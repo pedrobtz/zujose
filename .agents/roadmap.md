@@ -43,7 +43,7 @@ padding in R until a primitive exists.
 
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
-| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | | 2026-11-02 |
+| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | [#17](https://github.com/pedrobtz/zujwt/pull/17) | 2026-11-02 |
 | 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | | |
 | 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | | |
 | 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | | |
