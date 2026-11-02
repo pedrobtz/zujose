@@ -31,6 +31,12 @@ library(zujwt)
   : Read a JSON Web Key
 - [`jose_jwk()`](https://pedrobtz.github.io/zujwt/reference/jose_jwk.md)
   : Write a key or key set as JSON
+- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+  : Check a JWT and return its claims
+- [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.md)
+  : A reusable JWT check
+- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_encode.md)
+  : Encode a JWT
 - [`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
   : Make a symmetric key
 - [`jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)

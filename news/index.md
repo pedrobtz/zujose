@@ -50,3 +50,13 @@
 
 - [`zujwt_info()`](https://pedrobtz.github.io/zujwt/reference/zujwt_info.md)
   lists every JOSE algorithm and whether this installation can use it.
+
+- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_encode.md)
+  and
+  [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+  sign and check JWTs. Decoding checks `exp`, `nbf`, `iat`, `max_age`,
+  `iss`, `sub`, `aud`, `typ`, required claims, per-claim expectations
+  and a `validate` hook in one call; `exp` is required by default. Each
+  failure has its own condition class under `zujwt_claim_error`.
+  [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.md)
+  fixes a policy once and returns a checking function.

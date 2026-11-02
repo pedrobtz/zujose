@@ -9,6 +9,9 @@
 <url><loc>https://pedrobtz.github.io/zujwt/reference/as_jose_key.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/index.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwk.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwt_encode.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_key_oct.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_keyset.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_limits.html</loc></url>
