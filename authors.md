@@ -2,17 +2,21 @@
 
 ## Authors
 
-- **First Last**. Author, maintainer.
+- **Pedro Baltazar**. Author, maintainer, copyright holder.
 
 ## Citation
 
-Last F (2026). *zujwt: What the Package Does (One Line, Title Case)*. R
-package version 0.0.0.9000, <https://pedrobtz.github.io/zujwt/>.
+Source:
+[`DESCRIPTION`](https://github.com/pedrobtz/zujwt/blob/main/DESCRIPTION)
+
+Baltazar P (2026). *zujwt: Sign, Verify, Encrypt and Decrypt JSON Web
+Tokens*. R package version 0.0.0.9000,
+<https://github.com/pedrobtz/zujwt>.
 
     @Manual{,
-      title = {zujwt: What the Package Does (One Line, Title Case)},
-      author = {First Last},
+      title = {zujwt: Sign, Verify, Encrypt and Decrypt JSON Web Tokens},
+      author = {Pedro Baltazar},
       year = {2026},
       note = {R package version 0.0.0.9000},
-      url = {https://pedrobtz.github.io/zujwt/},
+      url = {https://github.com/pedrobtz/zujwt},
     }

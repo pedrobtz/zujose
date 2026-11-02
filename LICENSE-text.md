@@ -1,4 +1,4 @@
 # License
 
     YEAR: 2026
-    COPYRIGHT HOLDER: zujwt authors
+    COPYRIGHT HOLDER: Pedro Baltazar
