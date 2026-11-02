@@ -261,6 +261,10 @@ validation, interoperating with `jose` for `HS*`.
 - The `jose` oracle passes for `HS256/384/512`.
 - The full profile is green, `nosuggests` included.
 
+**Note, 2026-11-02.** r-actions runs `nosuggests` and `nold` only when the
+caller turns them on; the first full run skipped both. This stage turns
+them on in `R-CMD-check.yaml`.
+
 **Design.** §8.5, §10 (oracle).
 
 ## Stage 5 — JWE, symmetric
