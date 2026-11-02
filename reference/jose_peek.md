@@ -4,8 +4,9 @@
 headers and, for a JWS, its payload. **Nothing is verified.** The result
 is classed `jose_unverified` and says so when printed. Use it to decide
 which key or policy to apply, or to debug, never to make a decision that
-trusts the token. `jose_verify()` and `jose_decrypt()` are the functions
-that check a token.
+trusts the token.
+[`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)
+and `jose_decrypt()` are the functions that check a token.
 
 ## Usage
 

@@ -36,3 +36,17 @@
   [`as_jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md),
   with `[[` selecting by `kid`. Malformed entries in a JWK Set are
   ignored, as RFC 7517 asks.
+
+- [`jose_sign()`](https://pedrobtz.github.io/zujwt/reference/jose_sign.md)
+  and
+  [`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)
+  sign and verify JWS with `HS256`, `HS384` and `HS512`, in all three
+  serializations, with several signers through
+  [`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md),
+  detached payloads, and RFC 7797 unencoded payloads.
+  [`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)
+  needs `algorithms`, has no way to accept `none`, and refuses a key
+  that does not fit the token’s algorithm.
+
+- [`zujwt_info()`](https://pedrobtz.github.io/zujwt/reference/zujwt_info.md)
+  lists every JOSE algorithm and whether this installation can use it.

@@ -14,9 +14,13 @@
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_limits.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_peek.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_public.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_sign.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_signer.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_thumbprint.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_verify.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_with_kid.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/zujwt-package.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/zujwt_error.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/zujwt_info.html</loc></url>
 </urlset>
 

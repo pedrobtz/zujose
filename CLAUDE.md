@@ -23,8 +23,10 @@ adopted from [RFC
 It outranks this file. The RFC uses the working name `zujose`; read it
 as `zujwt`. That covers the package-named identifiers: condition classes
 are `zujwt_*`, following Testing conventions, and the RFC’s
-`zujose_info()` becomes `zujwt_info()`. The `jose_` prefix on public
-functions is not the package name and stays.
+`zujose_info()` becomes
+[`zujwt_info()`](https://pedrobtz.github.io/zujwt/reference/zujwt_info.md).
+The `jose_` prefix on public functions is not the package name and
+stays.
 
 ## Current state
 
@@ -147,7 +149,9 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   (`malformed_corpus()`), and `local_no_decoding()` fails a test that
   decodes a part before its limit check. `helper-keys.R` reads the RFC
   7520 keys (`rfc7520_key()`, `rfc7520_jwks()`) and holds the RFC 7638
-  vector.
+  vector. `rfc7515_key()` is the RFC 7515 A.1 HMAC key;
+  `expect_same_json()` compares JSON serializations whatever their
+  member order.
 - **Keep the suite inside the CRAN time budget.** No suite yet.
 
 ## Definition of done
