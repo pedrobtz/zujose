@@ -1,6 +1,7 @@
 # Extract the JWS and JWE serializations of RFC 7520 (the JOSE cookbook)
 # into tests/testthat/fixtures/rfc7520/, one file per figure, with a
-# MANIFEST.tsv recording each figure's number and section.
+# MANIFEST.tsv recording each figure's number and section; and the six keys
+# of RFC 7520 §3 into key-NNN.json files, with KEYS.tsv.
 #
 # Usage, from the package root:
 #
@@ -85,3 +86,40 @@ writeLines(
 utils::write.table(manifest, con, sep = "\t", quote = FALSE, row.names = FALSE)
 close(con)
 cat(nrow(manifest), "fixtures written to", out_dir, "\n")
+
+# The keys of §3: each figure body is a JSON object, from its "{" line to
+# the caption.
+key_caption_re <- "^ +Figure ([0-9]+): (.* Key)$"
+key_rows <- list()
+for (at in grep(key_caption_re, lines)) {
+  m <- regmatches(lines[at], regexec(key_caption_re, lines[at]))[[1]]
+  figure <- as.integer(m[[2]])
+  i <- at - 1L
+  while (!grepl("^ +\\{\\s*$", lines[[i]])) {
+    i <- i - 1L
+  }
+  jwk <- gsub("\\s+", "", paste(lines[i:(at - 1L)], collapse = ""))
+  sec_line <- lines[[max(sections[sections < at])]]
+  section <- regmatches(sec_line, regexec(section_re, sec_line))[[1]][[2]]
+  file <- sprintf("key-%03d.json", figure)
+  key_rows[[length(key_rows) + 1L]] <- data.frame(
+    file = file,
+    figure = figure,
+    section = section,
+    description = m[[3]]
+  )
+  writeLines(jwk, file.path(out_dir, file), sep = "")
+}
+keys <- do.call(rbind, key_rows)
+con <- file(file.path(out_dir, "KEYS.tsv"), "w")
+writeLines(
+  sprintf(
+    "# RFC 7520 <https://www.rfc-editor.org/rfc/rfc7520.txt>, sha256 %s, extracted by tools/rfc7520-fixtures.R",
+    unname(sha)
+  ),
+  con
+)
+utils::write.table(keys, con, sep = "\t", quote = FALSE, row.names = FALSE)
+close(con)
+cat(nrow(keys), "keys written to", out_dir, "\n")
+
