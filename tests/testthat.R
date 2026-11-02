@@ -1,12 +1,16 @@
-# This file is part of the standard setup for testthat.
-# It is recommended that you do not modify it.
+# The standard testthat runner, with one deviation: the run is conditional
+# on testthat being installed. The `nosuggests` CI leg is CRAN's NOSUGGESTS
+# flavor, where no Suggests are available and an unguarded
+# `library(testthat)` is an ERROR. A package must check without its
+# suggested packages, not test without them.
 #
-# Where should you do additional test configuration?
-# Learn more about the roles of various files in:
+# Learn more about the roles of the test files in:
 # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
 # * https://testthat.r-lib.org/articles/special-files.html
 
-library(testthat)
-library(zujwt)
+if (requireNamespace("testthat", quietly = TRUE)) {
+  library(testthat)
+  library(zujwt)
 
-test_check("zujwt")
+  test_check("zujwt")
+}
