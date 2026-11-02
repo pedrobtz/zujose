@@ -19,3 +19,12 @@
 
 * Key sets: `jose_keyset()` and `as_jose_keyset()`, with `[[` selecting by
   `kid`. Malformed entries in a JWK Set are ignored, as RFC 7517 asks.
+
+* `jose_sign()` and `jose_verify()` sign and verify JWS with `HS256`,
+  `HS384` and `HS512`, in all three serializations, with several signers
+  through `jose_signer()`, detached payloads, and RFC 7797 unencoded
+  payloads. `jose_verify()` needs `algorithms`, has no way to accept
+  `none`, and refuses a key that does not fit the token's algorithm.
+
+* `zujwt_info()` lists every JOSE algorithm and whether this installation
+  can use it.

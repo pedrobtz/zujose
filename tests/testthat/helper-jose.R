@@ -108,3 +108,27 @@ local_no_decoding <- function(what = NULL, env = parent.frame()) {
     .env = env
   )
 }
+
+# RFC 7515 A.1: the HMAC key, also used by RFC 7797 §4.
+rfc7515_key <- function() {
+  as_jose_key(paste0(
+    '{"kty":"oct","k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75',
+    'aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"}'
+  ))
+}
+
+# Two JSON serializations are the same object, whatever the member order.
+expect_same_json <- function(actual, expected) {
+  expect_identical(
+    zujson::json_parse(actual, simplify = "none") |> sort_members(),
+    zujson::json_parse(expected, simplify = "none") |> sort_members()
+  )
+}
+
+sort_members <- function(x) {
+  if (!is.list(x)) {
+    return(x)
+  }
+  x <- lapply(x, sort_members)
+  if (!is.null(names(x))) x[order(names(x))] else x
+}
