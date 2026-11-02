@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   coverage:
-    uses: pedrobtz/r-actions/.github/workflows/coverage.yml@v1
+    # Holds a write token, so pinned to a commit rather than a moving tag.
+    uses: pedrobtz/r-actions/.github/workflows/coverage.yml@30da3a640992fe6d502c578a12c0f2f3aed282c1 # v1.26.0
     permissions:
       contents: write

@@ -43,7 +43,7 @@ padding in R until a primitive exists.
 
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
-| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | | |
+| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | | 2026-11-02 |
 | 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | | |
 | 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | | |
 | 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | | |
@@ -82,6 +82,11 @@ CI, checked green.
   runner row. Pin `coverage.yaml` to a commit, with the tag in a comment.
   Move `pkgdown.yaml` to the r-actions workflow if one exists.
 - `CLAUDE.md` from the template (done by `pkg-init`).
+
+**Deviation, 2026-11-02.** `Imports`, `Remotes` and `Suggests: jose` are
+added by the stage that first calls them (Stages 1, 2 and 4), not here. An
+import nothing calls is an R CMD check NOTE. `pkgdown.yaml` stays the
+usethis workflow, because r-actions has no pkgdown workflow.
 
 **Exit criteria.**
 

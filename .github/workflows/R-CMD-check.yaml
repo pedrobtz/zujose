@@ -22,3 +22,16 @@ jobs:
       # Quick on each push to a pull request, full after merge. The
       # `full-ci` label runs the full set on a pull request before merging.
       profile: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-ci') && 'quick' || 'full' }}
+
+      # The default matrix plus Windows R-devel: CRAN's
+      # r-devel-windows-x86_64 flavor, the one win-builder exists to reach.
+      # The containers cover R-devel on Linux; nothing else checks this
+      # combination. It runs in the full profile only. The user agent is
+      # "release" because under R-devel the default one can resolve to
+      # binaries built for the wrong R.
+      runners: >-
+        [{"os": "macos-latest", "r": "release"},
+         {"os": "windows-latest", "r": "release"},
+         {"os": "windows-latest", "r": "devel", "http-user-agent": "release"},
+         {"os": "ubuntu-latest", "r": "release"},
+         {"os": "ubuntu-latest", "r": "oldrel-1"}]
