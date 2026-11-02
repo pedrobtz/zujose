@@ -55,3 +55,20 @@ test_that("unsupported algorithms name the zucrypt version they need", {
   expect_identical(err$needs, "0.4.0")
   expect_snapshot(conditionMessage(err))
 })
+
+test_that("claim errors have a leaf class under zujwt_claim_error", {
+  for (leaf in claim_leaves) {
+    err <- expect_error(
+      abort_claim(leaf, "No.", claim = "exp"),
+      class = paste0("zujwt_", leaf, "_error")
+    )
+    expect_s3_class(err, c("zujwt_claim_error", "zujwt_error"))
+    expect_identical(err$claim, "exp")
+  }
+  err <- expect_error(
+    abort_claim(NULL, "No.", claim = "x"),
+    class = "zujwt_claim_error"
+  )
+  expect_identical(class(err)[[1]], "zujwt_claim_error")
+  expect_error(abort_claim("late", "No.", claim = "x"), "leaf")
+})
