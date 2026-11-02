@@ -139,6 +139,11 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   RFC 7515 A.1 HMAC key; `expect_same_json()` compares JSON
   serializations whatever their member order. `decode_at_1000()` signs a
   claims set and decodes it at a fixed time, for the claim-check tests.
+  `encrypt_fixed()` encrypts with a fixed CEK and IV, as the RFC vectors
+  do; `hex()` reads hex text; `rfc7516_a3()`, `rfc7516_a4()`,
+  `rfc7518_cbc()` and `rfc3394_vectors()` hold the JWE vectors. The RFC
+  7518 Appendix B fixture is regenerated with
+  `tools/rfc7518-cbc-vectors.R`.
 - **Keep the suite inside the CRAN time budget.** No suite yet.
 
 ## Definition of done

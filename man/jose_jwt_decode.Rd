@@ -18,6 +18,7 @@ jose_jwt_decode(
   max_age = NULL,
   leeway = 60,
   now = Sys.time(),
+  decrypt = NULL,
   limits = jose_limits()
 )
 }
@@ -50,6 +51,9 @@ functions.}
 \item{leeway}{Seconds of clock skew to allow.}
 
 \item{now}{The current time, as \code{POSIXct}.}
+
+\item{decrypt}{For a JWT sent as a JWE, the key and algorithms to decrypt
+it, from \code{\link[=jose_decryption]{jose_decryption()}}; \code{NULL} refuses a JWE.}
 
 \item{limits}{Resource limits, from \code{\link[=jose_limits]{jose_limits()}}.}
 }
@@ -88,6 +92,11 @@ claims.
 A JWT whose header has \code{cty: "JWT"} carries another JWT as its payload.
 That inner JWT is verified with the same \code{key} and \code{algorithms}, and its
 claims are checked. Deeper nesting is refused.
+
+A JWT sent as a JWE is accepted only when \code{decrypt} says how to decrypt
+it, so a check meant for signed tokens never silently accepts encrypted
+ones. The JWE either carries a signed JWT (\code{cty: "JWT"}), verified as
+above, or the claims themselves.
 
 Each failed check raises a subclass of \code{zujwt_claim_error} carrying the
 claim name: \code{zujwt_expired_error}, \code{zujwt_not_yet_valid_error},

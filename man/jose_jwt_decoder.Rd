@@ -16,6 +16,7 @@ jose_jwt_decoder(
   validate = NULL,
   max_age = NULL,
   leeway = 60,
+  decrypt = NULL,
   limits = jose_limits()
 )
 }
@@ -44,6 +45,9 @@ functions.}
 \item{max_age}{The greatest age, in seconds, of \code{iat}, or \code{NULL}.}
 
 \item{leeway}{Seconds of clock skew to allow.}
+
+\item{decrypt}{For a JWT sent as a JWE, the key and algorithms to decrypt
+it, from \code{\link[=jose_decryption]{jose_decryption()}}; \code{NULL} refuses a JWE.}
 
 \item{limits}{Resource limits, from \code{\link[=jose_limits]{jose_limits()}}.}
 }

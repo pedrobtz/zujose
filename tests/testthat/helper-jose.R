@@ -158,3 +158,163 @@ decode_at_1000 <- function(
     ...
   )
 }
+
+# Hex text to raw, ignoring spaces.
+hex <- function(x) {
+  x <- gsub(" ", "", x)
+  as.raw(strtoi(substring(x, seq(1, nchar(x), 2), seq(2, nchar(x), 2)), 16L))
+}
+
+# RFC 7516 A.3: the key, CEK, IV, plaintext and compact JWE.
+rfc7516_a3 <- function() {
+  list(
+    key = as_jose_key('{"kty":"oct","k":"GawgguFyGrWKav7AX4VKUg"}'),
+    cek = as.raw(c(
+      4,
+      211,
+      31,
+      197,
+      84,
+      157,
+      252,
+      254,
+      11,
+      100,
+      157,
+      250,
+      63,
+      170,
+      106,
+      206,
+      107,
+      124,
+      212,
+      45,
+      111,
+      107,
+      9,
+      219,
+      200,
+      177,
+      0,
+      240,
+      143,
+      156,
+      44,
+      207
+    )),
+    iv = as.raw(c(
+      3,
+      22,
+      60,
+      12,
+      43,
+      67,
+      104,
+      105,
+      108,
+      108,
+      105,
+      99,
+      111,
+      116,
+      104,
+      101
+    )),
+    plaintext = "Live long and prosper.",
+    token = paste0(
+      "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.",
+      "6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ.",
+      "AxY8DCtDaGlsbGljb3RoZQ.",
+      "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.",
+      "U0m_YmjN04DJvceFICbCVQ"
+    )
+  )
+}
+
+# RFC 7516 A.4: the same message to an RSA1_5 recipient and to A.3's A128KW
+# key, with kid "7".
+rfc7516_a4 <- function() {
+  paste0(
+    '{"protected":"eyJlbmMiOiJBMTI4Q0JDLUhTMjU2In0",',
+    '"unprotected":{"jku":"https://server.example.com/keys.jwks"},',
+    '"recipients":[{"header":{"alg":"RSA1_5","kid":"2011-04-29"},',
+    '"encrypted_key":"UGhIOguC7IuEvf_NPVaXsGMoLOmwvc1GyqlIKOK1nN94nHPoltG',
+    "RhWhw7Zx0-kFm1NJn8LE9XShH59_i8J0PH5ZZyNfGy2xGdULU7sHNF6Gp2vPLgNZ__deL",
+    "KxGHZ7PcHALUzoOegEI-8E66jX2E4zyJKx-YxzZIItRzC5hlRirb6Y5Cl_p-ko3YvkkysZ",
+    "IFNPccxRU7qve1WYPxqbb2Yw8kZqa2rMWI5ng8OtvzlV7elprCbuPhcCdZ6XDP0_F8rkXd",
+    "s2vE4X-ncOIM8hAYHHi29NX0mcKiRaD0-D-ljQTP-cFPgwCp6X-nZZd9OHBv-B3oWh2Tbq",
+    'mScqXMR4gp_A"},',
+    '{"header":{"alg":"A128KW","kid":"7"},',
+    '"encrypted_key":"6KB707dM9YTIgHtLvtgWQ8mKwboJW3of9locizkDTHzBC2IlrT1oOQ"}],',
+    '"iv":"AxY8DCtDaGlsbGljb3RoZQ",',
+    '"ciphertext":"KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY",',
+    '"tag":"Mz-VPPyU4RlcuYv1IwIvzw"}'
+  )
+}
+
+# RFC 7518 Appendix B, one row per AES_CBC_HMAC_SHA2 algorithm.
+rfc7518_cbc <- function() {
+  utils::read.delim(
+    test_path("fixtures", "rfc7518-cbc.tsv"),
+    comment.char = "#",
+    stringsAsFactors = FALSE
+  )
+}
+
+# RFC 3394 §4: KEK, key data and wrapped key, in hex.
+rfc3394_vectors <- function() {
+  k16 <- "000102030405060708090A0B0C0D0E0F"
+  k24 <- paste0(k16, "1011121314151617")
+  k32 <- paste0(k16, "101112131415161718191A1B1C1D1E1F")
+  d16 <- "00112233445566778899AABBCCDDEEFF"
+  d24 <- paste0(d16, "0001020304050607")
+  d32 <- paste0(d16, "000102030405060708090A0B0C0D0E0F")
+  list(
+    "4.1" = c(k16, d16, "1FA68B0A8112B447AEF34BD8FB5A7B829D3E862371D2CFE5"),
+    "4.2" = c(k24, d16, "96778B25AE6CA435F92B5B97C050AED2468AB8A17AD84E5D"),
+    "4.3" = c(k32, d16, "64E8C3F9CE0F5BA263E9777905818A2A93C8191E7D6E8AE7"),
+    "4.4" = c(
+      k24,
+      d24,
+      "031D33264E15D33268F24EC260743EDCE1C6C7DDEE725A936BA814915C6762D2"
+    ),
+    "4.5" = c(
+      k32,
+      d24,
+      "A8F9BC1612C68B3FF6E6F4FBE30E71E4769C8B80A32CB8958CD5D17D6B254DA1"
+    ),
+    "4.6" = c(
+      k32,
+      d32,
+      "28C9F404C4B810F4CBCCB35CFB87F8263F5786E2D80ED326CBC7F0E71A99F43BFB988B9B7A02DD21"
+    )
+  )
+}
+
+# Encrypt with a fixed CEK and IV, as the RFC vectors do (design §8.6).
+encrypt_fixed <- function(
+  plaintext,
+  key,
+  alg = NULL,
+  enc = "A128CBC-HS256",
+  ...,
+  cek = as.raw(seq_len(cbc_hs[[enc]]$key)),
+  iv = as.raw(seq_len(16)),
+  format = "compact"
+) {
+  args <- list(...)
+  encrypt_jwe(
+    plaintext,
+    key,
+    alg,
+    enc,
+    header = args$header,
+    unprotected = args$unprotected,
+    aad = args$aad,
+    format = format,
+    cek = cek,
+    iv = iv,
+    call = NULL
+  )
+}

@@ -108,6 +108,11 @@ jose_jwt_encode <- function(
 #' That inner JWT is verified with the same `key` and `algorithms`, and its
 #' claims are checked. Deeper nesting is refused.
 #'
+#' A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
+#' it, so a check meant for signed tokens never silently accepts encrypted
+#' ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
+#' above, or the claims themselves.
+#'
 #' Each failed check raises a subclass of `zujwt_claim_error` carrying the
 #' claim name: `zujwt_expired_error`, `zujwt_not_yet_valid_error`,
 #' `zujwt_audience_error`, `zujwt_issuer_error`, `zujwt_subject_error` or
@@ -127,6 +132,8 @@ jose_jwt_encode <- function(
 #' @param max_age The greatest age, in seconds, of `iat`, or `NULL`.
 #' @param leeway Seconds of clock skew to allow.
 #' @param now The current time, as `POSIXct`.
+#' @param decrypt For a JWT sent as a JWE, the key and algorithms to decrypt
+#'   it, from [jose_decryption()]; `NULL` refuses a JWE.
 #' @returns The claims, as a named list of class `jose_claims`, with `exp`,
 #'   `nbf` and `iat` as `POSIXct` and the verified header as the `header`
 #'   attribute.
@@ -159,6 +166,7 @@ jose_jwt_decode <- function(
   max_age = NULL,
   leeway = 60,
   now = Sys.time(),
+  decrypt = NULL,
   limits = jose_limits()
 ) {
   call <- sys.call()
@@ -183,19 +191,35 @@ jose_jwt_decode <- function(
     )
   }
 
-  verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
-  if (is_nested(verified$header)) {
-    inner <- rawToChar(verified$payload)
-    if (grepl("^[[:space:]]*\\{", inner)) {
-      abort_zujwt("parse", "A JWT uses the compact serialization.", call = call)
-    }
-    verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
-    if (is_nested(verified$header)) {
+  if (!is.null(decrypt) && !inherits(decrypt, "jose_decryption")) {
+    stop("`decrypt` must be made by jose_decryption().", call. = FALSE)
+  }
+
+  if (compact_parts(token) == 5L) {
+    if (is.null(decrypt)) {
       abort_zujwt(
         "policy",
-        "A JWT nested more than one level deep is refused.",
+        "The token is a JWE; pass `decrypt = jose_decryption()` to accept one.",
         call = call
       )
+    }
+    opened <- decrypt_jwe(
+      token,
+      decrypt$key,
+      decrypt$algorithms,
+      decrypt$encryptions,
+      limits,
+      call
+    )
+    verified <- if (is_nested(opened$header)) {
+      verify_inner(opened$plaintext, key, algorithms, limits, call)
+    } else {
+      list(header = opened$header, payload = opened$plaintext)
+    }
+  } else {
+    verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
+    if (is_nested(verified$header)) {
+      verified <- verify_inner(verified$payload, key, algorithms, limits, call)
     }
   }
   header <- verified$header
@@ -256,9 +280,13 @@ jose_jwt_decoder <- function(
   validate = NULL,
   max_age = NULL,
   leeway = 60,
+  decrypt = NULL,
   limits = jose_limits()
 ) {
   check_algorithms(algorithms, "signature", call = sys.call())
+  if (!is.null(decrypt) && !inherits(decrypt, "jose_decryption")) {
+    stop("`decrypt` must be made by jose_decryption().", call. = FALSE)
+  }
   check_decode_args(
     audience,
     issuer,
@@ -288,6 +316,7 @@ jose_jwt_decoder <- function(
       max_age = max_age,
       leeway = leeway,
       now = now,
+      decrypt = decrypt,
       limits = limits
     )
   }
@@ -498,6 +527,35 @@ check_type <- function(header, type, call) {
     )
   }
   invisible()
+}
+
+# The JWT nested inside a JWS or JWE: a compact JWS, one level only.
+verify_inner <- function(bytes, key, algorithms, limits, call) {
+  inner <- if (!any(bytes == as.raw(0))) rawToChar(bytes) else ""
+  Encoding(inner) <- "UTF-8"
+  if (compact_parts(inner) != 3L) {
+    abort_zujwt(
+      "policy",
+      "A nested JWT must be a signed JWT in the compact serialization.",
+      call = call
+    )
+  }
+  verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
+  if (is_nested(verified$header)) {
+    abort_zujwt(
+      "policy",
+      "A JWT nested more than one level deep is refused.",
+      call = call
+    )
+  }
+  verified
+}
+
+compact_parts <- function(token) {
+  if (!is_string(token)) {
+    return(NA_integer_)
+  }
+  lengths(regmatches(token, gregexpr(".", token, fixed = TRUE))) + 1L
 }
 
 is_nested <- function(header) {
