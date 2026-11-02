@@ -57,6 +57,7 @@ applies them. Use it where the same policy guards many requests.</p>
 <span>  validate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_age <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  leeway <span class="op">=</span> <span class="fl">60</span>,</span>
+<span>  decrypt <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="fu"><a href="jose_limits.html">jose_limits</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -110,6 +111,11 @@ functions.</p></dd>
 
 <dt id="arg-leeway">leeway<a class="anchor" aria-label="anchor" href="#arg-leeway"></a></dt>
 <dd><p>Seconds of clock skew to allow.</p></dd>
+
+
+<dt id="arg-decrypt">decrypt<a class="anchor" aria-label="anchor" href="#arg-decrypt"></a></dt>
+<dd><p>For a JWT sent as a JWE, the key and algorithms to decrypt
+it, from <code><a href="jose_decryption.html">jose_decryption()</a></code>; <code>NULL</code> refuses a JWE.</p></dd>
 
 
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>

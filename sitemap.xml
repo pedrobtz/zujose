@@ -8,6 +8,9 @@
 <url><loc>https://pedrobtz.github.io/zujwt/news/index.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/as_jose_key.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/index.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_decrypt.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_decryption.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_encrypt.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwk.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.html</loc></url>
@@ -17,6 +20,7 @@
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_limits.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_peek.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_public.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zujwt/reference/jose_recipient.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_sign.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_signer.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zujwt/reference/jose_thumbprint.html</loc></url>

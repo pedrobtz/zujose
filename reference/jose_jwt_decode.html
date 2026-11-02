@@ -59,6 +59,7 @@ here, in one call, so none can be forgotten.</p>
 <span>  max_age <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  leeway <span class="op">=</span> <span class="fl">60</span>,</span>
 <span>  now <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  decrypt <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  limits <span class="op">=</span> <span class="fu"><a href="jose_limits.html">jose_limits</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -122,6 +123,11 @@ functions.</p></dd>
 <dd><p>The current time, as <code>POSIXct</code>.</p></dd>
 
 
+<dt id="arg-decrypt">decrypt<a class="anchor" aria-label="anchor" href="#arg-decrypt"></a></dt>
+<dd><p>For a JWT sent as a JWE, the key and algorithms to decrypt
+it, from <code><a href="jose_decryption.html">jose_decryption()</a></code>; <code>NULL</code> refuses a JWE.</p></dd>
+
+
 <dt id="arg-limits">limits<a class="anchor" aria-label="anchor" href="#arg-limits"></a></dt>
 <dd><p>Resource limits, from <code><a href="jose_limits.html">jose_limits()</a></code>.</p></dd>
 
@@ -156,6 +162,10 @@ claims.</p></li>
 </ul><p>A JWT whose header has <code>cty: "JWT"</code> carries another JWT as its payload.
 That inner JWT is verified with the same <code>key</code> and <code>algorithms</code>, and its
 claims are checked. Deeper nesting is refused.</p>
+<p>A JWT sent as a JWE is accepted only when <code>decrypt</code> says how to decrypt
+it, so a check meant for signed tokens never silently accepts encrypted
+ones. The JWE either carries a signed JWT (<code>cty: "JWT"</code>), verified as
+above, or the claims themselves.</p>
 <p>Each failed check raises a subclass of <code>zujwt_claim_error</code> carrying the
 claim name: <code>zujwt_expired_error</code>, <code>zujwt_not_yet_valid_error</code>,
 <code>zujwt_audience_error</code>, <code>zujwt_issuer_error</code>, <code>zujwt_subject_error</code> or

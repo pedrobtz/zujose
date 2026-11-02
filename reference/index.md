@@ -4,6 +4,12 @@
 
 - [`as_jose_key()`](https://pedrobtz.github.io/zujwt/reference/as_jose_key.md)
   : Read a JSON Web Key
+- [`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+  : Decrypt a JWE
+- [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md)
+  : Accept an encrypted JWT
+- [`jose_encrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_encrypt.md)
+  : Encrypt a payload as a JWE
 - [`jose_jwk()`](https://pedrobtz.github.io/zujwt/reference/jose_jwk.md)
   : Write a key or key set as JSON
 - [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
@@ -23,6 +29,8 @@
   : Look inside a token without verifying it
 - [`jose_public()`](https://pedrobtz.github.io/zujwt/reference/jose_public.md)
   : The public part of a key or key set
+- [`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md)
+  : One recipient of a multi-recipient JWE
 - [`jose_sign()`](https://pedrobtz.github.io/zujwt/reference/jose_sign.md)
   : Sign a payload as a JWS
 - [`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md)

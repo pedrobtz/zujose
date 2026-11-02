@@ -22,8 +22,15 @@ A data frame with columns `algorithm`, `kind` (`"signature"`,
 ``` r
 info <- zujwt_info()
 info[info$available, ]
-#>   algorithm      kind available zucrypt
-#> 1     HS256 signature      TRUE   0.1.0
-#> 2     HS384 signature      TRUE   0.1.0
-#> 3     HS512 signature      TRUE   0.1.0
+#>        algorithm               kind available zucrypt
+#> 1          HS256          signature      TRUE   0.1.0
+#> 2          HS384          signature      TRUE   0.1.0
+#> 3          HS512          signature      TRUE   0.1.0
+#> 13           dir     key management      TRUE   0.1.0
+#> 14        A128KW     key management      TRUE   0.1.0
+#> 15        A192KW     key management      TRUE   0.1.0
+#> 16        A256KW     key management      TRUE   0.1.0
+#> 30 A128CBC-HS256 content encryption      TRUE   0.1.0
+#> 31 A192CBC-HS384 content encryption      TRUE   0.1.0
+#> 32 A256CBC-HS512 content encryption      TRUE   0.1.0
 ```

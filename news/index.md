@@ -60,3 +60,18 @@
   failure has its own condition class under `zujwt_claim_error`.
   [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.md)
   fixes a policy once and returns a checking function.
+
+- [`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+  decrypts JWE with `dir`, `A128KW`, `A192KW` and `A256KW` key
+  management and `A128CBC-HS256`, `A192CBC-HS384` and `A256CBC-HS512`
+  content encryption, in all three serializations and for several
+  recipients. Every decryption failure raises one class with one
+  message. Compressed (`zip`) tokens are refused.
+  [`jose_encrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_encrypt.md)
+  and
+  [`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md)
+  are in place but need zucrypt (\>= 0.2.0) for random keys and IVs.
+
+- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+  accepts a JWT sent as a JWE only with
+  `decrypt = jose_decryption(...)`.

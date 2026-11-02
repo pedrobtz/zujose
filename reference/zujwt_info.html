@@ -62,10 +62,17 @@ is not raises <code>zujwt_unsupported_error</code>.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">info</span> <span class="op">&lt;-</span> <span class="fu">zujwt_info</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">info</span><span class="op">[</span><span class="va">info</span><span class="op">$</span><span class="va">available</span>, <span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   algorithm      kind available zucrypt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     HS256 signature      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2     HS384 signature      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3     HS512 signature      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        algorithm               kind available zucrypt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          HS256          signature      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2          HS384          signature      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3          HS512          signature      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13           dir     key management      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14        A128KW     key management      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15        A192KW     key management      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16        A256KW     key management      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 A128CBC-HS256 content encryption      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 A192CBC-HS384 content encryption      TRUE   0.1.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 A256CBC-HS512 content encryption      TRUE   0.1.0</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

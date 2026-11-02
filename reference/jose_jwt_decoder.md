@@ -20,6 +20,7 @@ jose_jwt_decoder(
   validate = NULL,
   max_age = NULL,
   leeway = 60,
+  decrypt = NULL,
   limits = jose_limits()
 )
 ```
@@ -70,6 +71,12 @@ jose_jwt_decoder(
 - leeway:
 
   Seconds of clock skew to allow.
+
+- decrypt:
+
+  For a JWT sent as a JWE, the key and algorithms to decrypt it, from
+  [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md);
+  `NULL` refuses a JWE.
 
 - limits:
 

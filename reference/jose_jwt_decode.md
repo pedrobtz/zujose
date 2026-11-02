@@ -22,6 +22,7 @@ jose_jwt_decode(
   max_age = NULL,
   leeway = 60,
   now = Sys.time(),
+  decrypt = NULL,
   limits = jose_limits()
 )
 ```
@@ -81,6 +82,12 @@ jose_jwt_decode(
 
   The current time, as `POSIXct`.
 
+- decrypt:
+
+  For a JWT sent as a JWE, the key and algorithms to decrypt it, from
+  [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md);
+  `NULL` refuses a JWE.
+
 - limits:
 
   Resource limits, from
@@ -121,6 +128,11 @@ attribute.
 A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
 That inner JWT is verified with the same `key` and `algorithms`, and its
 claims are checked. Deeper nesting is refused.
+
+A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
+it, so a check meant for signed tokens never silently accepts encrypted
+ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
+above, or the claims themselves.
 
 Each failed check raises a subclass of `zujwt_claim_error` carrying the
 claim name: `zujwt_expired_error`, `zujwt_not_yet_valid_error`,
