@@ -53,7 +53,18 @@ jwa_table <- function() {
 
 # The identifiers this version of zujwt has code for. Each stage adds its
 # own.
-implemented_algorithms <- c("HS256", "HS384", "HS512")
+implemented_algorithms <- c(
+  "HS256",
+  "HS384",
+  "HS512",
+  "dir",
+  "A128KW",
+  "A192KW",
+  "A256KW",
+  "A128CBC-HS256",
+  "A192CBC-HS384",
+  "A256CBC-HS512"
+)
 
 #' Algorithms available in this installation
 #'
