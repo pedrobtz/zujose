@@ -47,7 +47,7 @@ padding in R until a primitive exists.
 | 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | [#18](https://github.com/pedrobtz/zujwt/pull/18) | 2026-11-02 |
 | 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | [#19](https://github.com/pedrobtz/zujwt/pull/19) | 2026-11-02 |
 | 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | [#20](https://github.com/pedrobtz/zujwt/pull/20) | 2026-11-02 |
-| 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | | |
+| 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | [#21](https://github.com/pedrobtz/zujwt/pull/21) | 2026-11-02 |
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | | |
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | | |
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | | |
@@ -260,6 +260,10 @@ validation, interoperating with `jose` for `HS*`.
   value (test).
 - The `jose` oracle passes for `HS256/384/512`.
 - The full profile is green, `nosuggests` included.
+
+**Note, 2026-11-02.** r-actions runs `nosuggests` and `nold` only when the
+caller turns them on; the first full run skipped both. This stage turns
+them on in `R-CMD-check.yaml`.
 
 **Design.** §8.5, §10 (oracle).
 

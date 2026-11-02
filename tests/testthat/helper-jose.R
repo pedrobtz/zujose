@@ -132,3 +132,29 @@ sort_members <- function(x) {
   x <- lapply(x, sort_members)
   if (!is.null(names(x))) x[order(names(x))] else x
 }
+
+# Decode the claims `payload`, signed with a fixed key, at time 1000. The
+# argument is not called `claims`, which would capture jose_jwt_decode()'s.
+decode_at_1000 <- function(
+  payload,
+  ...,
+  required = character(),
+  header = list(typ = "JWT")
+) {
+  key <- jose_key_oct(as.raw(1:32))
+  jwt <- jose_jwt_encode(
+    payload,
+    key,
+    "HS256",
+    header = header,
+    issued_at = FALSE
+  )
+  jose_jwt_decode(
+    jwt,
+    key,
+    "HS256",
+    required = required,
+    now = as_posixct(1000),
+    ...
+  )
+}

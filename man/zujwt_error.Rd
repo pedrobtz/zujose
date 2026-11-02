@@ -17,9 +17,18 @@ Every error zujwt raises inherits from \code{zujwt_error}, then \code{error} and
    \code{zujwt_signature_error} \tab  \tab a signature or MAC does not verify \cr
    \code{zujwt_decrypt_error} \tab  \tab decryption fails, for any reason, after the header has passed the policy checks \cr
    \code{zujwt_claim_error} \tab \code{claim} \tab a JWT claim is missing or does not match what the caller expects \cr
+   \code{zujwt_expired_error} \tab \code{claim}, \code{time}, \code{now} \tab the token has expired, or is older than \code{max_age} \cr
+   \code{zujwt_not_yet_valid_error} \tab \code{claim}, \code{time}, \code{now} \tab the token is not valid yet, or was issued in the future \cr
+   \code{zujwt_audience_error} \tab \code{claim} \tab the token is not for this audience \cr
+   \code{zujwt_issuer_error} \tab \code{claim} \tab the token is not from this issuer \cr
+   \code{zujwt_subject_error} \tab \code{claim} \tab the token is not about this subject \cr
+   \code{zujwt_missing_claim_error} \tab \code{claim} \tab a required claim is absent \cr
    \code{zujwt_unsupported_error} \tab \code{algorithm}, \code{needs} \tab an algorithm needs a newer \code{zucrypt} than the one installed \cr
 }
 
+
+The last six inherit from \code{zujwt_claim_error}, so a caller can catch every
+claim failure at once or one cause.
 
 Every decryption failure raises the same class with the same message, so
 that the error cannot tell an attacker which step failed (RFC 7516

@@ -35,3 +35,13 @@ jobs:
          {"os": "windows-latest", "r": "devel", "http-user-agent": "release"},
          {"os": "ubuntu-latest", "r": "release"},
          {"os": "ubuntu-latest", "r": "oldrel-1"}]
+
+      # CRAN's NOSUGGESTS flavor: only hard dependencies installed. Suggests
+      # are jose and testthat; a test reaching for jose without
+      # skip_if_not_installed() fails here and nowhere else.
+      nosuggests: true
+
+      # CRAN's NOLD flavor, R without long double. zujwt's arithmetic is on
+      # NumericDate seconds as doubles; this checks it does not lean on
+      # 80-bit intermediates. Both legs run in the full profile only.
+      nold: true

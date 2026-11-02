@@ -267,6 +267,12 @@ jose_verify <- function(
   call <- sys.call()
   check_algorithms(algorithms, "signature", call = call)
   require <- match.arg(require)
+  verify_jws(token, key, algorithms, payload, require, limits, call)
+}
+
+# The body of jose_verify(), shared with jose_jwt_decode() so that errors
+# name the function the caller called.
+verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
   obj <- jose_parse(token, limits, call)
   if (obj$type != "JWS") {
     abort_zujwt("policy", "Expected a JWS, not a JWE.", call = call)
