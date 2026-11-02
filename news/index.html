@@ -37,6 +37,8 @@
 <ul><li><p>Condition classes for every error the package will raise, all inheriting from <code>zujwt_error</code> (<code><a href="../reference/zujwt_error.html">?zujwt_error</a></code>).</p></li>
 <li><p><code><a href="../reference/jose_peek.html">jose_peek()</a></code> reads a JWS or JWE in the compact, flattened or general JSON serialization, without verifying it, and returns its headers and, for a JWS, its payload and claims.</p></li>
 <li><p><code><a href="../reference/jose_limits.html">jose_limits()</a></code> sets the resource limits every token is checked against before anything is decoded.</p></li>
+<li><p>Keys: <code><a href="../reference/jose_key_oct.html">jose_key_oct()</a></code> makes a symmetric key, <code><a href="../reference/as_jose_key.html">as_jose_key()</a></code> reads a JWK, <code><a href="../reference/jose_jwk.html">jose_jwk()</a></code> writes one, <code><a href="../reference/jose_public.html">jose_public()</a></code> strips private members, and <code><a href="../reference/jose_thumbprint.html">jose_thumbprint()</a></code> computes RFC 7638 thumbprints and RFC 9278 thumbprint URIs. <code><a href="../reference/jose_with_kid.html">jose_with_kid()</a></code> sets <code>kid</code>, by default to the thumbprint. <code>RSA</code>, <code>EC</code> and <code>OKP</code> keys are read and kept but cannot be used yet.</p></li>
+<li><p>Key sets: <code><a href="../reference/jose_keyset.html">jose_keyset()</a></code> and <code><a href="../reference/jose_keyset.html">as_jose_keyset()</a></code>, with <code>[[</code> selecting by <code>kid</code>. Malformed entries in a JWK Set are ignored, as RFC 7517 asks.</p></li>
 </ul></div>
   </main></div>
 

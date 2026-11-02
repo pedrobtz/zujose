@@ -27,10 +27,25 @@ library(zujwt)
 
 ## All functions
 
+- [`as_jose_key()`](https://pedrobtz.github.io/zujwt/reference/as_jose_key.md)
+  : Read a JSON Web Key
+- [`jose_jwk()`](https://pedrobtz.github.io/zujwt/reference/jose_jwk.md)
+  : Write a key or key set as JSON
+- [`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
+  : Make a symmetric key
+- [`jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)
+  [`as_jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)
+  : Key sets
 - [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md)
   : Resource limits for untrusted tokens
 - [`jose_peek()`](https://pedrobtz.github.io/zujwt/reference/jose_peek.md)
   : Look inside a token without verifying it
+- [`jose_public()`](https://pedrobtz.github.io/zujwt/reference/jose_public.md)
+  : The public part of a key or key set
+- [`jose_thumbprint()`](https://pedrobtz.github.io/zujwt/reference/jose_thumbprint.md)
+  : JWK thumbprint
+- [`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md)
+  : Set a key's identifier
 - [`zujwt_error`](https://pedrobtz.github.io/zujwt/reference/zujwt_error.md)
   : Conditions raised by zujwt
 
