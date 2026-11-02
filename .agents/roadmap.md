@@ -46,7 +46,7 @@ padding in R until a primitive exists.
 | 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | [#17](https://github.com/pedrobtz/zujwt/pull/17) | 2026-11-02 |
 | 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | [#18](https://github.com/pedrobtz/zujwt/pull/18) | 2026-11-02 |
 | 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | [#19](https://github.com/pedrobtz/zujwt/pull/19) | 2026-11-02 |
-| 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | | 2026-11-02 |
+| 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | [#20](https://github.com/pedrobtz/zujwt/pull/20) | 2026-11-02 |
 | 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | | |
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | | |
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | | |
