@@ -127,8 +127,14 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   under `tests/testthat/fixtures/` with a manifest (design §10). CRAN's `jose`
   is the oracle for JWS and JWT under `skip_if_not_installed()`. JWE has no
   R oracle; a development-only job checks it against a Python or JavaScript
-  JOSE library, never at check time.
-- **Helpers live in `tests/testthat/helper-*.R`.** None yet.
+  JOSE library, never at check time. The RFC 7520 fixtures are regenerated with
+  `tools/rfc7520-fixtures.R`; never edit them by hand.
+- **Helpers live in `tests/testthat/helper-*.R`.** `helper-jose.R` reads
+  the RFC 7520 fixtures (`rfc7520_manifest()`, `rfc7520_token()`), builds
+  tokens (`b64_json()`, `compact_jws()`), holds the RFC 7519 and RFC 7797
+  vectors, generates the malformed corpus (`malformed_corpus()`), and
+  `local_no_decoding()` fails a test that decodes a part before its limit
+  check.
 - **Keep the suite inside the CRAN time budget.** No suite yet.
 
 ## Definition of done
