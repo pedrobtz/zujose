@@ -1,14 +1,26 @@
 Package: zujwt
-Title: What the Package Does (One Line, Title Case)
+Title: Sign, Verify, Encrypt and Decrypt JSON Web Tokens
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Pedro", "Baltazar", , "pedrobtz@gmail.com",
+           role = c("aut", "cre", "cph"))
+Description: Signs, verifies, encrypts and decrypts JSON Object Signing and
+    Encryption ('JOSE') objects: JSON Web Signatures (RFC 7515)
+    <doi:10.17487/RFC7515>, JSON Web Encryption (RFC 7516)
+    <doi:10.17487/RFC7516>, JSON Web Keys (RFC 7517)
+    <doi:10.17487/RFC7517> and JSON Web Tokens (RFC 7519)
+    <doi:10.17487/RFC7519>, in the compact and JSON serializations. The
+    caller names the algorithms it accepts, and tokens are checked against
+    the current best practices of RFC 8725 <doi:10.17487/RFC8725>. Written
+    in R over 'zucrypt', so no system cryptography library is needed.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.1.1
+URL: https://github.com/pedrobtz/zujwt, https://pedrobtz.github.io/zujwt/
+BugReports: https://github.com/pedrobtz/zujwt/issues
+Depends: 
+    R (>= 4.1)
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-URL: https://pedrobtz.github.io/zujwt/
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.1.1
