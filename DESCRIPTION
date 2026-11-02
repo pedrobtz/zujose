@@ -18,8 +18,14 @@ URL: https://github.com/pedrobtz/zujwt, https://pedrobtz.github.io/zujwt/
 BugReports: https://github.com/pedrobtz/zujwt/issues
 Depends: 
     R (>= 4.1)
+Imports: 
+    stats,
+    zujson (>= 0.1.0),
+    zuutf (>= 0.1.0)
 Suggests: 
     testthat (>= 3.0.0)
+Remotes: 
+    pedrobtz/zuutf
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

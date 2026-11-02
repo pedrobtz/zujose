@@ -44,7 +44,7 @@ padding in R until a primitive exists.
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
 | 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | [#17](https://github.com/pedrobtz/zujwt/pull/17) | 2026-11-02 |
-| 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | | |
+| 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | [#18](https://github.com/pedrobtz/zujwt/pull/18) | 2026-11-02 |
 | 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | | |
 | 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | | |
 | 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | | |
@@ -133,6 +133,25 @@ usethis workflow, because r-actions has no pkgdown workflow.
   mock or a counter).
 - `R CMD check` green on the quick profile.
 
+**Re-check of RFC 7520 citations, 2026-11-02.** The fixtures
+(`tests/testthat/fixtures/rfc7520/MANIFEST.tsv`, from
+`tools/rfc7520-fixtures.R`) give each figure's section and algorithms, and
+show four citations in this roadmap were wrong:
+
+- §4.8 (multiple signatures) mixes `RS256`, `ES512` and `HS256`; only its
+  `HS256` signature belongs to Stage 3.
+- §5.8 is `A128KW` with `A128GCM`, not a CBC-HS variant. No RFC 7520 vector
+  uses only `dir` or `A*KW` with `A*CBC-HS*`, so Stage 5 relies on RFC 7516
+  A.3, RFC 7518 B and RFC 3394.
+- §5.11 and §5.12 are `A128KW` with `A128GCM` and belong to Stage 7.
+  §5.9 carries `zip: "DEF"`, which zujwt rejects (§8.6).
+- §5.13 (multiple recipients) needs `RSA1_5`, `ECDH-ES+A256KW` and
+  `A256GCMKW`, so it completes only with Stage 9. §6 (nesting) needs `PS256`
+  and `RSA-OAEP`, Stage 8.
+
+RFC 7520 also captions Figure 41 "General JWS JSON Serialization" although
+it is compact; the extraction classifies by content.
+
 **Design.** §6 (codec layer), §8.1, §9 (limits), §10.
 
 ## Stage 2 — oct keys and key sets
@@ -200,8 +219,8 @@ three serializations.
 
 **Exit criteria.**
 
-- RFC 7515 A.1, RFC 7520 §4.4–§4.8 and RFC 7797 §4 vectors pass, verified and
-  reproduced byte for byte.
+- RFC 7515 A.1, RFC 7520 §4.4–§4.7, the `HS256` signature of §4.8, and
+  RFC 7797 §4 vectors pass, verified and reproduced byte for byte.
 - Each attack test fails with its documented class.
 - `jose_verify()` called without `algorithms` is an error (test).
 - `R CMD check` green on the quick profile.
@@ -271,8 +290,9 @@ Decryption works fully. Encryption works with an injected CEK and IV.
 
 **Exit criteria.**
 
-- RFC 7516 A.3, RFC 7518 B, RFC 3394 §4 and RFC 7520 §5.8 (CBC-HS variant)
-  vectors pass, decrypted and reproduced byte for byte.
+- RFC 7516 A.3, RFC 7518 B and RFC 3394 §4 vectors pass, decrypted and
+  reproduced byte for byte.
+- RFC 7520 §5.9 (`zip`) is rejected before decryption.
 - One test per failure mode (wrong key, bad tag, bad padding, unwrap
   failure, length error) asserts the same class and the same message.
 - `R CMD check` green on the quick profile.
@@ -332,7 +352,7 @@ them.
 
 **Exit criteria.**
 
-- RFC 7520 §5.3, §5.6–§5.8 and §5.10 vectors pass.
+- RFC 7520 §5.3, §5.6–§5.8 and §5.10–§5.12 vectors pass.
 - A `p2c` over the cap and a short `p2s` fail before any key derivation
   (tests).
 - `R CMD check` green on the quick profile.
@@ -365,7 +385,8 @@ and opt-in `RSA1_5` decryption.
 
 **Exit criteria.**
 
-- RFC 7515 A.2, RFC 7520 §4.1–§4.2 and §5.1–§5.2 vectors pass.
+- RFC 7515 A.2, RFC 7520 §4.1–§4.2, §5.1–§5.2, §6 and the `RS256`
+  signature of §4.8 pass.
 - The `jose` oracle passes for `RS256/384/512`.
 - `RSA1_5` without explicit opt-in fails with `zujwt_policy_error` (test).
 - `R CMD check` green on the quick profile.
@@ -397,8 +418,8 @@ without key wrap.
 
 **Exit criteria.**
 
-- RFC 7515 A.3–A.4, RFC 7518 C, RFC 7520 §4.3 and §5.4–§5.5, and RFC 8037
-  A.6 vectors pass.
+- RFC 7515 A.3–A.4, RFC 7518 C, RFC 7520 §4.3, §4.8 (all three
+  signatures), §5.4–§5.5 and §5.13, and RFC 8037 A.6 vectors pass.
 - Invalid-curve and off-curve point tests fail closed.
 - `R CMD check` green on the quick profile.
 

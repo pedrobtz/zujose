@@ -44,7 +44,11 @@ abort_zujwt <- function(kind, message, ..., call = NULL) {
 }
 
 abort_decrypt <- function(call = NULL) {
-  stop(zujwt_condition("zujwt_decrypt_error", "Decryption failed.", call = call))
+  stop(zujwt_condition(
+    "zujwt_decrypt_error",
+    "Decryption failed.",
+    call = call
+  ))
 }
 
 abort_unsupported <- function(algorithm, needs, call = NULL) {
