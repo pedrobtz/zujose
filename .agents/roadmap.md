@@ -31,7 +31,7 @@ development version.
 | 0–5 | `zuutf` 0.1.0 on CRAN before release | [zuutf#10](https://github.com/pedrobtz/zuutf/issues/10) |
 | 6 | `zucrypt` Stage 13a: `crypt_rand_bytes()`, merged on its `main` 2026-11-03 | [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9), closed by [zucrypt#83](https://github.com/pedrobtz/zucrypt/pull/83) |
 | 7 | `zucrypt` Stage 14a: AES-GCM, PBKDF2, merged on its `main` 2026-11-03 | [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10), [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12), done in [zucrypt#84](https://github.com/pedrobtz/zucrypt/pull/84) |
-| 8 | `zucrypt` Stage 15, v0.4.0 (candidate): RSA | [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80) |
+| 8 | `zucrypt` Stage 15a: RSA and key I/O, merged on its `main` 2026-11-03 | [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80), done in [zucrypt#86](https://github.com/pedrobtz/zucrypt/pull/86) |
 | 9 | `zucrypt` Stage 16, v0.5.0 (candidate): EC, X25519 | [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81) |
 | 5 | Optional: AES key wrap as a `zucrypt` primitive (design D4) | [zucrypt#82](https://github.com/pedrobtz/zucrypt/issues/82) |
 | 1 | Optional: strict unpadded Base64url in `zuutf` (design §8.1) | [zuutf#55](https://github.com/pedrobtz/zuutf/issues/55) |
@@ -51,7 +51,7 @@ padding in R until a primitive exists.
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | [#22](https://github.com/pedrobtz/zujwt/pull/22) | 2026-11-02 |
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | [#23](https://github.com/pedrobtz/zujwt/pull/23) | 2026-11-03 |
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | [#24](https://github.com/pedrobtz/zujwt/pull/24) | 2026-11-03 |
-| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | | |
+| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | | 2026-11-03 |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | | |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujwt/issues/12) | | |
 | 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujwt/issues/13) | | |
@@ -387,6 +387,14 @@ tokens' header member order is not ours.
 
 **Blocked on** `zucrypt` Stage 15 (v0.4.0, candidate),
 [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80).
+zucrypt admitted the tranche and shipped what this stage needs as Stage 15a
+in [zucrypt#86](https://github.com/pedrobtz/zucrypt/pull/86), on
+2026-11-03. Two deviations, recorded that day: a private RSA JWK must carry
+all of `p`, `q`, `dp`, `dq` and `qi` (RFC 7518 §6.3.2 lets them be
+omitted; zucrypt builds keys from the full set, and the primes are not
+reconstructed here); and RSA keys are kept as their JWK members, with a
+zucrypt key built per operation, rather than as `zucrypt` key objects
+(design §8.3), because those do not survive `saveRDS()`.
 
 **Goal.** RSA JWKs, `RS*` and `PS*` signatures, `RSA-OAEP` and `RSA-OAEP-256`,
 and opt-in `RSA1_5` decryption.
