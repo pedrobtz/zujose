@@ -9,10 +9,11 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' through [jose_recipient()], and returns the JWE in the compact,
 #' flattened JSON or general JSON serialization (RFC 7516).
 #'
-#' Encryption generates a fresh content encryption key and initialization
-#' vector for every message, so it needs cryptographic randomness from
-#' zucrypt (>= 0.2.0). Until that is installed it raises
-#' `zujwt_unsupported_error`; decryption works without it.
+#' Every message gets a fresh content encryption key and initialization
+#' vector, drawn from the operating system's cryptographic random source
+#' through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
+#' encryption. If the random source fails, the error is zucrypt's
+#' `zucrypt_entropy_error`, and nothing is returned.
 #'
 #' @param plaintext The plaintext: a raw vector, or a single string taken
 #'   as UTF-8 text.
@@ -33,9 +34,11 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' @seealso [jose_decrypt()].
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:16), kid = "kek")
-#' # Until zucrypt (>= 0.2.0) supplies randomness, this is unsupported.
-#' try(jose_encrypt("secret", key, alg = "A128KW"))
+#' key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
+#' token <- jose_encrypt("secret", key)
+#' token
+#' jose_decrypt(token, key, algorithms = "A128KW",
+#'              encryptions = "A128CBC-HS256")
 jose_encrypt <- function(
   plaintext,
   key,
@@ -186,9 +189,9 @@ encrypt_jwe <- function(
   cek <- if (algs[[1]] == "dir") {
     recipients[[1]]$key$k
   } else {
-    cek %||% random_bytes(cbc_hs[[enc]]$key, call)
+    cek %||% zucrypt::crypt_rand_bytes(cbc_hs[[enc]]$key)
   }
-  iv <- iv %||% random_bytes(16L, call)
+  iv <- iv %||% zucrypt::crypt_rand_bytes(16L)
 
   recipient_headers <- lapply(seq_along(recipients), function(i) {
     r <- recipients[[i]]
@@ -532,17 +535,6 @@ check_kek <- function(alg, enc, key, call) {
       call = call
     )
   }
-}
-
-# Cryptographic randomness arrives with zucrypt 0.2.0 (Stage 6).
-random_bytes <- function(n, call) {
-  stop(zujwt_condition(
-    "zujwt_unsupported_error",
-    "Encryption needs random keys and IVs from zucrypt (>= 0.2.0).",
-    algorithm = "random",
-    needs = "0.2.0",
-    call = call
-  ))
 }
 
 #' @export

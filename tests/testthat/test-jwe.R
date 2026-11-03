@@ -293,12 +293,53 @@ test_that("a JWS is not a JWE", {
   )
 })
 
-test_that("jose_encrypt() needs randomness, which zucrypt 0.1.0 lacks", {
-  err <- expect_error(
-    jose_encrypt("x", jose_key_oct(as.raw(1:16)), "A128KW"),
-    class = "zujwt_unsupported_error"
+test_that("two encryptions of one plaintext differ, and each decrypts", {
+  kek <- jose_key_oct(as.raw(1:16))
+  cek <- jose_key_oct(as.raw(1:32))
+  for (format in c("compact", "flattened")) {
+    for (case in list(list(kek, "A128KW"), list(cek, "dir"))) {
+      a <- jose_encrypt("same", case[[1]], case[[2]], format = format)
+      b <- jose_encrypt("same", case[[1]], case[[2]], format = format)
+      expect_false(identical(a, b))
+      for (token in list(a, b)) {
+        out <- jose_decrypt(token, case[[1]], case[[2]], "A128CBC-HS256")
+        expect_identical(out$plaintext, charToRaw("same"))
+      }
+      # A fresh IV each time.
+      iv_of <- function(token) {
+        if (format == "compact") {
+          strsplit(token, ".", fixed = TRUE)[[1]][[3]]
+        } else {
+          zujson::json_parse(token)$iv
+        }
+      }
+      expect_false(identical(iv_of(a), iv_of(b)))
+    }
+  }
+  # And for A128KW a fresh CEK: the wrapped keys differ too.
+  a <- strsplit(jose_encrypt("same", kek, "A128KW"), ".", fixed = TRUE)[[1]]
+  b <- strsplit(jose_encrypt("same", kek, "A128KW"), ".", fixed = TRUE)[[1]]
+  expect_false(identical(a[[2]], b[[2]]))
+  # A 16-byte IV is 22 Base64url characters.
+  expect_identical(nchar(a[[3]]), 22L)
+})
+
+test_that("jose_encrypt() exposes no CEK or IV argument", {
+  expect_false(any(c("cek", "iv") %in% names(formals(jose_encrypt))))
+})
+
+test_that("several recipients share one generated CEK", {
+  k1 <- jose_with_kid(jose_key_oct(as.raw(1:16)), "1")
+  k2 <- jose_with_kid(jose_key_oct(as.raw(17:48)), "2")
+  token <- jose_encrypt(
+    "both",
+    list(jose_recipient(k1, "A128KW"), jose_recipient(k2, "A256KW")),
+    format = "general"
   )
-  expect_identical(err$needs, "0.2.0")
+  for (key in list(k1, k2)) {
+    out <- jose_decrypt(token, key, c("A128KW", "A256KW"), "A128CBC-HS256")
+    expect_identical(rawToChar(out$plaintext), "both")
+  }
 })
 
 test_that("encryption refuses inconsistent requests", {

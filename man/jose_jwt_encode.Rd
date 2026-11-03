@@ -35,7 +35,8 @@ valid. Sets \code{nbf}.}
 
 \item{issued_at}{Whether to set \code{iat} to now, unless \code{claims} sets it.}
 
-\item{jti}{Whether to add a random \code{jti}. Needs zucrypt's randomness.}
+\item{jti}{Whether to add a random \code{jti}, 128 bits from the operating
+system's random source as Base64url, unless \code{claims} sets it.}
 }
 \value{
 The JWT, as a single string.

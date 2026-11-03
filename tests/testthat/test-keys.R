@@ -134,3 +134,95 @@ test_that("jose_with_kid() defaults to the thumbprint", {
   expect_identical(jose_with_kid(key, "mine")$kid, "mine")
   expect_error(jose_with_kid(key, 1), class = "zujwt_key_error")
 })
+
+# jose_key_generate() (design §7.2) ---------------------------------------
+
+test_that("jose_key_generate() makes a random oct key", {
+  key <- jose_key_generate("oct")
+  expect_s3_class(key, "jose_key")
+  expect_identical(key$kty, "oct")
+  expect_length(key$k, 32L)
+  expect_false(identical(key$k, jose_key_generate("oct")$k))
+  expect_length(jose_key_generate("oct", size = 384)$k, 48L)
+  key <- jose_key_generate("oct", alg = "A256KW", kid = "k", use = "enc")
+  expect_identical(key$alg, "A256KW")
+  expect_identical(key$kid, "k")
+  expect_identical(key$use, "enc")
+  # The secret never shows when the key prints.
+  expect_false(any(grepl(
+    b64url_encode(key$k),
+    capture.output(print(key)),
+    fixed = TRUE
+  )))
+})
+
+test_that("the default size follows alg", {
+  sizes <- c(
+    HS256 = 32L,
+    HS384 = 48L,
+    HS512 = 64L,
+    A128KW = 16L,
+    A192KW = 24L,
+    A256KW = 32L,
+    A128GCMKW = 16L,
+    A192GCMKW = 24L,
+    A256GCMKW = 32L,
+    dir = 32L
+  )
+  for (alg in names(sizes)) {
+    expect_length(jose_key_generate("oct", alg = alg)$k, sizes[[alg]])
+  }
+})
+
+test_that("a generated key signs, verifies and wraps", {
+  key <- jose_key_generate("oct", alg = "HS512")
+  token <- jose_sign("hi", key)
+  expect_identical(jose_verify(token, key, "HS512")$payload, charToRaw("hi"))
+  kek <- jose_key_generate("oct", alg = "A192KW")
+  token <- jose_encrypt("hi", kek)
+  out <- jose_decrypt(token, kek, "A192KW", "A128CBC-HS256")
+  expect_identical(out$plaintext, charToRaw("hi"))
+})
+
+test_that("jose_key_generate() refuses sizes and algorithms that do not fit", {
+  bad_sizes <- list(0, 64, 120, 129, 255.5, -256, NA, Inf, "256", c(256, 512))
+  for (size in bad_sizes) {
+    expect_error(
+      jose_key_generate("oct", size = size),
+      class = "zujwt_key_error"
+    )
+  }
+  # Shorter than the hash (RFC 7518 §3.2), or not the key wrap's size.
+  expect_error(
+    jose_key_generate("oct", size = 128, alg = "HS256"),
+    class = "zujwt_key_error"
+  )
+  expect_length(jose_key_generate("oct", size = 512, alg = "HS256")$k, 64L)
+  expect_error(
+    jose_key_generate("oct", size = 256, alg = "A128KW"),
+    class = "zujwt_key_error"
+  )
+  # Not an oct algorithm at all.
+  for (alg in c("RS256", "ES256", "A128CBC-HS256", "PBES2-HS256+A128KW")) {
+    expect_error(
+      jose_key_generate("oct", alg = alg),
+      class = "zujwt_key_error"
+    )
+  }
+  expect_error(
+    jose_key_generate("oct", crv = "P-256"),
+    class = "zujwt_key_error"
+  )
+  expect_error(jose_key_generate("DSA"), class = "zujwt_key_error")
+})
+
+test_that("RSA, EC and OKP generation names the zucrypt it needs", {
+  needs <- c(RSA = "0.4.0", EC = "0.5.0", OKP = "0.5.0")
+  for (kty in names(needs)) {
+    err <- expect_error(
+      jose_key_generate(kty),
+      class = "zujwt_unsupported_error"
+    )
+    expect_identical(err$needs, needs[[kty]])
+  }
+})

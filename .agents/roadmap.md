@@ -29,7 +29,7 @@ development version.
 | Stage | Needs | Tracked in |
 | --- | --- | --- |
 | 0–5 | `zuutf` 0.1.0 on CRAN before release | [zuutf#10](https://github.com/pedrobtz/zuutf/issues/10) |
-| 6 | `zucrypt` Stage 13, v0.2.0: `crypt_rand_bytes()` | [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9) |
+| 6 | `zucrypt` Stage 13a: `crypt_rand_bytes()`, merged on its `main` 2026-11-03 | [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9), closed by [zucrypt#83](https://github.com/pedrobtz/zucrypt/pull/83) |
 | 7 | `zucrypt` Stage 14, v0.3.0: AES-GCM, PBKDF2 | [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10), [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12) |
 | 8 | `zucrypt` Stage 15, v0.4.0 (candidate): RSA | [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80) |
 | 9 | `zucrypt` Stage 16, v0.5.0 (candidate): EC, X25519 | [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81) |
@@ -49,7 +49,7 @@ padding in R until a primitive exists.
 | 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | [#20](https://github.com/pedrobtz/zujwt/pull/20) | 2026-11-02 |
 | 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | [#21](https://github.com/pedrobtz/zujwt/pull/21) | 2026-11-02 |
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | [#22](https://github.com/pedrobtz/zujwt/pull/22) | 2026-11-02 |
-| 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | | |
+| 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | | 2026-11-03 |
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | | |
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | | |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | | |
@@ -312,6 +312,12 @@ Decryption works fully. Encryption works with an injected CEK and IV.
 
 **Blocked on** `zucrypt` Stage 13 (v0.2.0),
 [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9).
+On 2026-11-03 zucrypt split its Stage 13. Randomness became Stage 13a and
+merged on its `main` in
+[zucrypt#83](https://github.com/pedrobtz/zucrypt/pull/83), ahead of the
+0.2.0 release. This stage therefore requires `zucrypt (>= 0.1.0.9000)`,
+the development version, through `Remotes:`; the bound becomes `>= 0.2.0`
+when that reaches CRAN.
 
 **Goal.** Encryption generates its own CEK and IV, so callers never supply
 them.

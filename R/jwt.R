@@ -18,7 +18,8 @@
 #' @param not_before Seconds, or a `difftime`, before the token becomes
 #'   valid. Sets `nbf`.
 #' @param issued_at Whether to set `iat` to now, unless `claims` sets it.
-#' @param jti Whether to add a random `jti`. Needs zucrypt's randomness.
+#' @param jti Whether to add a random `jti`, 128 bits from the operating
+#'   system's random source as Base64url, unless `claims` sets it.
 #' @returns The JWT, as a single string.
 #' @seealso [jose_jwt_decode()] to check one.
 #' @export
@@ -49,15 +50,6 @@ jose_jwt_encode <- function(
   }
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)
-  if (jti) {
-    stop(zujwt_condition(
-      "zujwt_unsupported_error",
-      "A random `jti` needs zucrypt (>= 0.2.0), for its randomness.",
-      algorithm = "jti",
-      needs = "0.2.0",
-      call = call
-    ))
-  }
   if (length(claims) == 0L) {
     claims <- empty_object()
   }
@@ -74,6 +66,9 @@ jose_jwt_encode <- function(
   }
   if (issued_at && !"iat" %in% names(claims)) {
     claims[["iat"]] <- now
+  }
+  if (jti && !"jti" %in% names(claims)) {
+    claims[["jti"]] <- b64url_encode(zucrypt::crypt_rand_bytes(16L))
   }
 
   jose_sign(zujson::json_write(claims), key, alg = alg, header = header)

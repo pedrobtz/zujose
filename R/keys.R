@@ -80,6 +80,117 @@ jose_key_oct <- function(
   )
 }
 
+#' Generate a random key
+#'
+#' `jose_key_generate()` makes a new key from the operating system's
+#' cryptographic random source, through zucrypt. Only `oct` keys can be
+#' generated in this version. `RSA`, `EC` and `OKP` keys raise
+#' `zujwt_unsupported_error`, naming the zucrypt version that will add them.
+#'
+#' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
+#' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
+#' `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key must match the
+#' content encryption: 256 bits for `A128CBC-HS256`, 384 for
+#' `A192CBC-HS384` and 512 for `A256CBC-HS512`.
+#'
+#' @param kty The key type: `"oct"`, `"RSA"`, `"EC"` or `"OKP"`.
+#' @param size The key size in bits, a multiple of 8 and at least 128. For
+#'   an `oct` key, `NULL` takes the size `alg` needs.
+#' @param crv The curve of an `EC` or `OKP` key. Not used for `oct`.
+#' @inheritParams jose_key_oct
+#' @returns A `jose_key`.
+#' @seealso [jose_key_oct()] to wrap a secret you already have,
+#'   [jose_with_kid()] to name the new key by its thumbprint.
+#' @export
+#' @examples
+#' key <- jose_key_generate("oct", alg = "HS256")
+#' key
+#'
+#' # A key encryption key, named by its thumbprint.
+#' jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
+jose_key_generate <- function(
+  kty,
+  size = NULL,
+  crv = NULL,
+  alg = NULL,
+  kid = NULL,
+  use = NULL,
+  key_ops = NULL
+) {
+  call <- sys.call()
+  if (!is_string(kty) || !kty %in% c("oct", names(pending_key_types))) {
+    abort_zujwt(
+      "key",
+      "`kty` must be \"oct\", \"RSA\", \"EC\" or \"OKP\".",
+      call = call
+    )
+  }
+  if (kty != "oct") {
+    abort_unsupported(kty, pending_key_types[[kty]], call = call)
+  }
+  if (!is.null(crv)) {
+    abort_zujwt("key", "An `oct` key has no `crv`.", call = call)
+  }
+  if (!is.null(alg) && !is_string(alg)) {
+    abort_zujwt("key", "`alg` must be a single string.", call = call)
+  }
+  need <- oct_key_bits(alg, call)
+  if (is.null(size)) {
+    size <- need$bits
+  }
+  ok <- is.numeric(size) &&
+    length(size) == 1L &&
+    is.finite(size) &&
+    size >= 128 &&
+    size %% 8 == 0
+  if (!ok) {
+    abort_zujwt(
+      "key",
+      "`size` must be a whole number of bytes, in bits, of at least 128.",
+      call = call
+    )
+  }
+  if (size < need$bits || (need$exact && size != need$bits)) {
+    abort_zujwt(
+      "key",
+      sprintf(
+        "An %s key must be %s %d bits.",
+        alg,
+        if (need$exact) "exactly" else "at least",
+        need$bits
+      ),
+      call = call
+    )
+  }
+  new_jose_key(
+    kty = "oct",
+    k = zucrypt::crypt_rand_bytes(size / 8),
+    kid = kid,
+    alg = alg,
+    use = use,
+    key_ops = key_ops,
+    call = call
+  )
+}
+
+# The size an oct key for `alg` needs, in bits, and whether it is exact.
+oct_key_bits <- function(alg, call) {
+  if (is.null(alg) || alg == "dir") {
+    return(list(bits = 256, exact = FALSE))
+  }
+  if (alg %in% names(hmac_min_bytes)) {
+    return(list(bits = 8 * hmac_min_bytes[[alg]], exact = FALSE))
+  }
+  if (grepl("^A(128|192|256)(GCM)?KW$", alg)) {
+    return(list(bits = as.numeric(substr(alg, 2L, 4L)), exact = TRUE))
+  }
+  abort_zujwt(
+    "key",
+    sprintf("\"%s\" is not an algorithm for an `oct` key.", alg),
+    call = call
+  )
+}
+
 new_jose_key <- function(
   kty,
   k = NULL,

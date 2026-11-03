@@ -21,13 +21,14 @@ Depends:
 Imports: 
     stats,
     utils,
-    zucrypt (>= 0.1.0),
+    zucrypt (>= 0.1.0.9000),
     zujson (>= 0.1.0),
     zuutf (>= 0.1.0)
 Suggests: 
     jose,
     testthat (>= 3.0.0)
 Remotes: 
+    pedrobtz/zucrypt,
     pedrobtz/zuutf
 Config/testthat/edition: 3
 Encoding: UTF-8
