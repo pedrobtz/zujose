@@ -51,7 +51,7 @@ padding in R until a primitive exists.
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | [#22](https://github.com/pedrobtz/zujwt/pull/22) | 2026-11-02 |
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | [#23](https://github.com/pedrobtz/zujwt/pull/23) | 2026-11-03 |
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | [#24](https://github.com/pedrobtz/zujwt/pull/24) | 2026-11-03 |
-| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | | 2026-11-03 |
+| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | [#25](https://github.com/pedrobtz/zujwt/pull/25) | 2026-11-03 |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | | |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujwt/issues/12) | | |
 | 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujwt/issues/13) | | |
