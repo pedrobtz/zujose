@@ -76,7 +76,7 @@ private one:
 ``` r
 
 jwk_json(signer)
-#> [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"wWYFybiNa_CNW1t4C29RFS6_YKlMOA-5qvJi3DQDaR4\",\"y\":\"Fuq5c3nvU1LbYS_i8Yd5h3V7xiBmTyOTBGxjnFXXYFw\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"
+#> [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"_P7hP9DHA1ekmCB2CzmUQgptMS5Mvr23GVPioVDoIvc\",\"y\":\"vWTT9BmlgDhlUVxdLEKeUI2nIBr72aekKJT09DFtITs\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"
 ```
 
 A key set holds several keys. Its JWK Set text is what an identity
@@ -91,7 +91,7 @@ keys
 #>   EC "ec-1" ES256
 #>   RSA "rsa-1" RS256
 cat(jwk_json(keys))
-#> {"keys":[{"kty":"EC","crv":"P-256","x":"wWYFybiNa_CNW1t4C29RFS6_YKlMOA-5qvJi3DQDaR4","y":"Fuq5c3nvU1LbYS_i8Yd5h3V7xiBmTyOTBGxjnFXXYFw","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"5f_GH1W860ZQZJwTb1_WCNoK8KhPCZpr_JkCa9wEIwTSM3ciSf1oDVLLE-HeP08GSID2Yt8jSmEToCBwIKp0dc6RuK9fhUUu7PKlfSC_jpLmb93nzLsSY1ujQlHpl8-T6cGwc04GYsqw5fvrh6BSudjWutRHR7LNGcq4CQBFTEjbYuG1Xn4n23z0QVVklB5bsw0FDJQ5hQRZRlklUp0_Z2TunqrtiaunXs65DallEE5mMjEriS0CrHSYOUwffOfTa7GMT6tLhRFBR2cq_U4BYKvwM--6UhYBdrhDtKDJBo2mmDm2HRSPP0BfscnR1aTcICC5u-7zZvp7w4M2qFe4zw","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}
+#> {"keys":[{"kty":"EC","crv":"P-256","x":"_P7hP9DHA1ekmCB2CzmUQgptMS5Mvr23GVPioVDoIvc","y":"vWTT9BmlgDhlUVxdLEKeUI2nIBr72aekKJT09DFtITs","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"mvJm9D7X6jeN_0uziOUrkpungBCFCVeZC7sX95oMsnoyXqfH_o3tsmtiauu_0BLvXc7pd_WWMSj_MLroCHJPhgz9WhnMUcooDlhI839yOGE9oXe962dA4GnUbqyfJt2ihvZ-UC1MymOgYLneXL36I8t9UL8_RcWMtCDXXnKFtB85wpxD1E27BnK-ClSYbnZf6yZIHlUJoZr6R1NP6oGD49YaKHkcXtM38E72i46FkpmNhHw6i5Uq0kMgUfdSQVknn10MVIvlmP8ROtKaxALGqgGhb_g1zKjO0RE2jHt1Y7C3lYy5dF7qwrNDmm5-CuSLdgaQEzpL-mBf9yIltxqbGw","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}
 ```
 
 [`as_jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md)
@@ -144,8 +144,8 @@ claims
 #>   iss: "https://auth.example"
 #>   sub: "user-17"
 #>   aud: "orders-api"
-#>   exp: 2026-11-03 15:27:50 UTC
-#>   iat: 2026-11-03 15:17:50 UTC
+#>   exp: 2026-11-03 15:43:41 UTC
+#>   iat: 2026-11-03 15:33:41 UTC
 ```
 
 `claims` takes per-claim expectations, as a value or as a function that
@@ -191,7 +191,7 @@ tryCatch(
   jwt_decode(expired, hmac, algorithms = "HS256"),
   zujose_expired_error = function(e) paste("expired at", e$time)
 )
-#> [1] "expired at 2026-11-03 14:17:50"
+#> [1] "expired at 2026-11-03 14:33:41"
 ```
 
 A token signed with an algorithm you did not allow is a policy error,
@@ -358,8 +358,8 @@ jose_peek(jwt)
 #>   iss: "https://auth.example"
 #>   sub: "user-17"
 #>   aud: "orders-api"
-#>   exp: 1793719670
-#>   iat: 1793719070
+#>   exp: 1793720621
+#>   iat: 1793720021
 #> Signature: 64 bytes
 ```
 

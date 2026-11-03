@@ -9,11 +9,12 @@ Encryption (RFC 7516)
 (RFC 7517) [doi:10.17487/RFC7517](https://doi.org/10.17487/RFC7517) and
 JSON Web Tokens (RFC 7519)
 [doi:10.17487/RFC7519](https://doi.org/10.17487/RFC7519) , in the
-compact and JSON serializations. The caller names the algorithms it
-accepts, and tokens are checked against the current best practices of
-RFC 8725 [doi:10.17487/RFC8725](https://doi.org/10.17487/RFC8725) .
-Written in 'R' over 'zucrypt', so no system cryptography library is
-needed.
+compact and JSON serializations, with the JSON Web Algorithms of RFC
+7518 [doi:10.17487/RFC7518](https://doi.org/10.17487/RFC7518) . The
+caller names the algorithms it accepts, and tokens are checked against
+the current best practices of RFC 8725
+[doi:10.17487/RFC8725](https://doi.org/10.17487/RFC8725) . Written in
+'R' over 'zucrypt', so no system cryptography library is needed.
 
 ## Details
 
