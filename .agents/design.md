@@ -156,9 +156,10 @@ JWE encryption works only with a supplied CEK and IV until 0.2.0.
 `zuutf` 0.1.0 has closed all eight stages (#2–#9); its `v0.1.0` issue (#1)
 and `CRAN-submission` issue (#10) are open, and crandb returns
 `not_found`. It exports `base64_encode(x, url, pad, line_length)` and
-`base64_decode(x, url, forgiving)`. Its strict mode (`forgiving = FALSE`)
-rejects whitespace and non-zero trailing bits but requires padding, which
-JOSE forbids; section 8.1 shows how `zujose` reconciles the two.
+`base64_decode(x, url, forgiving, pad)`. Its strict mode (`forgiving =
+FALSE`) rejects whitespace and non-zero trailing bits; with `pad = FALSE`
+it also refuses padding, which JOSE forbids (zuutf#55, 2026-11-03; it
+required padding before, and `zujose` padded the text in R).
 
 `zujson` 0.1.0 is on CRAN (2026-10-02) with `json_parse()`,
 `json_parse_raw()`, `json_write()` and `json_validate()`. Plain parsing
@@ -397,10 +398,10 @@ EdDSA and ES256K (§3).
 
 ### 8.1 Parsing
 
-- Base64url is checked against `^[A-Za-z0-9_-]*$` and `nchar %% 4 != 1`,
-  padded with `=` in R, then decoded with `base64_decode(url = TRUE,
-  forgiving = FALSE)`. That rejects padding, whitespace and non-canonical
-  trailing bits, so every token has one encoding.
+- Base64url is decoded with `base64_decode(url = TRUE, forgiving = FALSE,
+  pad = FALSE)`, which rejects padding, whitespace, the standard alphabet,
+  a one-character final quantum and non-canonical trailing bits, so every
+  token has one encoding.
 - Decoded headers must be valid UTF-8 and a JSON object with no repeated
   member name across protected and unprotected headers (RFC 7515 §4,
   RFC 7516 §4; rejection rather than "last wins", per RFC 8725 §3.4).
@@ -612,7 +613,7 @@ symmetric-only release and waiting (open question 2).
   CBC pair now, and replaced by a `zucrypt` function if one is admitted.
 - **D5.** All JWE decryption failures share one class and message.
 - **D6.** Base64url decoding is strict and canonical, through `zuutf`'s
-  strict mode after local alphabet and length checks.
+  strict unpadded mode (`forgiving = FALSE, pad = FALSE`).
 - **D7.** Functions are named after their object (`jwt_*`, `jws_*`,
   `jwe_*`, `jwk_*`; §7.1), with no `jose`-compatible mirror layer in
   0.1.0; a migration article instead.
