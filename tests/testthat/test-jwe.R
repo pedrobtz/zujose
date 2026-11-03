@@ -544,3 +544,29 @@ test_that("every key management fails with one class and one message", {
   )
   expect_length(unique(messages), 1L)
 })
+
+test_that("jwk, x5c, jku and x5u in a JWE header are never used as keys", {
+  # The attacker wraps the CEK with their own key and names it in the
+  # header; were it used, the token would decrypt (#43).
+  attacker <- jwk_oct(as.raw(101:116))
+  caller <- jwk_oct(as.raw(1:16))
+  named <- list(
+    jwk = list(kty = "oct", k = b64url_encode(attacker$k)),
+    x5c = list("MIIBszCCAVmgAwIBAgIU"),
+    jku = "https://attacker.example/jwks.json",
+    x5u = "https://attacker.example/cert.pem"
+  )
+  for (member in names(named)) {
+    token <- jwe_encrypt(
+      "x",
+      attacker,
+      "A128KW",
+      header = stats::setNames(list(named[[member]]), member)
+    )
+    expect_error(
+      jwe_decrypt(token, caller, "A128KW", "A128CBC-HS256"),
+      class = "zujose_decrypt_error",
+      info = member
+    )
+  }
+})
