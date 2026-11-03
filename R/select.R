@@ -45,7 +45,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
   if (is.function(key)) {
     key <- key(header)
     if (!inherits(key, c("jose_key", "jose_keyset"))) {
-      abort_zujwt(
+      abort_zujose(
         "key",
         "The key resolver must return a jose_key or jose_keyset.",
         call = call
@@ -56,7 +56,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
 
   if (inherits(key, "jose_key")) {
     if (!key_fits(key, alg, operation, header[["enc"]])) {
-      abort_zujwt(
+      abort_zujose(
         "policy",
         "The key does not fit the token's algorithm or intended use.",
         call = call
@@ -74,14 +74,14 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
       candidates
     )
     if (length(candidates) == 0L) {
-      abort_zujwt(
+      abort_zujose(
         "key",
         "No key in the set fits the token's `kid` and algorithm.",
         call = call
       )
     }
   } else {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "`key` must be a jose_key, a jose_keyset or a resolver function.",
       call = call
@@ -93,7 +93,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
     abort_unsupported(alg, candidates[[1]]$needs, call = call)
   }
   if (length(usable) > limits$keys) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "More keys fit the token than `limits$keys` allows.",
       call = call

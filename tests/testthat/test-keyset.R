@@ -20,11 +20,11 @@ test_that("[[ selects by kid or position; [ keeps a set", {
   expect_s3_class(set["a"], "jose_keyset")
   expect_length(set[c("a", "b")], 2L)
   expect_length(set[2:3], 2L)
-  expect_error(set[["z"]], class = "zujwt_key_error")
-  expect_error(set[[c("a", "b")]], class = "zujwt_key_error")
+  expect_error(set[["z"]], class = "zujose_key_error")
+  expect_error(set[[c("a", "b")]], class = "zujose_key_error")
 
   twice <- jose_keyset(set, jose_key_oct(as.raw(4), kid = "a"))
-  expect_error(twice[["a"]], class = "zujwt_key_error")
+  expect_error(twice[["a"]], class = "zujose_key_error")
 })
 
 test_that("c() and jose_keyset() combine keys and sets in order", {
@@ -34,7 +34,7 @@ test_that("c() and jose_keyset() combine keys and sets in order", {
   expect_s3_class(set, "jose_keyset")
   expect_identical(c(set, a)[[3]], a)
   expect_identical(jose_keyset(), structure(list(), class = "jose_keyset"))
-  expect_error(jose_keyset(a, "b"), class = "zujwt_key_error")
+  expect_error(jose_keyset(a, "b"), class = "zujose_key_error")
 })
 
 test_that("malformed and unknown entries are ignored, per RFC 7517 §5", {
@@ -56,12 +56,12 @@ test_that("malformed and unknown entries are ignored, per RFC 7517 §5", {
 
 test_that("a JWK Set must be an object with a keys array", {
   for (bad in c("[]", "{}", '{"keys":{}}', '{"keys":1}', "nope")) {
-    expect_error(as_jose_keyset(bad), class = "zujwt_key_error", info = bad)
+    expect_error(as_jose_keyset(bad), class = "zujose_key_error", info = bad)
   }
-  expect_error(as_jose_keyset(c("a", "b")), class = "zujwt_key_error")
+  expect_error(as_jose_keyset(c("a", "b")), class = "zujose_key_error")
   expect_error(
     as_jose_keyset('{"keys":[],"keys":[]}'),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 

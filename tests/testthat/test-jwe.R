@@ -27,7 +27,7 @@ test_that("RFC 7516 A.4 decrypts for its A128KW recipient", {
   # key does not fit.
   expect_error(
     jose_decrypt(rfc7516_a4(), v$key, "RSA1_5", "A128CBC-HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -36,7 +36,7 @@ test_that("RFC 7520 §5.9 (zip) is refused before decryption", {
   for (figure in 170:172) {
     expect_error(
       jose_decrypt(rfc7520_token(figure), key, "A128KW", "A128GCM"),
-      class = "zujwt_policy_error",
+      class = "zujose_policy_error",
       info = figure
     )
   }
@@ -107,7 +107,7 @@ test_that("several recipients, shared headers and AAD round-trip", {
   obj$aad <- b64url_encode(charToRaw("Extra"))
   expect_error(
     jose_decrypt(zujson::json_write(obj), a, "A128KW", "A256CBC-HS512"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
 })
 
@@ -157,7 +157,7 @@ test_that("every decryption failure has the same class and message", {
       f <- failures[[name]]
       err <- expect_error(
         jose_decrypt(f[[1]], f[[2]], "A128KW", "A128CBC-HS256"),
-        class = "zujwt_decrypt_error",
+        class = "zujose_decrypt_error",
         info = name
       )
       expect_named(unclass(err)[c("message", "call")], c("message", "call"))
@@ -188,7 +188,7 @@ test_that("every decryption failure has the same class and message", {
   parts[[5]] <- b64url_encode(tag)
   err <- expect_error(
     jose_decrypt(paste(parts, collapse = "."), key, "dir", "A128CBC-HS256"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   expect_identical(conditionMessage(err), messages[[1]])
 })
@@ -199,7 +199,7 @@ test_that("dir with an encrypted key is a decryption failure", {
   parts[[2]] <- b64url_encode(as.raw(1:24))
   expect_error(
     jose_decrypt(paste(parts, collapse = "."), key, "dir", "A128CBC-HS256"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
 })
 
@@ -212,20 +212,20 @@ test_that("algorithms and encryptions have no default and are checked", {
   for (bad in list("none", "HS256", "A128GCM", character(), NA_character_)) {
     expect_error(
       jose_decrypt(v$token, v$key, bad, "A128CBC-HS256"),
-      class = "zujwt_policy_error"
+      class = "zujose_policy_error"
     )
   }
   expect_error(
     jose_decrypt(v$token, v$key, "A128KW", "A128KW"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_decrypt(v$token, v$key, "A256KW", "A128CBC-HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_decrypt(v$token, v$key, "A128KW", "A256CBC-HS512"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -238,7 +238,7 @@ test_that("keys of the wrong size, type or use are refused before decryption", {
       "A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     jose_decrypt(
@@ -247,7 +247,7 @@ test_that("keys of the wrong size, type or use are refused before decryption", {
       "A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_decrypt(
@@ -256,7 +256,7 @@ test_that("keys of the wrong size, type or use are refused before decryption", {
       "A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_decrypt(
@@ -265,13 +265,13 @@ test_that("keys of the wrong size, type or use are refused before decryption", {
       "A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   dir <- jose_key_oct(as.raw(1:32))
   token <- encrypt_fixed("x", dir, "dir")
   expect_error(
     jose_decrypt(token, jose_key_oct(as.raw(1:64)), "dir", "A128CBC-HS256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -283,7 +283,7 @@ test_that("a JWS is not a JWE", {
       "A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -339,15 +339,15 @@ test_that("several recipients share one generated CEK", {
 test_that("encryption refuses inconsistent requests", {
   key <- jose_key_oct(as.raw(1:16))
   two <- list(jose_recipient(key, "A128KW"), jose_recipient(key, "A128KW"))
-  expect_error(encrypt_fixed("x", key), class = "zujwt_policy_error")
+  expect_error(encrypt_fixed("x", key), class = "zujose_policy_error")
   # ECDH-ES needs an EC or X25519 key, not a symmetric one.
   expect_error(
     encrypt_fixed("x", key, "ECDH-ES"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
-  expect_error(encrypt_fixed("x", key, "HS256"), class = "zujwt_policy_error")
-  expect_error(encrypt_fixed("x", key, "A256KW"), class = "zujwt_key_error")
-  expect_error(encrypt_fixed("x", key, "dir"), class = "zujwt_key_error")
+  expect_error(encrypt_fixed("x", key, "HS256"), class = "zujose_policy_error")
+  expect_error(encrypt_fixed("x", key, "A256KW"), class = "zujose_key_error")
+  expect_error(encrypt_fixed("x", key, "dir"), class = "zujose_key_error")
   expect_error(encrypt_fixed("x", two), "general")
   expect_error(
     encrypt_fixed("x", two, "A128KW", format = "general"),
@@ -377,7 +377,7 @@ test_that("encryption refuses inconsistent requests", {
     ),
     "dir"
   )
-  expect_error(encrypt_fixed("x", "key", "A128KW"), class = "zujwt_key_error")
+  expect_error(encrypt_fixed("x", "key", "A128KW"), class = "zujose_key_error")
 })
 
 test_that("printing shows the header, not the plaintext", {

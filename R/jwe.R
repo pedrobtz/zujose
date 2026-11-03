@@ -157,7 +157,7 @@ encrypt_jwe <- function(
     }
     key
   } else {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "`key` must be a jose_key or a list of jose_recipient() objects.",
       call = call
@@ -203,7 +203,7 @@ encrypt_jwe <- function(
     function(r) {
       alg <- r$alg %||% r$key$alg
       if (is.null(alg)) {
-        abort_zujwt(
+        abort_zujose(
           "policy",
           "Give `alg`, or a key whose own `alg` is set.",
           call = call
@@ -212,7 +212,7 @@ encrypt_jwe <- function(
       check_algorithms(alg, "key management", "alg", call)
       check_available(alg, call)
       if (alg == "RSA1_5") {
-        abort_zujwt(
+        abort_zujose(
           "policy",
           paste0(
             "RSA1_5 is accepted for decryption only; it never ",
@@ -229,7 +229,7 @@ encrypt_jwe <- function(
         "wrapKey"
       }
       if (!key_fits(r$key, alg, operation, enc)) {
-        abort_zujwt(
+        abort_zujose(
           "policy",
           "The key does not fit the algorithm or its intended use.",
           call = call
@@ -416,7 +416,7 @@ encrypt_jwe <- function(
 #'
 #' Every failure after the header checks (a wrong key, a bad tag, bad
 #' padding, a failed key unwrap, a wrong length) raises the same
-#' `zujwt_decrypt_error` with the same message, so that the error cannot
+#' `zujose_decrypt_error` with the same message, so that the error cannot
 #' tell an attacker which step failed (RFC 7516 section 11.5).
 #'
 #' With several recipients, those whose algorithm is not in `algorithms`,
@@ -477,7 +477,7 @@ jose_decryption <- function(key, algorithms, encryptions) {
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
   if (!is.function(key) && !inherits(key, c("jose_key", "jose_keyset"))) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "`key` must be a jose_key, a jose_keyset or a resolver function.",
       call = call
@@ -502,13 +502,13 @@ print.jose_decryption <- function(x, ...) {
 decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
   obj <- jose_parse(token, limits, call)
   if (obj$type != "JWE") {
-    abort_zujwt("policy", "Expected a JWE, not a JWS.", call = call)
+    abort_zujose("policy", "Expected a JWE, not a JWS.", call = call)
   }
   headers <- lapply(obj$recipients, function(r) {
     c(obj$protected, obj$unprotected, r$header)
   })
   if (any(vapply(headers, function(h) "zip" %in% names(h), logical(1)))) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "Compressed content (`zip`) is refused (RFC 8725 section 3.6).",
       call = call
@@ -516,7 +516,7 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
   }
   enc <- headers[[1]][["enc"]]
   if (!enc %in% encryptions) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "The token's content encryption is not in `encryptions`.",
       call = call
@@ -530,7 +530,7 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
     logical(1)
   ))
   if (length(candidates) == 0L) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "No recipient uses an algorithm in `algorithms`.",
       call = call
@@ -579,7 +579,7 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
         }
         sized
       },
-      zujwt_error = function(e) {
+      zujose_error = function(e) {
         if (single) {
           stop(e)
         }
@@ -747,7 +747,7 @@ kek_params <- function(alg, header, limits, call) {
   member_b64 <- function(name, what) {
     value <- header[[name]]
     if (!is_string(value)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf("`%s` needs a `%s` header member.", alg, name),
         call = call
@@ -759,7 +759,7 @@ kek_params <- function(alg, header, limits, call) {
     kw_iv <- member_b64("iv", "key wrapping IV")
     tag <- member_b64("tag", "key wrapping tag")
     if (length(kw_iv) != 12L || length(tag) != 16L) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "An A*GCMKW `iv` must be 12 bytes and its `tag` 16.",
         call = call
@@ -779,14 +779,14 @@ kek_params <- function(alg, header, limits, call) {
         p2c != trunc(p2c) ||
         p2c < 1
     ) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "A PBES2 token needs a positive whole `p2c`.",
         call = call
       )
     }
     if (p2c > limits$p2c) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf(
           "The token's `p2c` is over the limit of %s PBES2 iterations.",
@@ -797,7 +797,7 @@ kek_params <- function(alg, header, limits, call) {
     }
     p2s <- member_b64("p2s", "PBES2 salt")
     if (length(p2s) < 8L) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "A PBES2 `p2s` must be at least 8 bytes (RFC 7518 section 4.8.1.1).",
         call = call
@@ -820,7 +820,7 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
   } else if (is_ecdh(alg)) {
     z <- tryCatch(
       ecdh_secret(key, params$epk),
-      zujwt_error = function(e) NULL,
+      zujose_error = function(e) NULL,
       zucrypt_error = function(e) NULL
     )
     if (is.null(z)) {
@@ -909,13 +909,13 @@ kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
 check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
   if (is_ecdh(alg)) {
     if (decrypt && !has_private(key)) {
-      abort_zujwt("key", "Key agreement needs the private key.", call = call)
+      abort_zujose("key", "Key agreement needs the private key.", call = call)
     }
     if (
       !is.null(params) &&
         !identical(key$members$crv, params$epk$members$crv)
     ) {
-      abort_zujwt(
+      abort_zujose(
         "key",
         "The token's ephemeral key is not on the key's curve.",
         call = call
@@ -926,12 +926,12 @@ check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
   if (is_rsa_kem(alg)) {
     check_rsa_size(key, call)
     if (decrypt && !has_private(key)) {
-      abort_zujwt("key", "Decrypting needs the private RSA key.", call = call)
+      abort_zujose("key", "Decrypting needs the private RSA key.", call = call)
     }
     return(invisible())
   }
   if (!kek_fits(alg, enc, key)) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       sprintf(
         "An `%s` key must be exactly %d bytes here.",
@@ -1028,7 +1028,7 @@ concat_kdf <- function(z, bits, alg_id, apu, apv) {
 ecdh_params <- function(header, call) {
   epk <- header[["epk"]]
   bad <- function() {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The `epk` header is not a public key on a supported curve.",
       call = call
@@ -1039,7 +1039,7 @@ ecdh_params <- function(header, call) {
   }
   key <- tryCatch(
     as_jose_key(epk[intersect(c("kty", "crv", "x", "y"), names(epk))]),
-    zujwt_error = function(e) NULL
+    zujose_error = function(e) NULL
   )
   if (is.null(key) || !key$supported) {
     bad()
@@ -1050,7 +1050,7 @@ ecdh_params <- function(header, call) {
       return(raw())
     }
     if (!is_string(value)) {
-      abort_zujwt("parse", sprintf("`%s` must be a string.", name), call = call)
+      abort_zujose("parse", sprintf("`%s` must be a string.", name), call = call)
     }
     b64url_decode(value, name, call)
   }

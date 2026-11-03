@@ -72,7 +72,7 @@ jose_sign <- function(
     }
     key
   } else {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "`key` must be a jose_key or a list of jose_signer() objects.",
       call = call
@@ -194,7 +194,7 @@ jose_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
 protected_header <- function(signer, b64, call) {
   alg <- signer$alg %||% signer$key$alg
   if (is.null(alg)) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "Give `alg`, or a key whose own `alg` is set.",
       call = call
@@ -203,7 +203,7 @@ protected_header <- function(signer, b64, call) {
   check_algorithms(alg, "signature", "alg", call)
   check_available(alg, call)
   if (!key_fits(signer$key, alg, "sign")) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "The key does not fit the algorithm or its intended use.",
       call = call
@@ -283,13 +283,13 @@ jose_verify <- function(
 verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
   obj <- jose_parse(token, limits, call)
   if (obj$type != "JWS") {
-    abort_zujwt("policy", "Expected a JWS, not a JWE.", call = call)
+    abort_zujose("policy", "Expected a JWS, not a JWE.", call = call)
   }
 
   carried <- !is.null(obj$payload_b64) && nzchar(obj$payload_b64)
   if (!is.null(payload)) {
     if (carried) {
-      abort_zujwt(
+      abort_zujose(
         "policy",
         "The token carries its payload; `payload` is for a detached one.",
         call = call
@@ -319,7 +319,7 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
     result <- if (require == "all") {
       attempt()
     } else {
-      tryCatch(attempt(), zujwt_error = function(e) {
+      tryCatch(attempt(), zujose_error = function(e) {
         first_error <<- first_error %||% e
         NULL
       })
@@ -358,7 +358,7 @@ verify_signature <- function(
 ) {
   alg <- header[["alg"]]
   if (!alg %in% algorithms) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "The token's algorithm is not in `algorithms`.",
       call = call
@@ -377,7 +377,7 @@ verify_signature <- function(
       ))
     }
   }
-  abort_zujwt("signature", "The signature does not verify.", call = call)
+  abort_zujose("signature", "The signature does not verify.", call = call)
 }
 
 # Algorithms --------------------------------------------------------------
@@ -425,7 +425,7 @@ jws_sign <- function(alg, key, input, call) {
   if (alg %in% names(rsa_sig_hash)) {
     check_rsa_size(key, call)
     if (!has_private(key)) {
-      abort_zujwt("key", "Signing needs the private key.", call = call)
+      abort_zujose("key", "Signing needs the private key.", call = call)
     }
     return(zucrypt::crypt_signature_create(
       input,
@@ -435,7 +435,7 @@ jws_sign <- function(alg, key, input, call) {
     ))
   }
   if (!has_private(key)) {
-    abort_zujwt("key", "Signing needs the private key.", call = call)
+    abort_zujose("key", "Signing needs the private key.", call = call)
   }
   der <- zucrypt::crypt_signature_create(
     input,
@@ -492,7 +492,7 @@ jws_verify <- function(alg, key, input, signature, call) {
 # RFC 7518 §3.2: an HMAC key at least as long as the hash output.
 check_hmac_key <- function(key, alg, call) {
   if (length(key$k) < hmac_min_bytes[[alg]]) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       sprintf(
         "An %s key must be at least %d bytes (RFC 7518 section 3.2).",

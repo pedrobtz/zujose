@@ -40,16 +40,16 @@ registered_headers <- c(
   "p2c"
 )
 
-# Extensions zujwt implements, and so may appear in `crit`.
+# Extensions zujose implements, and so may appear in `crit`.
 understood_crit <- "b64"
 
 jose_parse <- function(token, limits, call = NULL) {
   check_limits(limits)
   if (!is.character(token) || length(token) != 1L || is.na(token)) {
-    abort_zujwt("parse", "`token` must be a single string.", call = call)
+    abort_zujose("parse", "`token` must be a single string.", call = call)
   }
   if (nchar(token, type = "bytes") > limits$token) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The token is longer than `limits$token` allows.",
       call = call
@@ -69,7 +69,7 @@ jose_parse <- function(token, limits, call = NULL) {
       as.character(length(parts)),
       "3" = parse_jws_compact(parts, limits, call),
       "5" = parse_jwe_compact(parts, limits, call),
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf(
           "A compact token has 3 parts (JWS) or 5 (JWE), not %d.",
@@ -108,7 +108,7 @@ parse_jws_json <- function(obj, limits, call) {
   flattened_members <- c("protected", "header", "signature")
   general <- "signatures" %in% names(obj)
   if (general && any(flattened_members %in% names(obj))) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The token mixes the general and flattened JSON serializations.",
       call = call
@@ -123,7 +123,7 @@ parse_jws_json <- function(obj, limits, call) {
 
   signatures <- lapply(entries, function(entry) {
     if (!is_json_object(entry)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "A signature entry is not a JSON object.",
         call = call
@@ -156,7 +156,7 @@ parse_jws_json <- function(obj, limits, call) {
     logical(1)
   ))
   if (length(b64) != 1L) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The signatures disagree on `b64`.",
       call = call
@@ -193,7 +193,7 @@ decode_payload <- function(text, b64, limits, call) {
 }
 
 abort_payload_limit <- function(call) {
-  abort_zujwt(
+  abort_zujose(
     "parse",
     "The payload is longer than `limits$payload` allows.",
     call = call
@@ -230,7 +230,7 @@ parse_jwe_json <- function(obj, limits, call) {
   flattened_members <- c("header", "encrypted_key")
   general <- "recipients" %in% names(obj)
   if (general && any(flattened_members %in% names(obj))) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The token mixes the general and flattened JSON serializations.",
       call = call
@@ -254,7 +254,7 @@ parse_jwe_json <- function(obj, limits, call) {
 
   recipients <- lapply(entries, function(entry) {
     if (!is_json_object(entry)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "A recipient entry is not a JSON object.",
         call = call
@@ -277,7 +277,7 @@ parse_jwe_json <- function(obj, limits, call) {
   })
 
   if (length(unique(vapply(recipients, `[[`, "", "enc"))) != 1L) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The recipients disagree on `enc`.",
       call = call
@@ -326,7 +326,7 @@ decode_ciphertext <- function(text, limits, call) {
 
 parse_protected <- function(text, limits, call) {
   if (nchar(text, type = "bytes") > b64url_max_chars(limits$header)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The protected header is longer than `limits$header` allows.",
       call = call
@@ -334,10 +334,10 @@ parse_protected <- function(text, limits, call) {
   }
   bytes <- b64url_decode(text, "protected header", call)
   if (length(bytes) == 0L) {
-    abort_zujwt("parse", "The protected header is empty.", call = call)
+    abort_zujose("parse", "The protected header is empty.", call = call)
   }
   if (!isTRUE(zuutf::utf_valid(bytes))) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "The protected header is not valid UTF-8.",
       call = call
@@ -350,7 +350,7 @@ parse_protected <- function(text, limits, call) {
 check_headers <- function(protected, unprotected, type, call) {
   all_names <- c(names(protected), unlist(lapply(unprotected, names)))
   if (anyDuplicated(all_names)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "A header member appears in more than one header.",
       call = call
@@ -358,7 +358,7 @@ check_headers <- function(protected, unprotected, type, call) {
   }
   for (header in unprotected) {
     if (any(c("crit", "b64") %in% names(header))) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "`crit` and `b64` must be in the protected header.",
         call = call
@@ -370,7 +370,7 @@ check_headers <- function(protected, unprotected, type, call) {
     for (header in c(list(protected), unprotected)) {
       value <- member(header, name)
       if (!is.null(value) && !is_string(value)) {
-        abort_zujwt(
+        abort_zujose(
           "parse",
           sprintf("The `%s` header must be a string.", name),
           call = call
@@ -381,11 +381,11 @@ check_headers <- function(protected, unprotected, type, call) {
 
   if ("b64" %in% names(protected)) {
     if (type != "JWS") {
-      abort_zujwt("parse", "`b64` applies only to a JWS.", call = call)
+      abort_zujose("parse", "`b64` applies only to a JWS.", call = call)
     }
     b64 <- protected[["b64"]]
     if (!is.logical(b64) || length(b64) != 1L || is.na(b64)) {
-      abort_zujwt("parse", "The `b64` header must be a boolean.", call = call)
+      abort_zujose("parse", "The `b64` header must be a boolean.", call = call)
     }
   }
 
@@ -396,7 +396,7 @@ check_headers <- function(protected, unprotected, type, call) {
       length(crit) > 0L &&
       all(vapply(crit, is_string, logical(1)))
     if (!names_ok) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "`crit` must be a non-empty array of strings.",
         call = call
@@ -404,21 +404,21 @@ check_headers <- function(protected, unprotected, type, call) {
     }
     crit <- unlist(crit)
     if (anyDuplicated(crit) || any(crit %in% registered_headers)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "`crit` repeats a name or lists a registered header.",
         call = call
       )
     }
     if (!all(crit %in% understood_crit)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
-        "`crit` lists an extension zujwt does not implement.",
+        "`crit` lists an extension zujose does not implement.",
         call = call
       )
     }
     if (!all(crit %in% all_names)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         "`crit` lists a header that is not present.",
         call = call
@@ -426,14 +426,14 @@ check_headers <- function(protected, unprotected, type, call) {
     }
   }
   if ("b64" %in% names(protected) && !"b64" %in% crit) {
-    abort_zujwt("parse", "`b64` must be listed in `crit`.", call = call)
+    abort_zujose("parse", "`b64` must be listed in `crit`.", call = call)
   }
   invisible()
 }
 
 require_member <- function(header, name, what, call) {
   if (!is_string(member(header, name))) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("The %s has no `%s`.", what, name),
       call = call
@@ -451,7 +451,7 @@ json_object <- function(x, what, call) {
       zujson::json_parse(x, simplify = "none")
     },
     zujson_error = function(e) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf("The %s is not valid JSON.", what),
         call = call
@@ -459,14 +459,14 @@ json_object <- function(x, what, call) {
     }
   )
   if (!is_json_object(parsed)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("The %s is not a JSON object.", what),
       call = call
     )
   }
   if (has_repeated_names(parsed)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("The %s repeats a member name.", what),
       call = call
@@ -477,14 +477,14 @@ json_object <- function(x, what, call) {
 
 json_array <- function(x, what, limit, call) {
   if (!is.list(x) || !is.null(names(x)) || length(x) == 0L) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("%s must be a non-empty JSON array.", what),
       call = call
     )
   }
   if (length(x) > limit) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("%s has more entries than the limits allow.", what),
       call = call
@@ -499,7 +499,7 @@ json_string <- function(obj, name, call, optional = FALSE) {
     return("")
   }
   if (!is_string(value)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("`%s` must be a string.", name),
       call = call
@@ -514,7 +514,7 @@ json_header <- function(obj, name, call) {
     return(empty_object())
   }
   if (!is_json_object(value)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("`%s` must be a JSON object.", name),
       call = call

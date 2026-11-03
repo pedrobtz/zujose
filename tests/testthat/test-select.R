@@ -38,11 +38,11 @@ test_that("a resolver must return a key or key set", {
       "verify",
       jose_limits()
     ),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     resolve_keys("key", list(alg = "HS256"), "verify", jose_limits()),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -54,23 +54,23 @@ test_that("a single key that does not fit is a policy error", {
   # The wrong key type, algorithm, use or operations (design §8.2).
   expect_error(
     verify(jose_key_oct(as.raw(1)), "RS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     verify(jose_key_oct(as.raw(1)), "none"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     verify(jose_key_oct(as.raw(1), alg = "HS512")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     verify(jose_key_oct(as.raw(1), use = "enc")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     verify(jose_key_oct(as.raw(1), key_ops = "sign")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_length(
     verify(jose_key_oct(as.raw(1), key_ops = c("sign", "verify"))),
@@ -93,15 +93,15 @@ test_that("no fitting key in a set is a key error", {
   set <- jose_keyset(jose_key_oct(as.raw(1), kid = "a"))
   expect_error(
     resolve_keys(set, list(alg = "HS256", kid = "b"), "verify", jose_limits()),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     resolve_keys(jose_keyset(), list(alg = "HS256"), "verify", jose_limits()),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
-test_that("keys zujwt cannot use yet raise zujwt_unsupported_error", {
+test_that("keys zujose cannot use yet raise zujose_unsupported_error", {
   # With a zucrypt that lacks the curve functions, EC keys are read and kept
   # but not usable.
   local_mocked_bindings(zucrypt_provides = function(version, installed) {
@@ -115,7 +115,7 @@ test_that("keys zujwt cannot use yet raise zujwt_unsupported_error", {
       "verify",
       jose_limits()
     ),
-    class = "zujwt_unsupported_error"
+    class = "zujose_unsupported_error"
   )
   expect_identical(err$needs, "0.5.0")
 })
@@ -128,7 +128,7 @@ test_that("more fitting keys than limits$keys is a key error", {
   )
   expect_error(
     resolve_keys(set, list(alg = "HS256"), "verify", jose_limits(keys = 2)),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 

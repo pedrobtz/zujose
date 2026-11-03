@@ -20,7 +20,7 @@ test_that("a JWE is refused where no decrypt is given (D12)", {
   outer <- encrypt_fixed(inner, kek, "A128KW", header = list(cty = "JWT"))
   expect_error(
     jose_jwt_decode(outer, signer, "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_jwt_decode(outer, signer, "HS256", decrypt = list(key = kek)),
@@ -53,7 +53,7 @@ test_that("an encrypted-only JWT carries its claims directly", {
       type = "at+jwt",
       decrypt = jose_decryption(kek, "A128KW", "A128CBC-HS256")
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -69,14 +69,14 @@ test_that("the inner JWT is held to the signature rules", {
   outer <- encrypt_fixed(forged, kek, "A128KW", header = list(cty = "JWT"))
   expect_error(
     jose_jwt_decode(outer, signer, "HS256", decrypt = decrypt),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
   # A JWE inside a JWE is refused.
   inner <- encrypt_fixed('{"exp":2000000000}', kek, "A128KW")
   outer <- encrypt_fixed(inner, kek, "A128KW", header = list(cty = "JWT"))
   expect_error(
     jose_jwt_decode(outer, signer, "HS256", decrypt = decrypt),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 

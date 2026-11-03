@@ -46,7 +46,7 @@ test_that("RFC 7520 §4.5 detached content verifies and is reproduced", {
   # Without the payload, the empty payload does not verify.
   expect_error(
     jose_verify(rfc7520_token(41), key, algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
@@ -91,13 +91,13 @@ test_that("RFC 7520 §4.8: the HS256 signature verifies with require = 'any'", {
   # With require = "all", the RS256 signature is not allowed.
   expect_error(
     jose_verify(rfc7520_token(71), set, algorithms = "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   # Allowing RS256 too is not enough: with require = "all", the ES512
   # signature is not allowed either.
   expect_error(
     jose_verify(rfc7520_token(71), set, algorithms = c("HS256", "RS256")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -162,7 +162,7 @@ test_that("several signers make a general JWS that all must verify", {
   # Without b's key, "all" fails and "any" succeeds.
   expect_error(
     jose_verify(token, jose_keyset(a), algorithms = c("HS256", "HS512")),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_identical(
     jose_verify(
@@ -187,17 +187,17 @@ test_that("tampering is a signature error", {
   )
   expect_error(
     jose_verify(forged, key, algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
   wrong_key <- jose_key_oct(as.raw(2:33))
   expect_error(
     jose_verify(token, wrong_key, algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
   truncated <- paste(parts[1], parts[2], substr(parts[3], 1, 20), sep = ".")
   expect_error(
     jose_verify(truncated, key, algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
@@ -213,13 +213,13 @@ test_that("alg none is refused in every form", {
   )
   expect_error(
     jose_verify(token, key, algorithms = "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_verify(token, key, algorithms = "none"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
-  expect_error(jose_sign("x", key, alg = "none"), class = "zujwt_policy_error")
+  expect_error(jose_sign("x", key, alg = "none"), class = "zujose_policy_error")
 })
 
 test_that("an HS256 token signed with an RSA public key's bytes is refused", {
@@ -229,11 +229,11 @@ test_that("an HS256 token signed with an RSA public key's bytes is refused", {
   # The RSA key does not fit HS256, whatever `algorithms` allows.
   expect_error(
     jose_verify(forged, rsa, algorithms = c("RS256", "HS256")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_verify(forged, jose_keyset(rsa), algorithms = c("RS256", "HS256")),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -242,11 +242,11 @@ test_that("an algorithm swapped within the family is refused", {
   token <- jose_sign("x", jose_key_oct(as.raw(1:64)), alg = "HS512")
   expect_error(
     jose_verify(token, key, algorithms = "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_verify(token, key, algorithms = c("HS256", "HS512")),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -261,7 +261,7 @@ test_that("kid injection selects nothing", {
     )
     expect_error(
       jose_verify(token, set, algorithms = "HS256"),
-      class = "zujwt_key_error",
+      class = "zujose_key_error",
       info = kid
     )
   }
@@ -272,12 +272,12 @@ test_that("unknown crit and repeated header members are refused", {
   crit <- compact_jws(list(alg = "HS256", crit = list("exp"), exp = 1))
   expect_error(
     jose_verify(crit, key, algorithms = "HS256"),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   repeated <- compact_jws('{"alg":"HS256","alg":"HS256"}')
   expect_error(
     jose_verify(repeated, key, algorithms = "HS256"),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })
 
@@ -292,7 +292,7 @@ test_that("keys named inside the token are never used", {
   )
   expect_error(
     jose_verify(token, key, algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
@@ -305,22 +305,22 @@ test_that("algorithms has no default and names known signature algorithms", {
   for (bad in list(character(), NA_character_, "HS1", "A128KW", 256)) {
     expect_error(
       jose_verify(token, key, algorithms = bad),
-      class = "zujwt_policy_error"
+      class = "zujose_policy_error"
     )
   }
 })
 
 test_that("HMAC keys shorter than the hash are refused", {
   short <- jose_key_oct(as.raw(1:31))
-  expect_error(jose_sign("x", short, alg = "HS256"), class = "zujwt_key_error")
+  expect_error(jose_sign("x", short, alg = "HS256"), class = "zujose_key_error")
   token <- jose_sign("x", jose_key_oct(as.raw(1:48)), alg = "HS256")
   expect_error(
     jose_verify(token, jose_key_oct(as.raw(1:47)), algorithms = "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
   expect_error(
     jose_sign("x", jose_key_oct(as.raw(1:47)), alg = "HS384"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -331,7 +331,7 @@ test_that("a JWE is not a JWS", {
       jose_key_oct(as.raw(1:32)),
       algorithms = "HS256"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -340,7 +340,7 @@ test_that("a payload argument is only for detached payloads", {
   token <- jose_sign("x", key, alg = "HS256")
   expect_error(
     jose_verify(token, key, algorithms = "HS256", payload = "x"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   detached <- jose_sign("x", key, alg = "HS256", detached = TRUE)
   expect_error(
@@ -351,14 +351,14 @@ test_that("a payload argument is only for detached payloads", {
       payload = "xy",
       limits = jose_limits(payload = 1)
     ),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })
 
 test_that("jose_sign() refuses inconsistent requests", {
   key <- jose_key_oct(as.raw(1:32))
   signers <- list(jose_signer(key, "HS256"), jose_signer(key, "HS256"))
-  expect_error(jose_sign("x", key), class = "zujwt_policy_error")
+  expect_error(jose_sign("x", key), class = "zujose_policy_error")
   expect_error(jose_sign("x", signers), "general")
   expect_error(
     jose_sign("x", signers, alg = "HS256", format = "general"),
@@ -376,13 +376,13 @@ test_that("jose_sign() refuses inconsistent requests", {
   expect_error(jose_sign("x.y", key, "HS256", b64 = FALSE), "detached")
   expect_type(jose_sign("x", key, "HS256", b64 = FALSE), "character")
   expect_error(jose_sign(1, key, "HS256"), "payload")
-  expect_error(jose_sign("x", "key", "HS256"), class = "zujwt_key_error")
+  expect_error(jose_sign("x", "key", "HS256"), class = "zujose_key_error")
   expect_error(
     jose_sign("x", jose_key_oct(as.raw(1:32), alg = "HS512"), "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   # ES256 needs a P-256 key, not a symmetric one.
-  expect_error(jose_sign("x", key, "ES256"), class = "zujwt_policy_error")
+  expect_error(jose_sign("x", key, "ES256"), class = "zujose_policy_error")
 })
 
 test_that("the key's kid goes into the protected header unless one is given", {
@@ -413,13 +413,13 @@ test_that("a resolver sees the header and picks the key", {
   expect_identical(seen, list(alg = "HS256", kid = "k"))
 })
 
-test_that("zujwt_info() reports what this installation can do", {
-  info <- zujwt_info()
+test_that("zujose_info() reports what this installation can do", {
+  info <- zujose_info()
   expect_named(info, c("algorithm", "kind", "available", "zucrypt"))
   expect_true(all(info$available[
     info$algorithm %in% c("HS256", "HS384", "HS512")
   ]))
-  # Every algorithm zujwt knows is available with the zucrypt it requires.
+  # Every algorithm zujose knows is available with the zucrypt it requires.
   expect_true(all(info$available))
   expect_identical(info$zucrypt[info$algorithm == "ES256"], "0.5.0")
   expect_false("none" %in% info$algorithm)

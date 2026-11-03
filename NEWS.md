@@ -1,7 +1,10 @@
-# zujwt 0.0.0.9000
+# zujose 0.0.0.9000
+
+* The package, developed as `zujwt`, is renamed `zujose`, the name of its
+  design: conditions are `zujose_*` and `zujwt_info()` is `zujose_info()`.
 
 * Condition classes for every error the package will raise, all
-  inheriting from `zujwt_error` (`?zujwt_error`).
+  inheriting from `zujose_error` (`?zujose_error`).
 
 * `jose_peek()` reads a JWS or JWE in the compact, flattened or general
   JSON serialization, without verifying it, and returns its headers and,
@@ -26,14 +29,14 @@
   payloads. `jose_verify()` needs `algorithms`, has no way to accept
   `none`, and refuses a key that does not fit the token's algorithm.
 
-* `zujwt_info()` lists every JOSE algorithm and whether this installation
+* `zujose_info()` lists every JOSE algorithm and whether this installation
   can use it.
 
 * `jose_jwt_encode()` and `jose_jwt_decode()` sign and check JWTs.
   Decoding checks `exp`, `nbf`, `iat`, `max_age`, `iss`, `sub`, `aud`,
   `typ`, required claims, per-claim expectations and a `validate` hook in
   one call; `exp` is required by default. Each failure has its own
-  condition class under `zujwt_claim_error`. `jose_jwt_decoder()` fixes a
+  condition class under `zujose_claim_error`. `jose_jwt_decoder()` fixes a
   policy once and returns a checking function.
 
 * `jose_decrypt()` decrypts JWE with `dir`, `A128KW`, `A192KW` and `A256KW`
@@ -76,9 +79,9 @@
 
 * `jose_jwt_encode(jti = TRUE)` adds a random 128-bit `jti`.
 
-* zujwt now needs the development version of zucrypt, for
+* zujose now needs the development version of zucrypt, for
   `crypt_rand_bytes()`, `crypt_aes_gcm_encrypt()` and `crypt_pbkdf2()`.
-  `zujwt_info()` reports an algorithm available when the installed zucrypt
+  `zujose_info()` reports an algorithm available when the installed zucrypt
   exports what it needs, so a development zucrypt counts.
 
 * `jose_jwt_decode()` accepts a JWT sent as a JWE only with

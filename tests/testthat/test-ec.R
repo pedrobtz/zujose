@@ -127,7 +127,7 @@ test_that("ES256, ES384 and ES512 sign and verify on their curves", {
   }
   # A key on the wrong curve for the algorithm does not fit.
   p384 <- jose_key_generate("EC", crv = "P-384")
-  expect_error(jose_sign("x", p384, "ES256"), class = "zujwt_policy_error")
+  expect_error(jose_sign("x", p384, "ES256"), class = "zujose_policy_error")
 })
 
 test_that("a bad ECDSA signature is a signature error", {
@@ -142,11 +142,11 @@ test_that("a bad ECDSA signature is a signature error", {
     raw(64)
   )) {
     t <- paste(parts[[1]], parts[[2]], b64url_encode(bad), sep = ".")
-    expect_error(jose_verify(t, key, "ES256"), class = "zujwt_signature_error")
+    expect_error(jose_verify(t, key, "ES256"), class = "zujose_signature_error")
   }
   expect_error(
     jose_verify(token, jose_key_generate("EC"), "ES256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
@@ -251,7 +251,7 @@ test_that("an ephemeral key off the curve, or malformed, is a parse error", {
   )) {
     expect_error(
       jose_decrypt(ecdh_token(epk), key, "ECDH-ES", "A128GCM"),
-      class = "zujwt_parse_error"
+      class = "zujose_parse_error"
     )
   }
 })
@@ -266,7 +266,7 @@ test_that("an ephemeral key on another curve than the key is refused", {
       "ECDH-ES",
       "A128GCM"
     ),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   x <- jose_public(jose_key_generate("OKP"))$members
   expect_error(
@@ -276,7 +276,7 @@ test_that("an ephemeral key on another curve than the key is refused", {
       "ECDH-ES",
       "A128GCM"
     ),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -287,7 +287,7 @@ test_that("a low-order X25519 ephemeral key is one decrypt error", {
     jose_decrypt(ecdh_token(epk), key, "ECDH-ES", "A128GCM"),
     error = identity
   )
-  expect_true(inherits(err, c("zujwt_decrypt_error", "zujwt_parse_error")))
+  expect_true(inherits(err, c("zujose_decrypt_error", "zujose_parse_error")))
 })
 
 # Keys ---------------------------------------------------------------------
@@ -309,15 +309,15 @@ test_that("EC and X25519 keys are generated, read and written", {
   expect_identical(as_jose_key(jose_pem(x))$members$x, x$members$x)
   expect_error(
     jose_key_generate("EC", crv = "P-224"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     jose_key_generate("OKP", crv = "Ed25519"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     jose_key_generate("EC", crv = "P-384", alg = "ES256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -326,10 +326,10 @@ test_that("an EC JWK whose point is off the curve is a key error", {
   y <- b64url_decode(jwk$y, "y")
   y[[length(y)]] <- xor(y[[length(y)]], as.raw(1))
   jwk$y <- b64url_encode(y)
-  expect_error(as_jose_key(jwk), class = "zujwt_key_error")
+  expect_error(as_jose_key(jwk), class = "zujose_key_error")
   expect_error(
     as_jose_key(list(kty = "EC", crv = "P-256")),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -339,11 +339,11 @@ test_that("Ed25519 keys are read and kept, but cannot be used", {
     '"x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}'
   ))
   expect_false(key$supported)
-  expect_error(jose_verify("a.b.c", key, "EdDSA"), class = "zujwt_policy_error")
+  expect_error(jose_verify("a.b.c", key, "EdDSA"), class = "zujose_policy_error")
 })
 
-test_that("zujwt_info() reports ES* and ECDH-ES available", {
-  info <- zujwt_info()
+test_that("zujose_info() reports ES* and ECDH-ES available", {
+  info <- zujose_info()
   ec <- c(
     "ES256",
     "ES384",

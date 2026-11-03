@@ -10,7 +10,7 @@
 
 if (requireNamespace("testthat", quietly = TRUE)) {
   library(testthat)
-  library(zujwt)
+  library(zujose)
 
-  test_check("zujwt")
+  test_check("zujose")
 }

@@ -8,7 +8,7 @@
 b64url_decode <- function(x, what, call = NULL) {
   n <- nchar(x, type = "bytes")
   if (!grepl("^[A-Za-z0-9_-]*$", x) || n %% 4L == 1L) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       sprintf("The %s is not unpadded Base64url.", what),
       call = call
@@ -21,7 +21,7 @@ b64url_decode <- function(x, what, call = NULL) {
   tryCatch(
     zuutf::base64_decode(padded, url = TRUE, forgiving = FALSE),
     zuutf_error = function(e) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf("The %s is not canonical Base64url.", what),
         call = call

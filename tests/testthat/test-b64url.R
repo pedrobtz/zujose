@@ -28,14 +28,14 @@ test_that("every non-canonical form is rejected", {
     "YéQ" # non-ASCII
   )
   for (text in bad) {
-    expect_error(b64url_decode(text, "x"), class = "zujwt_parse_error")
+    expect_error(b64url_decode(text, "x"), class = "zujose_parse_error")
   }
 })
 
 test_that("the message names the part, never the text", {
   err <- expect_error(
     b64url_decode("secret==", "payload"),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_match(conditionMessage(err), "payload")
   expect_no_match(conditionMessage(err), "secret")

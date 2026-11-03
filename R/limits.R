@@ -1,11 +1,11 @@
 #' Resource limits for untrusted tokens
 #'
 #' Every function that reads a token checks it against these limits before
-#' decoding anything, so a hostile token cannot make zujwt allocate or
+#' decoding anything, so a hostile token cannot make zujose allocate or
 #' compute much more than an honest one would. The defaults are far above
 #' what real tokens need.
 #'
-#' A token over a limit fails with `zujwt_parse_error`. Use `Inf` to switch
+#' A token over a limit fails with `zujose_parse_error`. Use `Inf` to switch
 #' a limit off.
 #'
 #' @param token Maximum length of a token, in bytes.

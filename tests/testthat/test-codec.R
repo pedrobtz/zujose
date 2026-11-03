@@ -96,7 +96,7 @@ test_that("crit and b64 follow RFC 7515 §4.1.11 and RFC 7797 §6", {
   for (name in names(bad)) {
     expect_error(
       jose_parse(compact_jws(bad[[name]]), jose_limits()),
-      class = "zujwt_parse_error",
+      class = "zujose_parse_error",
       info = name
     )
   }
@@ -107,13 +107,13 @@ test_that("crit and b64 are refused outside the protected header", {
     '{"protected":"%s","header":{"crit":["b64"]},"payload":"","signature":"c2ln"}',
     b64_json(list(alg = "HS256"))
   )
-  expect_error(jose_parse(token, jose_limits()), class = "zujwt_parse_error")
+  expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
 })
 
 test_that("b64 in a JWE is refused", {
   header <- list(alg = "dir", enc = "A128GCM", b64 = FALSE, crit = list("b64"))
   token <- paste(b64_json(header), "", "aXY", "Y3Q", "dGFn", sep = ".")
-  expect_error(jose_parse(token, jose_limits()), class = "zujwt_parse_error")
+  expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
 })
 
 test_that("repeated member names are refused, however deep", {
@@ -123,7 +123,7 @@ test_that("repeated member names are refused, however deep", {
   )) {
     expect_error(
       jose_parse(compact_jws(json), jose_limits()),
-      class = "zujwt_parse_error",
+      class = "zujose_parse_error",
       info = json
     )
   }
@@ -134,21 +134,21 @@ test_that("a member in both the protected and unprotected header is refused", {
     '{"protected":"%s","header":{"alg":"none"},"payload":"","signature":"c2ln"}',
     b64_json(list(alg = "HS256"))
   )
-  expect_error(jose_parse(token, jose_limits()), class = "zujwt_parse_error")
+  expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
 })
 
 test_that("required header members must be present strings", {
   expect_error(
     jose_parse(compact_jws(list(typ = "JWT")), jose_limits()),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_error(
     jose_parse(compact_jws(list(alg = 1)), jose_limits()),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_error(
     jose_parse(compact_jws(list(alg = "HS256", kid = list())), jose_limits()),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   no_enc <- paste(
     b64_json(list(alg = "dir")),
@@ -158,7 +158,7 @@ test_that("required header members must be present strings", {
     "dGFn",
     sep = "."
   )
-  expect_error(jose_parse(no_enc, jose_limits()), class = "zujwt_parse_error")
+  expect_error(jose_parse(no_enc, jose_limits()), class = "zujose_parse_error")
 })
 
 test_that("recipients must agree on enc", {
@@ -169,12 +169,12 @@ test_that("recipients must agree on enc", {
       '"iv":"aXY","ciphertext":"Y3Q","tag":"dGFn"}'
     )
   )
-  expect_error(jose_parse(token, jose_limits()), class = "zujwt_parse_error")
+  expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
 })
 
 # The malformed corpus (design §10) ---------------------------------------
 
-test_that("the malformed corpus fails with zujwt_parse_error", {
+test_that("the malformed corpus fails with zujose_parse_error", {
   manifest <- rfc7520_manifest()
   compact <- manifest$figure[manifest$serialization == "compact"]
   n <- 0L
@@ -186,7 +186,7 @@ test_that("the malformed corpus fails with zujwt_parse_error", {
       n <- n + 1L
       expect_error(
         jose_parse(bad, jose_limits()),
-        class = "zujwt_parse_error",
+        class = "zujose_parse_error",
         info = sprintf("Figure %d, mutation %d", figure, n)
       )
     }
@@ -194,7 +194,7 @@ test_that("the malformed corpus fails with zujwt_parse_error", {
   expect_gt(n, 500L)
 })
 
-test_that("malformed JSON serializations fail with zujwt_parse_error", {
+test_that("malformed JSON serializations fail with zujose_parse_error", {
   general <- zujson::json_parse(rfc7520_token(14), simplify = "none")
   jwe <- zujson::json_parse(rfc7520_token(82), simplify = "none")
   edit <- function(obj, ...) {
@@ -226,7 +226,7 @@ test_that("malformed JSON serializations fail with zujwt_parse_error", {
   for (i in seq_along(bad)) {
     expect_error(
       jose_parse(bad[[i]], jose_limits()),
-      class = "zujwt_parse_error",
+      class = "zujose_parse_error",
       info = i
     )
   }
@@ -234,7 +234,7 @@ test_that("malformed JSON serializations fail with zujwt_parse_error", {
 
 test_that("a token that is not a single string is a parse error", {
   for (bad in list(NULL, NA_character_, c("a", "b"), 1, list("a.b.c"))) {
-    expect_error(jose_parse(bad, jose_limits()), class = "zujwt_parse_error")
+    expect_error(jose_parse(bad, jose_limits()), class = "zujose_parse_error")
   }
 })
 
@@ -245,7 +245,7 @@ test_that("an oversized token fails before any decoding", {
   token <- rfc7520_token(13)
   expect_error(
     jose_parse(token, jose_limits(token = nchar(token) - 1)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })
 
@@ -253,7 +253,7 @@ test_that("an oversized protected header fails before it is decoded", {
   local_no_decoding("protected header")
   expect_error(
     jose_parse(rfc7520_token(13), jose_limits(header = 16)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })
 
@@ -261,11 +261,11 @@ test_that("an oversized payload or ciphertext fails before it is decoded", {
   local_no_decoding(c("payload", "ciphertext"))
   expect_error(
     jose_parse(rfc7520_token(13), jose_limits(payload = 16)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_error(
     jose_parse(rfc7520_token(81), jose_limits(payload = 16)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })
 
@@ -278,7 +278,7 @@ test_that("an unencoded payload is held to the same limit", {
   )
   expect_error(
     jose_parse(flattened, jose_limits(payload = 99)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_no_error(jose_parse(flattened, jose_limits(payload = 100)))
 })
@@ -287,10 +287,10 @@ test_that("too many signatures or recipients fail before any decoding", {
   local_no_decoding()
   expect_error(
     jose_parse(rfc7520_token(71), jose_limits(signatures = 2)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_error(
     jose_parse(rfc7520_token(221), jose_limits(recipients = 2)),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
 })

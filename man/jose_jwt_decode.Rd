@@ -98,10 +98,10 @@ it, so a check meant for signed tokens never silently accepts encrypted
 ones. The JWE either carries a signed JWT (\code{cty: "JWT"}), verified as
 above, or the claims themselves.
 
-Each failed check raises a subclass of \code{zujwt_claim_error} carrying the
-claim name: \code{zujwt_expired_error}, \code{zujwt_not_yet_valid_error},
-\code{zujwt_audience_error}, \code{zujwt_issuer_error}, \code{zujwt_subject_error} or
-\code{zujwt_missing_claim_error}. Time errors also carry \code{time} and \code{now}.
+Each failed check raises a subclass of \code{zujose_claim_error} carrying the
+claim name: \code{zujose_expired_error}, \code{zujose_not_yet_valid_error},
+\code{zujose_audience_error}, \code{zujose_issuer_error}, \code{zujose_subject_error} or
+\code{zujose_missing_claim_error}. Time errors also carry \code{time} and \code{now}.
 }
 \examples{
 key <- jose_key_oct(as.raw(1:32))
@@ -114,7 +114,7 @@ claims$iss
 # Claim failures have classes of their own.
 tryCatch(
   jose_jwt_decode(jwt, key, "HS256", audience = "other"),
-  zujwt_audience_error = function(e) "wrong audience"
+  zujose_audience_error = function(e) "wrong audience"
 )
 }
 \seealso{

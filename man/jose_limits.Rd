@@ -37,12 +37,12 @@ A list of class \code{jose_limits}.
 }
 \description{
 Every function that reads a token checks it against these limits before
-decoding anything, so a hostile token cannot make zujwt allocate or
+decoding anything, so a hostile token cannot make zujose allocate or
 compute much more than an honest one would. The defaults are far above
 what real tokens need.
 }
 \details{
-A token over a limit fails with \code{zujwt_parse_error}. Use \code{Inf} to switch
+A token over a limit fails with \code{zujose_parse_error}. Use \code{Inf} to switch
 a limit off.
 }
 \examples{

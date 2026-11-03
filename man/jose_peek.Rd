@@ -37,7 +37,7 @@ that check a token.
 The token must still be well formed: strict unpadded Base64url, headers
 that are JSON objects without repeated members, and the rules on \code{crit}
 and \code{b64} (RFC 7515, RFC 7797). A malformed token raises
-\code{zujwt_parse_error}.
+\code{zujose_parse_error}.
 }
 \examples{
 token <- paste0(

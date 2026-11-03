@@ -39,7 +39,7 @@ it fails exactly as a wrong key does. Prefer \code{RSA-OAEP-256}.
 
 Every failure after the header checks (a wrong key, a bad tag, bad
 padding, a failed key unwrap, a wrong length) raises the same
-\code{zujwt_decrypt_error} with the same message, so that the error cannot
+\code{zujose_decrypt_error} with the same message, so that the error cannot
 tell an attacker which step failed (RFC 7516 section 11.5).
 
 With several recipients, those whose algorithm is not in \code{algorithms},

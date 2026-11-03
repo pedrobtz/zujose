@@ -108,10 +108,10 @@ jose_jwt_encode <- function(
 #' ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
 #' above, or the claims themselves.
 #'
-#' Each failed check raises a subclass of `zujwt_claim_error` carrying the
-#' claim name: `zujwt_expired_error`, `zujwt_not_yet_valid_error`,
-#' `zujwt_audience_error`, `zujwt_issuer_error`, `zujwt_subject_error` or
-#' `zujwt_missing_claim_error`. Time errors also carry `time` and `now`.
+#' Each failed check raises a subclass of `zujose_claim_error` carrying the
+#' claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
+#' `zujose_audience_error`, `zujose_issuer_error`, `zujose_subject_error` or
+#' `zujose_missing_claim_error`. Time errors also carry `time` and `now`.
 #'
 #' @param token The JWT, in the compact serialization.
 #' @inheritParams jose_verify
@@ -145,7 +145,7 @@ jose_jwt_encode <- function(
 #' # Claim failures have classes of their own.
 #' tryCatch(
 #'   jose_jwt_decode(jwt, key, "HS256", audience = "other"),
-#'   zujwt_audience_error = function(e) "wrong audience"
+#'   zujose_audience_error = function(e) "wrong audience"
 #' )
 jose_jwt_decode <- function(
   token,
@@ -179,7 +179,7 @@ jose_jwt_decode <- function(
     now
   )
   if (is_string(token) && grepl("^[[:space:]]*\\{", token)) {
-    abort_zujwt(
+    abort_zujose(
       "parse",
       "A JWT uses the compact serialization.",
       call = call
@@ -192,7 +192,7 @@ jose_jwt_decode <- function(
 
   if (compact_parts(token) == 5L) {
     if (is.null(decrypt)) {
-      abort_zujwt(
+      abort_zujose(
         "policy",
         "The token is a JWE; pass `decrypt = jose_decryption()` to accept one.",
         call = call
@@ -222,8 +222,8 @@ jose_jwt_decode <- function(
 
   payload <- tryCatch(
     json_object(verified$payload, "claims set", call),
-    zujwt_parse_error = function(e) {
-      abort_zujwt("parse", "The claims set is not a JSON object.", call = call)
+    zujose_parse_error = function(e) {
+      abort_zujose("parse", "The claims set is not a JSON object.", call = call)
     }
   )
   now <- as.numeric(now)
@@ -339,7 +339,7 @@ check_claims <- function(
   for (name in intersect(c("exp", "nbf", "iat"), present)) {
     value <- cl[[name]]
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
-      abort_zujwt(
+      abort_zujose(
         "parse",
         sprintf("The `%s` claim must be a number.", name),
         call = call
@@ -515,7 +515,7 @@ check_type <- function(header, type, call) {
   typ <- member(header, "typ")
   ok <- if (is.null(typ)) norm(type) == "jwt" else norm(typ) == norm(type)
   if (!ok) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "The token's `typ` header is not `type`.",
       call = call
@@ -529,7 +529,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
   inner <- if (!any(bytes == as.raw(0))) rawToChar(bytes) else ""
   Encoding(inner) <- "UTF-8"
   if (compact_parts(inner) != 3L) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "A nested JWT must be a signed JWT in the compact serialization.",
       call = call
@@ -537,7 +537,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
   }
   verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
   if (is_nested(verified$header)) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       "A JWT nested more than one level deep is refused.",
       call = call

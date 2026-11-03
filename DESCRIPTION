@@ -1,4 +1,4 @@
-Package: zujwt
+Package: zujose
 Title: Sign, Verify, Encrypt and Decrypt JSON Web Tokens
 Version: 0.0.0.9000
 Authors@R: 
@@ -14,8 +14,8 @@ Description: Signs, verifies, encrypts and decrypts JSON Object Signing and
     the current best practices of RFC 8725 <doi:10.17487/RFC8725>. Written
     in R over 'zucrypt', so no system cryptography library is needed.
 License: MIT + file LICENSE
-URL: https://github.com/pedrobtz/zujwt, https://pedrobtz.github.io/zujwt/
-BugReports: https://github.com/pedrobtz/zujwt/issues
+URL: https://github.com/pedrobtz/zujose, https://pedrobtz.github.io/zujose/
+BugReports: https://github.com/pedrobtz/zujose/issues
 Depends: 
     R (>= 4.1)
 Imports: 

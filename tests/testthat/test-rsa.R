@@ -46,7 +46,7 @@ test_that("RFC 7515 A.2 (RS256) is reproduced byte for byte", {
     header = list(),
     alg = "RS256"
   )
-  # zujwt's protected header is {"alg":"RS256"}, as the RFC's is.
+  # zujose's protected header is {"alg":"RS256"}, as the RFC's is.
   expect_identical(signed, token)
   out <- jose_verify(token, jose_public(key), "RS256")
   expect_identical(out$alg, "RS256")
@@ -129,7 +129,7 @@ test_that("every RS* and PS* algorithm signs and verifies", {
     )
     expect_error(
       jose_verify(token, pub, other),
-      class = "zujwt_policy_error",
+      class = "zujose_policy_error",
       info = alg
     )
   }
@@ -148,10 +148,10 @@ test_that("a tampered or foreign RSA signature does not verify", {
   sig <- b64url_decode(parts[[3]], "signature")
   sig[[1]] <- xor(sig[[1]], as.raw(1))
   bad <- paste(parts[[1]], parts[[2]], b64url_encode(sig), sep = ".")
-  expect_error(jose_verify(bad, key, "PS256"), class = "zujwt_signature_error")
+  expect_error(jose_verify(bad, key, "PS256"), class = "zujose_signature_error")
   expect_error(
     jose_verify(token, jose_key_generate("RSA"), "PS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
@@ -173,7 +173,7 @@ test_that("RSA-OAEP and RSA-OAEP-256 round-trip, to a public key", {
   token <- jose_encrypt("secret", pub, "RSA-OAEP-256")
   expect_error(
     jose_decrypt(token, pub, "RSA-OAEP-256", "A128CBC-HS256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -181,11 +181,11 @@ test_that("RSA1_5 never encrypts and decrypts only when named", {
   key <- as_jose_key(rfc7520_key(73))
   expect_error(
     jose_encrypt("x", jose_public(key), "RSA1_5"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     jose_decrypt(rfc7520_token(81), key, "RSA-OAEP", "A128CBC-HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -195,7 +195,7 @@ test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
   other <- jose_key_generate("RSA")
   e1 <- expect_error(
     jose_decrypt(token, other, "RSA-OAEP", "A128CBC-HS256"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   parts <- strsplit(token, ".", fixed = TRUE)[[1]]
   ek <- b64url_decode(parts[[2]], "key")
@@ -208,7 +208,7 @@ test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
       "RSA-OAEP",
       "A128CBC-HS256"
     ),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   # RSA1_5, whose padding failures must look like every other failure.
   v15 <- as_jose_key(rfc7520_key(73))
@@ -218,7 +218,7 @@ test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
   parts[[2]] <- b64url_encode(ek)
   e3 <- expect_error(
     jose_decrypt(paste(parts, collapse = "."), v15, "RSA1_5", "A128CBC-HS256"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   expect_identical(conditionMessage(e1), conditionMessage(e2))
   expect_identical(conditionMessage(e1), conditionMessage(e3))
@@ -229,10 +229,10 @@ test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
 test_that("RSA moduli under 2048 bits are refused for use", {
   skip_if_not_installed("openssl")
   small <- as_jose_key(openssl::write_pem(openssl::rsa_keygen(1024)))
-  expect_error(jose_sign("x", small, "RS256"), class = "zujwt_key_error")
+  expect_error(jose_sign("x", small, "RS256"), class = "zujose_key_error")
   expect_error(
     jose_encrypt("x", jose_public(small), "RSA-OAEP"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   # Still readable and writable: a JWKS may hold one.
   expect_s3_class(small, "jose_key")
@@ -248,8 +248,8 @@ test_that("PEM keys are read, and written back as PEM", {
   pub <- as_jose_key(openssl::write_pem(theirs$pubkey))
   expect_false("d" %in% names(pub$members))
   expect_identical(jose_pem(pub), openssl::write_pem(theirs$pubkey))
-  expect_error(jose_pem(pub, private = TRUE), class = "zujwt_key_error")
-  expect_error(jose_pem(jose_key_oct(as.raw(1:32))), class = "zujwt_key_error")
+  expect_error(jose_pem(pub, private = TRUE), class = "zujose_key_error")
+  expect_error(jose_pem(jose_key_oct(as.raw(1:32))), class = "zujose_key_error")
 })
 
 test_that("a JWK and its PEM describe the same key", {
@@ -272,23 +272,23 @@ test_that("jose_key_generate('RSA') makes a usable key of the size asked", {
   for (bad in list(1024, 2047, 5000, 8192)) {
     expect_error(
       jose_key_generate("RSA", size = bad),
-      class = "zujwt_key_error"
+      class = "zujose_key_error"
     )
   }
   expect_error(
     jose_key_generate("RSA", alg = "HS256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
 test_that("malformed RSA JWKs are key errors", {
   jwk <- zujson::json_parse(rfc7520_key(4), simplify = "none")
   no_crt <- jwk[c("kty", "n", "e", "d")]
-  expect_error(as_jose_key(no_crt), class = "zujwt_key_error")
+  expect_error(as_jose_key(no_crt), class = "zujose_key_error")
   bad <- jwk
   bad$n <- "AQAB"
-  expect_error(as_jose_key(bad), class = "zujwt_key_error")
-  expect_error(as_jose_key(jwk["kty"]), class = "zujwt_key_error")
+  expect_error(as_jose_key(bad), class = "zujose_key_error")
+  expect_error(as_jose_key(jwk["kty"]), class = "zujose_key_error")
 })
 
 test_that("printing an RSA key shows its size, never its private members", {
@@ -299,8 +299,8 @@ test_that("printing an RSA key shows its size, never its private members", {
   expect_true(any(grepl("private: yes", out, fixed = TRUE)))
 })
 
-test_that("zujwt_info() reports RS*, PS* and RSA key management available", {
-  info <- zujwt_info()
+test_that("zujose_info() reports RS*, PS* and RSA key management available", {
+  info <- zujose_info()
   rsa <- c(
     "RS256",
     "RS384",

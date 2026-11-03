@@ -3,9 +3,8 @@
 Adopted from [RFC 0062](https://github.com/pedrobtz/packages/blob/main/rfcs/started/0062-zujose-jose-tokens.md)
 on 2026-11-02. From here on this file is authoritative; the RFC is history.
 
-The package is `zujwt`; `zujose` below is the RFC's working name, and
-package-named identifiers (`zujwt_info()`, `zujwt_*` conditions) use the
-real one. Revised 2026-11-02: §7 rewritten after the API survey, §8.5 and
+The package was built as `zujwt` and renamed to `zujose`, this design's
+name, on 2026-11-03. Revised 2026-11-02: §7 rewritten after the API survey, §8.5 and
 §9 extended to match, D9–D12 added.
 
 - **Status:** Proposed. Section 12 records decisions for the package's
@@ -215,7 +214,7 @@ and closures for reuse.*
 
 - **One prefix, `jose_`.** It collides with nothing in `jose` (`jwt_*`,
   `jwk_*`, `base64url_*`) or `httr2`. Package-level helpers take the
-  package name: `zujwt_info()`.
+  package name: `zujose_info()`.
 - **Data first**, so calls chain with `|>`: the token, payload or claims
   is the first argument, the key the second.
 - **Types at the boundary.** Tokens and JWK text are character scalars.
@@ -257,12 +256,12 @@ jose_thumbprint(key, hash = "sha256", uri = FALSE)  # RFC 7638, RFC 9278
 `as_jose_keyset()` keeps keys of a type the installed `zucrypt` cannot use
 as unsupported entries rather than failing, so a provider's JWKS loads
 before the matching stage lands. Using such a key raises
-`zujwt_unsupported_error`.
+`zujose_unsupported_error`.
 
 Wherever a function takes a key to check a token, it accepts a `jose_key`,
 a `jose_keyset`, or a **resolver**: `function(header)` returning a key or
 key set. The resolver is the explicit way to choose keys per issuer, or to
-honour `jku` against an allow-list the caller writes. `zujwt` itself still
+honour `jku` against an allow-list the caller writes. `zujose` itself still
 never fetches anything (D3). The getting-started article shows a JWKS
 cache with `httr2` behind a resolver.
 
@@ -353,12 +352,12 @@ cl <- check(jwt)                         # same checks, every call
 jose_peek(tok)       # headers, and payload and claims for a JWS; unverified
 jose_limits(token = 2^20, header = 2^14, payload = 2^20, signatures = 16,
             recipients = 16, keys = 16, p2c = 600000)
-zujwt_info()         # data frame: algorithm, kind, available, zucrypt needed
+zujose_info()         # data frame: algorithm, kind, available, zucrypt needed
 ```
 
 ### 7.7 Against the surveyed libraries
 
-Each `zujwt` feature, and the libraries it matches:
+Each `zujose` feature, and the libraries it matches:
 
 - **Mandatory allow-list** (`algorithms`, no default): go-jose v4,
   PyJWT 2.
@@ -483,16 +482,16 @@ matching. A nested JWT (`cty: "JWT"`) is unwrapped one level, with its own
 
 ## 9. Errors and limits
 
-Conditions inherit from `zujwt_error`: `zujwt_parse_error`,
-`zujwt_policy_error` (algorithm not allowed, `crit`, key mismatch, a JWE
-where none was allowed), `zujwt_key_error`, `zujwt_signature_error`,
-`zujwt_decrypt_error` and `zujwt_claim_error`.
-`zujwt_unsupported_error` names the `zucrypt` version an algorithm needs.
+Conditions inherit from `zujose_error`: `zujose_parse_error`,
+`zujose_policy_error` (algorithm not allowed, `crit`, key mismatch, a JWE
+where none was allowed), `zujose_key_error`, `zujose_signature_error`,
+`zujose_decrypt_error` and `zujose_claim_error`.
+`zujose_unsupported_error` names the `zucrypt` version an algorithm needs.
 
-`zujwt_claim_error` has leaf classes, so callers branch on the cause as
-PyJWT's do: `zujwt_expired_error`, `zujwt_not_yet_valid_error`,
-`zujwt_audience_error`, `zujwt_issuer_error`, `zujwt_subject_error` and
-`zujwt_missing_claim_error`. Each carries the claim name, and the time
+`zujose_claim_error` has leaf classes, so callers branch on the cause as
+PyJWT's do: `zujose_expired_error`, `zujose_not_yet_valid_error`,
+`zujose_audience_error`, `zujose_issuer_error`, `zujose_subject_error` and
+`zujose_missing_claim_error`. Each carries the claim name, and the time
 errors carry both times. Messages name claims and times but never echo
 key material, decrypted bytes or token text (joserfc CVE-2025-65015).
 
@@ -603,7 +602,7 @@ symmetric-only release and waiting (open question 2).
   before the public-key tranches arrive.
 - **D9.** Every function that checks a token takes a key, a key set or a
   resolver `function(header)`. Resolvers are how callers opt into
-  per-issuer keys or `jku`; `zujwt` never does either itself.
+  per-issuer keys or `jku`; `zujose` never does either itself.
 - **D10.** Claim checks happen inside `jose_jwt_decode()`, never as a
   second step a caller can forget (joserfc's split is the counterexample).
   `required` defaults to `"exp"`.

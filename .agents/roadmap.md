@@ -1,14 +1,16 @@
-# zujwt: roadmap
+# zujose: roadmap
 
 Status: draft 2026-11-02. Implements [design.md](design.md).
 Target: v0.1.0, the first CRAN release.
-Tracking: [v0.1.0 (#1)](https://github.com/pedrobtz/zujwt/issues/1), with one
+Tracking: [v0.1.0 (#1)](https://github.com/pedrobtz/zujose/issues/1), with one
 sub-issue per stage;
-[CRAN-submission (#15)](https://github.com/pedrobtz/zujwt/issues/15).
+[CRAN-submission (#15)](https://github.com/pedrobtz/zujose/issues/15).
 
-The design calls the package `zujose`, its working name. Here and in the code
-it is `zujwt`: condition classes are `zujwt_*` and `zujose_info()` is
-`zujwt_info()`. The `jose_` function prefix stays.
+The package was scaffolded and built through Stage 9 as `zujwt`, and renamed
+to `zujose`, the design's name, on 2026-11-03 (before Stage 10): condition
+classes are `zujose_*` and the information function is `zujose_info()`. The
+`jose_` function prefix stays. The repository was renamed with it; GitHub
+redirects the old `pedrobtz/zujwt` links.
 
 Revised 2026-11-02: work items follow the API of design §7 as rewritten
 after [the survey](api-survey.md).
@@ -36,31 +38,31 @@ development version.
 | 5 | Optional: AES key wrap as a `zucrypt` primitive (design D4) | [zucrypt#82](https://github.com/pedrobtz/zucrypt/issues/82) |
 | 1 | Optional: strict unpadded Base64url in `zuutf` (design §8.1) | [zuutf#55](https://github.com/pedrobtz/zuutf/issues/55) |
 
-The two optional rows don't block anything. `zujwt` composes key wrap and
+The two optional rows don't block anything. `zujose` composes key wrap and
 padding in R until a primitive exists.
 
 ## Stages
 
 | Stage | Title | CI | Issue | Pull request | Done |
 | --- | --- | --- | --- | --- | --- |
-| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujwt/issues/2) | [#17](https://github.com/pedrobtz/zujwt/pull/17) | 2026-11-02 |
-| 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujwt/issues/3) | [#18](https://github.com/pedrobtz/zujwt/pull/18) | 2026-11-02 |
-| 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujwt/issues/4) | [#19](https://github.com/pedrobtz/zujwt/pull/19) | 2026-11-02 |
-| 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujwt/issues/5) | [#20](https://github.com/pedrobtz/zujwt/pull/20) | 2026-11-02 |
-| 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | [#21](https://github.com/pedrobtz/zujwt/pull/21) | 2026-11-02 |
-| 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | [#22](https://github.com/pedrobtz/zujwt/pull/22) | 2026-11-02 |
-| 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | [#23](https://github.com/pedrobtz/zujwt/pull/23) | 2026-11-03 |
-| 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | [#24](https://github.com/pedrobtz/zujwt/pull/24) | 2026-11-03 |
-| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | [#25](https://github.com/pedrobtz/zujwt/pull/25) | 2026-11-03 |
-| 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | [#26](https://github.com/pedrobtz/zujwt/pull/26) | 2026-11-03 |
-| 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujwt/issues/12) | | |
-| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujwt/issues/13) | | |
-| 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujwt/issues/14) | | |
+| 0 | [Package identity](#stage-0--package-identity) | quick | [#2](https://github.com/pedrobtz/zujose/issues/2) | [#17](https://github.com/pedrobtz/zujose/pull/17) | 2026-11-02 |
+| 1 | [Codec](#stage-1--codec) | quick | [#3](https://github.com/pedrobtz/zujose/issues/3) | [#18](https://github.com/pedrobtz/zujose/pull/18) | 2026-11-02 |
+| 2 | [oct keys and key sets](#stage-2--oct-keys-and-key-sets) | quick | [#4](https://github.com/pedrobtz/zujose/issues/4) | [#19](https://github.com/pedrobtz/zujose/pull/19) | 2026-11-02 |
+| 3 | [JWS with HMAC](#stage-3--jws-with-hmac) | quick | [#5](https://github.com/pedrobtz/zujose/issues/5) | [#20](https://github.com/pedrobtz/zujose/pull/20) | 2026-11-02 |
+| 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujose/issues/6) | [#21](https://github.com/pedrobtz/zujose/pull/21) | 2026-11-02 |
+| 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujose/issues/7) | [#22](https://github.com/pedrobtz/zujose/pull/22) | 2026-11-02 |
+| 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujose/issues/8) | [#23](https://github.com/pedrobtz/zujose/pull/23) | 2026-11-03 |
+| 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujose/issues/9) | [#24](https://github.com/pedrobtz/zujose/pull/24) | 2026-11-03 |
+| 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujose/issues/10) | [#25](https://github.com/pedrobtz/zujose/pull/25) | 2026-11-03 |
+| 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujose/issues/11) | [#26](https://github.com/pedrobtz/zujose/pull/26) | 2026-11-03 |
+| 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujose/issues/12) | | |
+| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | | |
+| 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujose/issues/14) | | |
 
 ## Stage 0 — Package identity
 
-**Issue.** [#2](https://github.com/pedrobtz/zujwt/issues/2), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#2](https://github.com/pedrobtz/zujose/issues/2), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -74,10 +76,10 @@ CI, checked green.
   jose`; `Remotes: pedrobtz/zuutf`; MIT; `Version: 0.0.0.9000`.
 - `.Rbuildignore` with every entry the `CLAUDE.md` "Working with skills"
   section lists (done by `pkg-init`; verify).
-- Condition constructors for design §9: `zujwt_error` and its subclasses
-  `zujwt_parse_error`, `zujwt_policy_error`, `zujwt_key_error`,
-  `zujwt_signature_error`, `zujwt_decrypt_error`, `zujwt_claim_error` and
-  `zujwt_unsupported_error`, internal, with tests on class and fields.
+- Condition constructors for design §9: `zujose_error` and its subclasses
+  `zujose_parse_error`, `zujose_policy_error`, `zujose_key_error`,
+  `zujose_signature_error`, `zujose_decrypt_error`, `zujose_claim_error` and
+  `zujose_unsupported_error`, internal, with tests on class and fields.
 - `R-CMD-check` caller: add the `{"os": "windows-latest", "r": "devel"}`
   runner row. Pin `coverage.yaml` to a commit, with the tag in a comment.
   Move `pkgdown.yaml` to the r-actions workflow if one exists.
@@ -100,13 +102,13 @@ usethis workflow, because r-actions has no pkgdown workflow.
 
 ## Stage 1 — Codec
 
-**Issue.** [#3](https://github.com/pedrobtz/zujwt/issues/3), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#3](https://github.com/pedrobtz/zujose/issues/3), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
 **Goal.** Every JOSE serialization parses into a `jose_object`, or fails with
-`zujwt_parse_error`. No key is touched.
+`zujose_parse_error`. No key is touched.
 
 **Work.**
 
@@ -128,7 +130,7 @@ usethis workflow, because r-actions has no pkgdown workflow.
 
 - Every RFC 7520 token parses; the fixture manifest names each one's source
   section.
-- Every member of the malformed corpus fails with `zujwt_parse_error`.
+- Every member of the malformed corpus fails with `zujose_parse_error`.
 - A token over each limit fails before any Base64 decoding (asserted with a
   mock or a counter).
 - `R CMD check` green on the quick profile.
@@ -144,7 +146,7 @@ show four citations in this roadmap were wrong:
   uses only `dir` or `A*KW` with `A*CBC-HS*`, so Stage 5 relies on RFC 7516
   A.3, RFC 7518 B and RFC 3394.
 - §5.11 and §5.12 are `A128KW` with `A128GCM` and belong to Stage 7.
-  §5.9 carries `zip: "DEF"`, which zujwt rejects (§8.6).
+  §5.9 carries `zip: "DEF"`, which zujose rejects (§8.6).
 - §5.13 (multiple recipients) needs `RSA1_5`, `ECDH-ES+A256KW` and
   `A256GCMKW`, so it completes only with Stage 9. §6 (nesting) needs `PS256`
   and `RSA-OAEP`, Stage 8.
@@ -156,8 +158,8 @@ it is compact; the extraction classifies by content.
 
 ## Stage 2 — oct keys and key sets
 
-**Issue.** [#4](https://github.com/pedrobtz/zujwt/issues/4), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#4](https://github.com/pedrobtz/zujose/issues/4), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -192,8 +194,8 @@ from a key set.
 
 ## Stage 3 — JWS with HMAC
 
-**Issue.** [#5](https://github.com/pedrobtz/zujwt/issues/5), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#5](https://github.com/pedrobtz/zujose/issues/5), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -205,7 +207,7 @@ three serializations.
 - The policy layer of §6: the required `algorithms` argument with no
   default, key-to-algorithm binding, minimum HMAC key length.
 - The algorithm table of §6, keyed by JWA name, with the `zucrypt` version
-  each entry needs. `zujwt_info()` reports it.
+  each entry needs. `zujose_info()` reports it.
 - Signing input from the received protected header bytes; MACs compared with
   `crypt_equal()`.
 - `crit` with `b64`, and RFC 7797 unencoded and detached payloads.
@@ -229,8 +231,8 @@ three serializations.
 
 ## Stage 4 — JWT
 
-**Issue.** [#6](https://github.com/pedrobtz/zujwt/issues/6), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#6](https://github.com/pedrobtz/zujose/issues/6), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `full — first Suggests guard (the jose oracle): nosuggests`.
 
@@ -254,7 +256,7 @@ validation, interoperating with `jose` for `HS*`.
 **Exit criteria.**
 
 - RFC 7519 §3.1 and §6.1 vectors pass.
-- Every claim failure raises its leaf class of `zujwt_claim_error` with the
+- Every claim failure raises its leaf class of `zujose_claim_error` with the
   claim name, and times where relevant (one test each).
 - An array-valued `iss` or `sub` fails even when it contains the expected
   value (test).
@@ -269,8 +271,8 @@ them on in `R-CMD-check.yaml`.
 
 ## Stage 5 — JWE, symmetric
 
-**Issue.** [#7](https://github.com/pedrobtz/zujwt/issues/7), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#7](https://github.com/pedrobtz/zujose/issues/7), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -305,8 +307,8 @@ Decryption works fully. Encryption works with an injected CEK and IV.
 
 ## Stage 6 — Generated keys and IVs
 
-**Issue.** [#8](https://github.com/pedrobtz/zujwt/issues/8), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#8](https://github.com/pedrobtz/zujose/issues/8), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -327,7 +329,7 @@ them.
 - CEKs and IVs from `crypt_rand_bytes()`. The injection argument stays
   internal, for the test vectors.
 - `jose_key_generate("oct")`, and `jti = TRUE` in `jose_jwt_encode()`.
-- `zujwt_info()` and the unsupported-algorithm check reflect the installed
+- `zujose_info()` and the unsupported-algorithm check reflect the installed
   `zucrypt` version.
 - `DESCRIPTION` requires the `zucrypt` version that has randomness.
 
@@ -341,8 +343,8 @@ them.
 
 ## Stage 7 — GCM and PBES2
 
-**Issue.** [#9](https://github.com/pedrobtz/zujwt/issues/9), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#9](https://github.com/pedrobtz/zujose/issues/9), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -352,7 +354,7 @@ them.
 On 2026-11-03 zucrypt split its Stage 14 and shipped AES-GCM and PBKDF2 as
 Stage 14a in [zucrypt#84](https://github.com/pedrobtz/zucrypt/pull/84),
 ahead of 0.3.0. Because the development version still says 0.1.0.9000,
-`zujwt_info()` now counts an algorithm available when zucrypt exports the
+`zujose_info()` now counts an algorithm available when zucrypt exports the
 functions its release adds, not only by version. RFC 7520 §5.6's key names
 `A128GCM` as its `alg` for a `dir` token, so a `dir` key may name the
 token's `enc`. The RFC's whole tokens are decrypted; their encrypted keys,
@@ -380,8 +382,8 @@ tokens' header member order is not ours.
 
 ## Stage 8 — RSA
 
-**Issue.** [#10](https://github.com/pedrobtz/zujwt/issues/10), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#10](https://github.com/pedrobtz/zujose/issues/10), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -415,15 +417,15 @@ and opt-in `RSA1_5` decryption.
 - RFC 7515 A.2, RFC 7520 §4.1–§4.2, §5.1–§5.2, §6 and the `RS256`
   signature of §4.8 pass.
 - The `jose` oracle passes for `RS256/384/512`.
-- `RSA1_5` without explicit opt-in fails with `zujwt_policy_error` (test).
+- `RSA1_5` without explicit opt-in fails with `zujose_policy_error` (test).
 - `R CMD check` green on the quick profile.
 
 **Design.** §8.2, §8.3, §8.4.
 
 ## Stage 9 — EC and X25519
 
-**Issue.** [#11](https://github.com/pedrobtz/zujwt/issues/11), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#11](https://github.com/pedrobtz/zujose/issues/11), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -459,8 +461,8 @@ without key wrap.
 
 ## Stage 10 — Documentation
 
-**Issue.** [#12](https://github.com/pedrobtz/zujwt/issues/12), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#12](https://github.com/pedrobtz/zujose/issues/12), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `quick`.
 
@@ -489,8 +491,8 @@ without key wrap.
 
 ## Stage 11 — Full CI
 
-**Issue.** [#13](https://github.com/pedrobtz/zujwt/issues/13), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#13](https://github.com/pedrobtz/zujose/issues/13), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `full`.
 
@@ -515,8 +517,8 @@ branch's code, and everything it finds is fixed.
 
 ## Stage 12 — v0.1.0 readiness
 
-**Issue.** [#14](https://github.com/pedrobtz/zujwt/issues/14), sub-issue of
-[v0.1.0](https://github.com/pedrobtz/zujwt/issues/1).
+**Issue.** [#14](https://github.com/pedrobtz/zujose/issues/14), sub-issue of
+[v0.1.0](https://github.com/pedrobtz/zujose/issues/1).
 
 **CI.** `full`.
 

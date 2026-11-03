@@ -36,13 +36,13 @@ test_that("the hash sets the length and the URI's hash name", {
   expect_identical(nchar(jose_thumbprint(key, "sha384")), 64L)
   expect_identical(nchar(jose_thumbprint(key, "sha512")), 86L)
   expect_match(jose_thumbprint(key, "sha512", uri = TRUE), ":sha-512:")
-  expect_error(jose_thumbprint(key, "md5"), class = "zujwt_key_error")
+  expect_error(jose_thumbprint(key, "md5"), class = "zujose_key_error")
 })
 
 test_that("a key without its required members has no thumbprint", {
   expect_error(
     jose_thumbprint(as_jose_key('{"kty":"EC","crv":"P-256","x":"AAAA"}')),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
-  expect_error(jose_thumbprint("x"), class = "zujwt_key_error")
+  expect_error(jose_thumbprint("x"), class = "zujose_key_error")
 })

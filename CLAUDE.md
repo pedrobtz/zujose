@@ -5,23 +5,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-zujwt signs, verifies, encrypts and decrypts JOSE objects: JWS, JWE, JWK
+zujose signs, verifies, encrypts and decrypts JOSE objects: JWS, JWE, JWK
 and JWK sets, and JWTs with claim validation, in both the compact and the
 JSON serializations. Its callers are R code talking to OAuth 2.0 and OpenID
 Connect providers, services that take signed assertions, and Shiny or
 Plumber apps that issue or check tokens. It contains no cryptography and no
 compiled code. Primitives come from `zucrypt`, Base64url from `zuutf` and
-JSON from `zujson`. zujwt owns the JOSE layer: serializations, header rules,
+JSON from `zujson`. zujose owns the JOSE layer: serializations, header rules,
 keys, algorithm policy and claim checks. It is not an OAuth client, not a
 key store and not a fetcher, and it performs no I/O.
 
 The specification is [`.agents/design.md`](.agents/design.md), adopted from
 [RFC 0062](https://github.com/pedrobtz/packages/blob/main/rfcs/started/0062-zujose-jose-tokens.md).
-It outranks this file. The RFC uses the working name `zujose`; read it as
-`zujwt`. That covers the package-named identifiers: condition classes are
-`zujwt_*`, following Testing conventions, and the RFC's `zujose_info()`
-becomes `zujwt_info()`. The `jose_` prefix on public functions is not the
-package name and stays.
+It outranks this file. The package was scaffolded as `zujwt` and renamed
+back to the RFC's name, `zujose`, on 2026-11-03, before any release:
+condition classes are `zujose_*` and the information function is
+`zujose_info()`. The `jose_` prefix on public functions names the JOSE
+standards, not the package.
 
 ## Current state
 

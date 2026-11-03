@@ -133,7 +133,7 @@ test_that("GCM takes associated data in the JSON serializations", {
   obj$aad <- b64url_encode(charToRaw("other"))
   expect_error(
     jose_decrypt(zujson::json_write(obj), key, "A128KW", "A128GCM"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
 })
 
@@ -195,7 +195,7 @@ test_that("a p2c over the cap fails before any key derivation", {
       "PBES2-HS256+A128KW",
       "A128GCM"
     ),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   expect_error(
     jose_decrypt(
@@ -205,7 +205,7 @@ test_that("a p2c over the cap fails before any key derivation", {
       "A128GCM",
       limits = jose_limits(p2c = 999)
     ),
-    class = "zujwt_parse_error"
+    class = "zujose_parse_error"
   )
   for (bad in list(0, -1, 1.5, "1000", NULL)) {
     expect_error(
@@ -215,7 +215,7 @@ test_that("a p2c over the cap fails before any key derivation", {
         "PBES2-HS256+A128KW",
         "A128GCM"
       ),
-      class = "zujwt_parse_error"
+      class = "zujose_parse_error"
     )
   }
 })
@@ -231,7 +231,7 @@ test_that("a p2s shorter than 8 bytes fails before any key derivation", {
         "PBES2-HS256+A128KW",
         "A128GCM"
       ),
-      class = "zujwt_parse_error"
+      class = "zujose_parse_error"
     )
   }
   # Eight bytes passes the checks and reaches the derivation.
@@ -268,7 +268,7 @@ test_that("malformed A*GCMKW header parameters are parse errors", {
     )
     expect_error(
       jose_decrypt(token, key, "A128GCMKW", "A128GCM"),
-      class = "zujwt_parse_error"
+      class = "zujose_parse_error"
     )
   }
 })
@@ -290,13 +290,13 @@ test_that("tampering, a wrong key or a wrong password is one decrypt error", {
   for (bad in list(flip(2), flip(3), flip(4), flip(5))) {
     err <- expect_error(
       jose_decrypt(bad, key, "A128GCMKW", "A128GCM"),
-      class = "zujwt_decrypt_error"
+      class = "zujose_decrypt_error"
     )
     msgs <- c(msgs, conditionMessage(err))
   }
   err <- expect_error(
     jose_decrypt(token, jose_key_oct(as.raw(2:17)), "A128GCMKW", "A128GCM"),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   msgs <- c(msgs, conditionMessage(err))
   pw <- jose_encrypt(
@@ -312,7 +312,7 @@ test_that("tampering, a wrong key or a wrong password is one decrypt error", {
       "PBES2-HS256+A128KW",
       "A128CBC-HS256"
     ),
-    class = "zujwt_decrypt_error"
+    class = "zujose_decrypt_error"
   )
   msgs <- c(msgs, conditionMessage(err))
   expect_length(unique(msgs), 1L)
@@ -352,8 +352,8 @@ test_that("generated parameters cannot be supplied, and p2c is checked", {
   )
 })
 
-test_that("zujwt_info() reports GCM, GCMKW and PBES2 as available", {
-  info <- zujwt_info()
+test_that("zujose_info() reports GCM, GCMKW and PBES2 as available", {
+  info <- zujose_info()
   algs <- c(
     "A128GCM",
     "A192GCM",
@@ -384,11 +384,11 @@ test_that("a dir key may name its content encryption, and only that one", {
       "dir",
       "A128GCM"
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   # Naming an enc is no licence for other algorithms.
   expect_error(
     jose_encrypt("x", key, "A128KW", "A128GCM"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })

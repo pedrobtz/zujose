@@ -9,20 +9,20 @@ test_that("jose_key_oct() wraps a raw secret", {
 
 test_that("jose_key_oct() refuses what is not a key", {
   for (bad in list("secret", raw(), 1:32, NULL)) {
-    expect_error(jose_key_oct(bad), class = "zujwt_key_error")
+    expect_error(jose_key_oct(bad), class = "zujose_key_error")
   }
-  expect_error(jose_key_oct(as.raw(1), kid = 1), class = "zujwt_key_error")
+  expect_error(jose_key_oct(as.raw(1), kid = 1), class = "zujose_key_error")
   expect_error(
     jose_key_oct(as.raw(1), alg = c("a", "b")),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     jose_key_oct(as.raw(1), key_ops = "fly"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_error(
     jose_key_oct(as.raw(1), key_ops = c("sign", "sign")),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
 
@@ -88,16 +88,16 @@ test_that("malformed JWKs are key errors", {
     '{"kty":"RSA","n":1,"e":"AQAB"}'
   )
   for (text in bad) {
-    expect_error(as_jose_key(text), class = "zujwt_key_error", info = text)
+    expect_error(as_jose_key(text), class = "zujose_key_error", info = text)
   }
-  expect_error(as_jose_key(c("a", "b")), class = "zujwt_key_error")
-  expect_error(as_jose_key(42), class = "zujwt_key_error")
-  expect_error(as_jose_key(list(1, 2)), class = "zujwt_key_error")
+  expect_error(as_jose_key(c("a", "b")), class = "zujose_key_error")
+  expect_error(as_jose_key(42), class = "zujose_key_error")
+  expect_error(as_jose_key(list(1, 2)), class = "zujose_key_error")
 })
 
 test_that("a PEM that is not a readable RSA key is a key error", {
   pem <- "-----BEGIN PUBLIC KEY-----\nMIIB\n-----END PUBLIC KEY-----"
-  expect_error(as_jose_key(pem), class = "zujwt_key_error")
+  expect_error(as_jose_key(pem), class = "zujose_key_error")
 })
 
 test_that("jose_jwk() round-trips every RFC 7520 key", {
@@ -114,8 +114,8 @@ test_that("jose_jwk() writes only public members by default", {
   expect_false(any(c("d", "p", "q", "dp", "dq", "qi") %in% names(public)))
   expect_true(all(c("kty", "n", "e") %in% names(public)))
 
-  expect_error(jose_jwk(jose_key_oct(as.raw(1:4))), class = "zujwt_key_error")
-  expect_error(jose_jwk(rsa, private = NA), class = "zujwt_key_error")
+  expect_error(jose_jwk(jose_key_oct(as.raw(1:4))), class = "zujose_key_error")
+  expect_error(jose_jwk(rsa, private = NA), class = "zujose_key_error")
 })
 
 test_that("jose_public() strips secrets and refuses oct keys", {
@@ -125,15 +125,15 @@ test_that("jose_public() strips secrets and refuses oct keys", {
     rsa$members[c("n", "e")],
     as_jose_key(rfc7520_key(3))$members[c("n", "e")]
   )
-  expect_error(jose_public(jose_key_oct(as.raw(1))), class = "zujwt_key_error")
-  expect_error(jose_public("x"), class = "zujwt_key_error")
+  expect_error(jose_public(jose_key_oct(as.raw(1))), class = "zujose_key_error")
+  expect_error(jose_public("x"), class = "zujose_key_error")
 })
 
 test_that("jose_with_kid() defaults to the thumbprint", {
   key <- jose_with_kid(jose_key_oct(as.raw(1:32)))
   expect_identical(key$kid, jose_thumbprint(key))
   expect_identical(jose_with_kid(key, "mine")$kid, "mine")
-  expect_error(jose_with_kid(key, 1), class = "zujwt_key_error")
+  expect_error(jose_with_kid(key, 1), class = "zujose_key_error")
 })
 
 # jose_key_generate() (design §7.2) ---------------------------------------
@@ -190,38 +190,38 @@ test_that("jose_key_generate() refuses sizes and algorithms that do not fit", {
   for (size in bad_sizes) {
     expect_error(
       jose_key_generate("oct", size = size),
-      class = "zujwt_key_error"
+      class = "zujose_key_error"
     )
   }
   # Shorter than the hash (RFC 7518 §3.2), or not the key wrap's size.
   expect_error(
     jose_key_generate("oct", size = 128, alg = "HS256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   expect_length(jose_key_generate("oct", size = 512, alg = "HS256")$k, 64L)
   expect_error(
     jose_key_generate("oct", size = 256, alg = "A128KW"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
   # Not an oct algorithm at all.
   for (alg in c("RS256", "ES256", "A128CBC-HS256", "PBES2-HS256+A128KW")) {
     expect_error(
       jose_key_generate("oct", alg = alg),
-      class = "zujwt_key_error"
+      class = "zujose_key_error"
     )
   }
   expect_error(
     jose_key_generate("oct", crv = "P-256"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
-  expect_error(jose_key_generate("DSA"), class = "zujwt_key_error")
+  expect_error(jose_key_generate("DSA"), class = "zujose_key_error")
 })
 
-test_that("EC and OKP keys are generated on the curves zujwt has", {
+test_that("EC and OKP keys are generated on the curves zujose has", {
   expect_identical(jose_key_generate("EC")$members$crv, "P-256")
   expect_identical(jose_key_generate("OKP")$members$crv, "X25519")
   expect_error(
     jose_key_generate("OKP", crv = "Ed25519"),
-    class = "zujwt_key_error"
+    class = "zujose_key_error"
   )
 })
