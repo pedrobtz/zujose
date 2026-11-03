@@ -93,3 +93,47 @@ test_that("a decoder can carry decrypt", {
   expect_identical(check_token(outer)$sub, "u")
   expect_identical(check_token(inner)$sub, "u")
 })
+
+test_that("an encrypted-only JWT with public-key key management is refused", {
+  # Anyone holding the recipient's public key can make such a token, so its
+  # claims would be unauthenticated (#34). The refusal comes before any
+  # decryption.
+  claims <- '{"sub":"admin","exp":2000000000}'
+  cases <- list(
+    list(key = jwk_generate("RSA"), alg = "RSA-OAEP-256"),
+    list(key = jwk_generate("EC", crv = "P-256"), alg = "ECDH-ES"),
+    list(key = jwk_generate("OKP", crv = "X25519"), alg = "ECDH-ES+A128KW")
+  )
+  for (case in cases) {
+    token <- jwe_encrypt(claims, jwk_public(case$key), alg = case$alg)
+    local_mocked_bindings(decrypt_jwe = function(...) stop("decrypted"))
+    expect_error(
+      jwt_decode(
+        token,
+        jwk_oct(as.raw(1:32)),
+        "HS256",
+        decrypt = jwe_decryption(case$key, case$alg, "A128CBC-HS256")
+      ),
+      class = "zujose_policy_error",
+      info = case$alg
+    )
+  }
+})
+
+test_that("a signed JWT inside a public-key JWE still decodes", {
+  signer <- jwk_oct(as.raw(1:32))
+  recipient <- jwk_generate("RSA")
+  token <- jwt_encode(list(sub = "u"), signer, "HS256", expires_in = 60) |>
+    jwe_encrypt(
+      jwk_public(recipient),
+      alg = "RSA-OAEP-256",
+      header = list(cty = "JWT")
+    )
+  claims <- jwt_decode(
+    token,
+    signer,
+    "HS256",
+    decrypt = jwe_decryption(recipient, "RSA-OAEP-256", "A128CBC-HS256")
+  )
+  expect_identical(claims$sub, "u")
+})

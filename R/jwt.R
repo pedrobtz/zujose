@@ -105,8 +105,11 @@ jwt_encode <- function(
 #'
 #' A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
 #' it, so a check meant for signed tokens never silently accepts encrypted
-#' ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
-#' above, or the claims themselves.
+#' ones. The JWE carries a signed JWT (`cty: "JWT"`), verified as above,
+#' or, when its key management is symmetric (`dir`, `A*KW`, `A*GCMKW` or
+#' `PBES2-*`), the claims themselves. With RSA or ECDH key management anyone
+#' holding the recipient's public key can encrypt a token, so the claims must
+#' be signed: an encrypted-only JWT is refused with `zujose_policy_error`.
 #'
 #' Each failed check raises a subclass of `zujose_claim_error` carrying the
 #' claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
@@ -195,6 +198,21 @@ jwt_decode <- function(
       abort_zujose(
         "policy",
         "The token is a JWE; pass `decrypt = jwe_decryption()` to accept one.",
+        call = call
+      )
+    }
+    # An encrypted-only JWT is authentic only when the key management is
+    # symmetric: with RSA or ECDH, anyone holding the recipient's public key
+    # can make one. Its claims must then come inside a signed JWT (#34).
+    # Decided on the header, before any decryption.
+    outer <- jose_parse(token, limits, call)$protected
+    if (!is_nested(outer) && !identical(alg_key_types(outer$alg), "oct")) {
+      abort_zujose(
+        "policy",
+        paste0(
+          "A JWT encrypted with public-key key management must carry a ",
+          "signed JWT (`cty: \"JWT\"`)."
+        ),
         call = call
       )
     }

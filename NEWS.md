@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* `jwt_decode()` refuses an encrypted-only JWT whose key management is
+  public-key (`RSA-OAEP*`, `RSA1_5`, `ECDH-ES*`), because anyone holding the
+  recipient's public key could have made it. Its claims must come inside a
+  signed JWT (`cty: "JWT"`). Encrypted-only JWTs with symmetric key
+  management are still accepted (#34).
+
 * Functions are named after the object they work on: `jwt_encode()`,
   `jwt_decode()` and `jwt_decoder()`; `jws_sign()`, `jws_signer()` and
   `jws_verify()`; `jwe_encrypt()`, `jwe_recipient()`, `jwe_decrypt()` and

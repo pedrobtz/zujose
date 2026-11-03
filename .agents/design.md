@@ -467,7 +467,13 @@ without `aud` fails when the caller does (RFC 8725 §3.9). `issuer`,
 or `sub` is a claim error, never a membership test: PyJWT
 (CVE-2024-53861) and joserfc (CVE-2026-75509) were both caught by looser
 matching. A nested JWT (`cty: "JWT"`) is unwrapped one level, with its own
-`algorithms`; deeper nesting fails.
+`algorithms`; deeper nesting fails. An encrypted-only JWT, a JWE carrying
+the claims set itself, is accepted only with symmetric key management
+(`dir`, `A*KW`, `A*GCMKW`, `PBES2-*`): with RSA or ECDH key management
+anyone holding the recipient's public key can make one, so its claims
+would be unauthenticated. Such a token is refused with
+`zujose_policy_error` before decryption, and there is no flag to accept
+it (2026-11-03, #34).
 
 ### 8.6 JWE
 
