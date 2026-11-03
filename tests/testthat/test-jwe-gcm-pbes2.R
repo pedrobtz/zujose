@@ -392,3 +392,25 @@ test_that("a dir key may name its content encryption, and only that one", {
     class = "zujose_policy_error"
   )
 })
+
+test_that("limits$keys caps the key attempts across all recipients", {
+  # Each recipient alone is within limits$keys, but together they are not:
+  # without a cap, a token with many PBES2 recipients costs one PBKDF2 run
+  # each (#37). The refusal comes before any key is derived.
+  password <- jwk_oct(charToRaw("correct horse"))
+  recipients <- lapply(1:3, function(i) {
+    jwe_recipient(password, "PBES2-HS256+A128KW", header = list(p2c = 1000L))
+  })
+  token <- jwe_encrypt("x", recipients, format = "general")
+  local_mocked_bindings(pbes2_kek = function(...) stop("derived a key"))
+  expect_error(
+    jwe_decrypt(
+      token,
+      password,
+      "PBES2-HS256+A128KW",
+      "A128CBC-HS256",
+      limits = jose_limits(keys = 2)
+    ),
+    class = "zujose_key_error"
+  )
+})
