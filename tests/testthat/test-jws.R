@@ -496,3 +496,31 @@ test_that("jwk, x5c, jku and x5u in a header are never used as keys", {
     )
   }
 })
+
+test_that("b64 and crit are set through the b64 argument, not a header", {
+  # A b64 member the payload encoding does not follow would verify as the
+  # wrong bytes (#72).
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  for (header in list(
+    list(b64 = FALSE, crit = list("b64")),
+    list(b64 = FALSE),
+    list(b64 = TRUE),
+    list(crit = list("b64")),
+    list(crit = list("exp"), exp = 1)
+  )) {
+    expect_error(
+      jws_sign("x", key, header = header),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_sign("x", key, unprotected = header, format = "flattened"),
+      class = "zujose_argument_error"
+    )
+  }
+  # The b64 argument still writes RFC 7797 correctly.
+  token <- jws_sign("{\"a\":1}", key, b64 = FALSE, detached = TRUE)
+  expect_identical(
+    rawToChar(jws_verify(token, key, "HS256", payload = "{\"a\":1}")$payload),
+    "{\"a\":1}"
+  )
+})
