@@ -24,6 +24,21 @@ a detached payload.
 \item \code{claims}: the payload parsed as a list when it is a JSON object, as in
 a JWT; otherwise \code{NULL}.
 }
+
+A JWS also has, one element per signature:
+\itemize{
+\item \code{signatures}: each signature, as a raw vector.
+\item \code{signing_input}: the bytes each signature covers, as a raw vector;
+\code{NULL} for a detached payload.
+}
+
+A JWE also has:
+\itemize{
+\item \code{encrypted_keys}: one encrypted key per recipient, as a raw vector,
+empty for \code{dir} and \code{ECDH-ES}.
+\item \code{iv}, \code{ciphertext} and \code{tag}: raw vectors.
+\item \code{aad}: the additional authenticated data as a raw vector, or \code{NULL}.
+}
 }
 \description{
 \code{jose_peek()} parses a JWS or JWE, in any serialization, and returns its

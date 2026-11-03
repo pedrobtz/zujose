@@ -7,8 +7,10 @@
   inheriting from `zujose_error` (`?zujose_error`).
 
 * `jose_peek()` reads a JWS or JWE in the compact, flattened or general
-  JSON serialization, without verifying it, and returns its headers and,
-  for a JWS, its payload and claims.
+  JSON serialization, without verifying it, and returns every part
+  decoded: its headers; for a JWS, its payload, claims, signatures and
+  signing inputs; for a JWE, its encrypted keys, IV, ciphertext, tag and
+  AAD.
 
 * `jose_limits()` sets the resource limits every token is checked against
   before anything is decoded.

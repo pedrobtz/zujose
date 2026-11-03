@@ -349,7 +349,8 @@ cl <- check(jwt)                         # same checks, every call
 ### 7.6 Inspection and limits
 
 ```r
-jose_peek(tok)       # headers, and payload and claims for a JWS; unverified
+jose_peek(tok)       # every part decoded: headers, payload, claims, signatures
+                     # or encrypted keys, IV, ciphertext, tag, AAD; unverified
 jose_limits(token = 2^20, header = 2^14, payload = 2^20, signatures = 16,
             recipients = 16, keys = 16, p2c = 600000)
 zujose_info()         # data frame: algorithm, kind, available, zucrypt needed
