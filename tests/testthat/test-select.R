@@ -1,8 +1,8 @@
 test_that("a key set is narrowed by kid, then by algorithm", {
-  set <- jose_keyset(
-    jose_key_oct(as.raw(1), kid = "a"),
-    jose_key_oct(as.raw(2), kid = "b"),
-    as_jose_key(rfc7520_key(3))
+  set <- jwk_set(
+    jwk_oct(as.raw(1), kid = "a"),
+    jwk_oct(as.raw(2), kid = "b"),
+    as_jwk(rfc7520_key(3))
   )
   picked <- resolve_keys(
     set,
@@ -22,12 +22,12 @@ test_that("a resolver that returns a key set selects by kid", {
   seen <- NULL
   resolver <- function(header) {
     seen <<- header
-    as_jose_keyset(rfc7520_jwks())
+    as_jwk_set(rfc7520_jwks())
   }
   header <- list(alg = "HS256", kid = "018c0ae5-4d9b-471b-bfd6-eef314bc7037")
   picked <- resolve_keys(resolver, header, "verify", jose_limits())
   expect_identical(seen, header)
-  expect_identical(picked, list(as_jose_key(rfc7520_key(5))))
+  expect_identical(picked, list(as_jwk(rfc7520_key(5))))
 })
 
 test_that("a resolver must return a key or key set", {
@@ -50,36 +50,36 @@ test_that("a single key that does not fit is a policy error", {
   verify <- function(key, alg = "HS256") {
     resolve_keys(key, list(alg = alg), "verify", jose_limits())
   }
-  expect_length(verify(jose_key_oct(as.raw(1))), 1L)
+  expect_length(verify(jwk_oct(as.raw(1))), 1L)
   # The wrong key type, algorithm, use or operations (design §8.2).
   expect_error(
-    verify(jose_key_oct(as.raw(1)), "RS256"),
+    verify(jwk_oct(as.raw(1)), "RS256"),
     class = "zujose_policy_error"
   )
   expect_error(
-    verify(jose_key_oct(as.raw(1)), "none"),
+    verify(jwk_oct(as.raw(1)), "none"),
     class = "zujose_policy_error"
   )
   expect_error(
-    verify(jose_key_oct(as.raw(1), alg = "HS512")),
+    verify(jwk_oct(as.raw(1), alg = "HS512")),
     class = "zujose_policy_error"
   )
   expect_error(
-    verify(jose_key_oct(as.raw(1), use = "enc")),
+    verify(jwk_oct(as.raw(1), use = "enc")),
     class = "zujose_policy_error"
   )
   expect_error(
-    verify(jose_key_oct(as.raw(1), key_ops = "sign")),
+    verify(jwk_oct(as.raw(1), key_ops = "sign")),
     class = "zujose_policy_error"
   )
   expect_length(
-    verify(jose_key_oct(as.raw(1), key_ops = c("sign", "verify"))),
+    verify(jwk_oct(as.raw(1), key_ops = c("sign", "verify"))),
     1L
   )
 })
 
 test_that("a single key is used whatever kid the token names", {
-  key <- jose_key_oct(as.raw(1), kid = "mine")
+  key <- jwk_oct(as.raw(1), kid = "mine")
   picked <- resolve_keys(
     key,
     list(alg = "HS256", kid = "other"),
@@ -90,13 +90,13 @@ test_that("a single key is used whatever kid the token names", {
 })
 
 test_that("no fitting key in a set is a key error", {
-  set <- jose_keyset(jose_key_oct(as.raw(1), kid = "a"))
+  set <- jwk_set(jwk_oct(as.raw(1), kid = "a"))
   expect_error(
     resolve_keys(set, list(alg = "HS256", kid = "b"), "verify", jose_limits()),
     class = "zujose_key_error"
   )
   expect_error(
-    resolve_keys(jose_keyset(), list(alg = "HS256"), "verify", jose_limits()),
+    resolve_keys(jwk_set(), list(alg = "HS256"), "verify", jose_limits()),
     class = "zujose_key_error"
   )
 })
@@ -107,7 +107,7 @@ test_that("keys zujose cannot use yet raise zujose_unsupported_error", {
   local_mocked_bindings(zucrypt_provides = function(version, installed) {
     version != "0.5.0"
   })
-  set <- as_jose_keyset(rfc7520_jwks())
+  set <- as_jwk_set(rfc7520_jwks())
   err <- expect_error(
     resolve_keys(
       set,
@@ -121,7 +121,7 @@ test_that("keys zujose cannot use yet raise zujose_unsupported_error", {
 })
 
 test_that("more fitting keys than limits$keys is a key error", {
-  set <- do.call(jose_keyset, lapply(1:3, function(i) jose_key_oct(as.raw(i))))
+  set <- do.call(jwk_set, lapply(1:3, function(i) jwk_oct(as.raw(i))))
   expect_length(
     resolve_keys(set, list(alg = "HS256"), "verify", jose_limits(keys = 3)),
     3L

@@ -20,8 +20,10 @@ The specification is [`.agents/design.md`](.agents/design.md), adopted from
 It outranks this file. The package was scaffolded as `zujwt` and renamed
 back to the RFC's name, `zujose`, on 2026-11-03, before any release:
 condition classes are `zujose_*` and the information function is
-`zujose_info()`. The `jose_` prefix on public functions names the JOSE
-standards, not the package.
+`zujose_info()`. Public functions are named after the object they work
+on: `jwt_*`, `jws_*`, `jwe_*` and `jwk_*` (renamed from one `jose_`
+prefix on 2026-11-03, design §7.1). `jose_peek()` and `jose_limits()` keep
+`jose_` because they apply to any JOSE object.
 
 ## Current state
 

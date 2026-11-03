@@ -212,9 +212,16 @@ and closures for reuse.*
 
 ### 7.1 Conventions
 
-- **One prefix, `jose_`.** It collides with nothing in `jose` (`jwt_*`,
-  `jwk_*`, `base64url_*`) or `httr2`. Package-level helpers take the
-  package name: `zujose_info()`.
+- **Named after the object.** `jwt_*` for JSON Web Tokens, `jws_*` for
+  signatures, `jwe_*` for encryption and `jwk_*` for keys and key sets.
+  Functions that apply to any JOSE object take `jose_` (`jose_peek()`,
+  `jose_limits()`), and package-level helpers take the package name
+  (`zujose_info()`). No name equals one of `jose`'s exports (`jwt_claim`,
+  `jwt_encode_hmac`, `jwt_decode_sig`, `jwt_split`, `jwk_read`,
+  `jwk_write`, ...), which is why a key is written by `jwk_json()`.
+  Classes follow the functions: `jwk`, `jwk_set`, `jws_verified`,
+  `jwe_decrypted`, `jwt_claims`. (2026-11-03: replaces one `jose_` prefix
+  on every function, before any release.)
 - **Data first**, so calls chain with `|>`: the token, payload or claims
   is the first argument, the key the second.
 - **Types at the boundary.** Tokens and JWK text are character scalars.
@@ -235,31 +242,31 @@ and closures for reuse.*
 ### 7.2 Keys and key sets
 
 ```r
-key <- jose_key_oct(secret, alg = "HS256", kid = NULL, use = NULL,
+key <- jwk_oct(secret, alg = "HS256", kid = NULL, use = NULL,
                     key_ops = NULL)
-key <- jose_key_generate("oct", size = 256, alg = "HS256")     # Stage 6
-key <- jose_key_generate("RSA", size = 2048, alg = "RS256")    # Stage 8
-key <- jose_key_generate("EC", crv = "P-256", alg = "ES256")   # Stage 9
-key <- as_jose_key(x)       # JWK text, a parsed JWK list, or PEM (Stage 8)
-key <- jose_with_kid(key)   # kid defaults to the RFC 7638 thumbprint
+key <- jwk_generate("oct", size = 256, alg = "HS256")     # Stage 6
+key <- jwk_generate("RSA", size = 2048, alg = "RS256")    # Stage 8
+key <- jwk_generate("EC", crv = "P-256", alg = "ES256")   # Stage 9
+key <- as_jwk(x)       # JWK text, a parsed JWK list, or PEM (Stage 8)
+key <- jwk_with_kid(key)   # kid defaults to the RFC 7638 thumbprint
 
-ks  <- jose_keyset(key1, key2)
-ks  <- as_jose_keyset(jwks) # JWKS text or a parsed list
+ks  <- jwk_set(key1, key2)
+ks  <- as_jwk_set(jwks) # JWKS text or a parsed list
 ks[["k1"]]                  # by kid; c(), length() and [ work too
 
-jose_public(key_or_set)     # public part; drops oct keys from a set
-jose_jwk(key_or_set, private = FALSE)   # JWK or JWKS text
-jose_pem(key, private = FALSE)          # Stage 8
-jose_thumbprint(key, hash = "sha256", uri = FALSE)  # RFC 7638, RFC 9278
+jwk_public(key_or_set)     # public part; drops oct keys from a set
+jwk_json(key_or_set, private = FALSE)   # JWK or JWKS text
+jwk_pem(key, private = FALSE)          # Stage 8
+jwk_thumbprint(key, hash = "sha256", uri = FALSE)  # RFC 7638, RFC 9278
 ```
 
-`as_jose_keyset()` keeps keys of a type the installed `zucrypt` cannot use
+`as_jwk_set()` keeps keys of a type the installed `zucrypt` cannot use
 as unsupported entries rather than failing, so a provider's JWKS loads
 before the matching stage lands. Using such a key raises
 `zujose_unsupported_error`.
 
-Wherever a function takes a key to check a token, it accepts a `jose_key`,
-a `jose_keyset`, or a **resolver**: `function(header)` returning a key or
+Wherever a function takes a key to check a token, it accepts a `jwk`,
+a `jwk_set`, or a **resolver**: `function(header)` returning a key or
 key set. The resolver is the explicit way to choose keys per issuer, or to
 honour `jku` against an allow-list the caller writes. `zujose` itself still
 never fetches anything (D3). The getting-started article shows a JWKS
@@ -268,37 +275,37 @@ cache with `httr2` behind a resolver.
 ### 7.3 JWS
 
 ```r
-tok <- jose_sign(payload, key, alg = NULL, header = NULL,
+tok <- jws_sign(payload, key, alg = NULL, header = NULL,
                  unprotected = NULL,
                  format = c("compact", "flattened", "general"),
                  b64 = TRUE, detached = FALSE)
 
-tok <- jose_sign(payload, list(jose_signer(k1, "RS256"),
-                               jose_signer(k2, "ES256")),
+tok <- jws_sign(payload, list(jws_signer(k1, "RS256"),
+                               jws_signer(k2, "ES256")),
                  format = "general")
 
-v <- jose_verify(tok, key, algorithms, payload = NULL,
+v <- jws_verify(tok, key, algorithms, payload = NULL,
                  require = c("all", "any"), limits = jose_limits())
 v$payload; v$header; v$kid; v$alg
 ```
 
 `alg = NULL` takes the key's own `alg` and fails when it has none. `header`
 is the protected header, `unprotected` the per-signature one. `payload` in
-`jose_verify()` supplies a detached payload. `b64 = FALSE` writes RFC 7797
-with `crit: ["b64"]`. The result has class `jose_verified`.
+`jws_verify()` supplies a detached payload. `b64 = FALSE` writes RFC 7797
+with `crit: ["b64"]`. The result has class `jws_verified`.
 
 ### 7.4 JWE
 
 ```r
-tok <- jose_encrypt(plaintext, key, alg = NULL, enc = "A128CBC-HS256",
+tok <- jwe_encrypt(plaintext, key, alg = NULL, enc = "A128CBC-HS256",
                     header = NULL, unprotected = NULL, aad = NULL,
                     format = c("compact", "flattened", "general"))
 
-tok <- jose_encrypt(plaintext, list(jose_recipient(k1, "RSA-OAEP-256"),
-                                    jose_recipient(k2, "ECDH-ES+A256KW")),
+tok <- jwe_encrypt(plaintext, list(jwe_recipient(k1, "RSA-OAEP-256"),
+                                    jwe_recipient(k2, "ECDH-ES+A256KW")),
                     enc = "A256GCM", format = "general")
 
-d <- jose_decrypt(tok, key, algorithms, encryptions,
+d <- jwe_decrypt(tok, key, algorithms, encryptions,
                   limits = jose_limits())
 d$plaintext; d$header; d$kid; d$alg; d$enc
 ```
@@ -306,24 +313,24 @@ d$plaintext; d$header; d$kid; d$alg; d$enc
 `enc` defaults to `A128CBC-HS256`, the content encryption RFC 7518 §5.1
 marks required, and the one available from Stage 5. PBES2 parameters go in
 `header` (`p2c`); the salt is generated. The result has class
-`jose_decrypted`.
+`jwe_decrypted`.
 
 ### 7.5 JWT
 
 ```r
-jwt <- jose_jwt_encode(claims, key, alg = NULL,
+jwt <- jwt_encode(claims, key, alg = NULL,
                        header = list(typ = "JWT"),
                        expires_in = NULL, not_before = NULL,
                        issued_at = TRUE, jti = FALSE)
 
-cl <- jose_jwt_decode(jwt, key, algorithms,
+cl <- jwt_decode(jwt, key, algorithms,
                       audience = NULL, issuer = NULL, subject = NULL,
                       type = "JWT", required = "exp", claims = list(),
                       validate = NULL, max_age = NULL, leeway = 60,
                       now = Sys.time(), decrypt = NULL,
                       limits = jose_limits())
 
-check <- jose_jwt_decoder(key = jwks, algorithms = "RS256",
+check <- jwt_decoder(key = jwks, algorithms = "RS256",
                           audience = "my-api",
                           issuer = "https://issuer.example")
 cl <- check(jwt)                         # same checks, every call
@@ -337,12 +344,12 @@ cl <- check(jwt)                         # same checks, every call
   hold `POSIXct` values for `exp`, `nbf` and `iat`. `jti = TRUE` adds a
   random identifier (Stage 6).
 - An encrypted JWT is composed rather than flagged:
-  `jose_jwt_encode(...) |> jose_encrypt(k2, header = list(cty = "JWT"))`.
-  `jose_jwt_decode()` accepts one only when given
-  `decrypt = jose_decryption(key, algorithms, encryptions)`. Without it a
+  `jwt_encode(...) |> jwe_encrypt(k2, header = list(cty = "JWT"))`.
+  `jwt_decode()` accepts one only when given
+  `decrypt = jwe_decryption(key, algorithms, encryptions)`. Without it a
   JWE token is a policy error, which closes the JWS/JWE confusion of
   jwcrypto's CVE-2022-3102.
-- The result has class `jose_claims`: the claims as a named list, with
+- The result has class `jwt_claims`: the claims as a named list, with
   `exp`, `nbf` and `iat` as `POSIXct` and the verified header as an
   attribute.
 
@@ -364,8 +371,8 @@ Each `zujose` feature, and the libraries it matches:
   PyJWT 2.
 - **Key, key set or resolver** (§7.2): joserfc's callable, golang-jwt's
   `Keyfunc`, jwx's `KeyProvider`.
-- **Multiple signers or recipients** (`jose_signer()`,
-  `jose_recipient()`): jwx's repeated `WithKey`, go-jose's
+- **Multiple signers or recipients** (`jws_signer()`,
+  `jwe_recipient()`): jwx's repeated `WithKey`, go-jose's
   `NewMultiSigner`.
 - **Detached and unencoded payloads** (`detached`, `b64`, `payload`): jwx
   `WithDetachedPayload`, go-jose `DetachedVerify`.
@@ -373,14 +380,14 @@ Each `zujose` feature, and the libraries it matches:
   `WithClaimValue` and `WithValidator`, joserfc's claims registry.
 - **Subject, maximum age, future `iat`** (`subject`, `max_age`, always
   on): golang-jwt `WithSubject` and `WithIssuedAt`, jwx `WithMaxDelta`.
-- **Reusable policy** (`jose_jwt_decoder()`): golang-jwt `NewParser`,
+- **Reusable policy** (`jwt_decoder()`): golang-jwt `NewParser`,
   joserfc registries.
 - **Unverified inspection** (`jose_peek()`): PyJWT
   `get_unverified_header`, jwx `ParseInsecure`.
-- **Key generation and public part** (`jose_key_generate()`,
-  `jose_public()`): joserfc `generate_key`, go-jose `Public()`.
-- **Thumbprint, thumbprint URI, kid** (`jose_thumbprint()`,
-  `jose_with_kid()`): joserfc `thumbprint_uri` and `ensure_kid`.
+- **Key generation and public part** (`jwk_generate()`,
+  `jwk_public()`): joserfc `generate_key`, go-jose `Public()`.
+- **Thumbprint, thumbprint URI, kid** (`jwk_thumbprint()`,
+  `jwk_with_kid()`): joserfc `thumbprint_uri` and `ensure_kid`.
 
 Left out on purpose: JWKS fetching and caching (PyJWT `PyJWKClient`, jwx
 `jwk.Cache`), replaced by a resolver recipe (D3); and `zip`, `none`,
@@ -416,7 +423,7 @@ EdDSA and ES256K (§3).
 
 ### 8.3 Keys
 
-A `jose_key` is an R list of class `jose_key` with `kty`, the key
+A `jwk` is an R list of class `jwk` with `kty`, the key
 material as raw or `zucrypt` key objects, and optional `kid`, `alg`,
 `use` and `key_ops`. Printing never shows secret members. Public RSA and
 EC JWKs convert to `zucrypt` key objects through `crypt_bignum()` and
@@ -440,7 +447,7 @@ the payload unencoded when the protected header carries `b64: false`
 `crypt_equal()`. ECDSA signatures are raw `r || s` of fixed length per
 curve (RFC 7518 §3.4), which `zucrypt` Stage 16 says its backend
 produces natively. PSS uses a salt the length of the hash. In a general
-JSON serialization, `jose_verify()` succeeds only when every signature
+JSON serialization, `jws_verify()` succeeds only when every signature
 verifies unless `require = "any"` is given.
 
 ### 8.5 JWT claims
@@ -544,7 +551,7 @@ when the named `zucrypt` stage has merged on its `main`.
 - **Stage 1: codec.** Base64url, compact and JSON serializations, header
   rules of section 8.1, `jose_peek()`, limits. Exit: every RFC 7520
   token parses; the malformed corpus fails with `zujose_parse_error`.
-- **Stage 2: `oct` keys and key sets.** `jose_key()`, JWK and JWKS read
+- **Stage 2: `oct` keys and key sets.** `jwk()`, JWK and JWKS read
   and write, RFC 7638 thumbprints, `kid` selection. Exit: RFC 7638 and
   RFC 7520 §3.5 vectors.
 - **Stage 3: JWS with `HS*`.** Sign, verify, all three serializations,
@@ -600,7 +607,8 @@ symmetric-only release and waiting (open question 2).
 - **D5.** All JWE decryption failures share one class and message.
 - **D6.** Base64url decoding is strict and canonical, through `zuutf`'s
   strict mode after local alphabet and length checks.
-- **D7.** One `jose_` prefix and no `jose`-compatible mirror layer in
+- **D7.** Functions are named after their object (`jwt_*`, `jws_*`,
+  `jwe_*`, `jwk_*`; §7.1), with no `jose`-compatible mirror layer in
   0.1.0; a migration article instead.
 - **D8.** The release waits for the gate of section 11.2; Stages 0–5 are
   built now on `zucrypt` 0.1.0 so that the JOSE layer is done and tested
@@ -608,13 +616,13 @@ symmetric-only release and waiting (open question 2).
 - **D9.** Every function that checks a token takes a key, a key set or a
   resolver `function(header)`. Resolvers are how callers opt into
   per-issuer keys or `jku`; `zujose` never does either itself.
-- **D10.** Claim checks happen inside `jose_jwt_decode()`, never as a
+- **D10.** Claim checks happen inside `jwt_decode()`, never as a
   second step a caller can forget (joserfc's split is the counterexample).
   `required` defaults to `"exp"`.
 - **D11.** Unverified reading is one separately named function,
   `jose_peek()`; no `verify` or `verify_*` flags exist.
 - **D12.** A JWE is accepted where a JWT is expected only with an explicit
-  `decrypt = jose_decryption(...)`.
+  `decrypt = jwe_decryption(...)`.
 
 ## 13. Open questions
 

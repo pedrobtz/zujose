@@ -51,9 +51,9 @@ oracle_tokens <- function() {
 oracle_key <- function(name, public = TRUE) {
   switch(
     name,
-    hmac = jose_key_oct(as.raw(1:64)),
-    "hmac-wrong" = jose_key_oct(as.raw(64:1)),
-    as_jose_key(oracle_pem(name, public = public))
+    hmac = jwk_oct(as.raw(1:64)),
+    "hmac-wrong" = jwk_oct(as.raw(64:1)),
+    as_jwk(oracle_pem(name, public = public))
   )
 }
 

@@ -15,25 +15,25 @@ thumbprint_hashes <- c(
 
 #' JWK thumbprint
 #'
-#' `jose_thumbprint()` computes a key's RFC 7638 thumbprint: the hash of
+#' `jwk_thumbprint()` computes a key's RFC 7638 thumbprint: the hash of
 #' its required members, in lexicographic order, as JSON without
 #' whitespace. With `uri = TRUE` it returns the RFC 9278 thumbprint URI.
 #'
 #' The thumbprint of a private key equals that of its public key, since
 #' private members are never part of it. It is a common `kid`; see
-#' [jose_with_kid()].
+#' [jwk_with_kid()].
 #'
-#' @param key A `jose_key`.
+#' @param key A `jwk`.
 #' @param hash `"sha256"`, `"sha384"` or `"sha512"`.
 #' @param uri Whether to return a `urn:ietf:params:oauth:jwk-thumbprint`
 #'   URI rather than the bare Base64url value.
 #' @returns A single string.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32))
-#' jose_thumbprint(key)
-#' jose_thumbprint(key, uri = TRUE)
-jose_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
+#' key <- jwk_oct(as.raw(1:32))
+#' jwk_thumbprint(key)
+#' jwk_thumbprint(key, uri = TRUE)
+jwk_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   call <- sys.call()
   key <- check_key(key, call)
   if (!is_string(hash) || !hash %in% names(thumbprint_hashes)) {

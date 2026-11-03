@@ -8,7 +8,7 @@ test_that("zujose verifies every JWT PyJWT signs", {
     if (row$key == "hmac-wrong") {
       next
     }
-    claims <- jose_jwt_decode(
+    claims <- jwt_decode(
       row$token,
       oracle_key(row$key),
       row$alg,
@@ -29,7 +29,12 @@ test_that("zujose signs exactly as PyJWT does for HS* and RS*", {
     row <- tokens[i, ]
     parts <- strsplit(row$token, ".", fixed = TRUE)[[1]]
     input <- charToRaw(paste0(parts[[1]], ".", parts[[2]]))
-    ours <- jws_sign(row$alg, oracle_key(row$key, public = FALSE), input, NULL)
+    ours <- jws_sign_bytes(
+      row$alg,
+      oracle_key(row$key, public = FALSE),
+      input,
+      NULL
+    )
     expect_identical(b64url_encode(ours), parts[[3]], info = row$id)
   }
 })
@@ -37,7 +42,7 @@ test_that("zujose signs exactly as PyJWT does for HS* and RS*", {
 test_that("a PyJWT token signed with the wrong secret is refused", {
   row <- oracle_tokens()[oracle_tokens()$id == "hs256-wrong", ]
   expect_error(
-    jose_jwt_decode(row$token, oracle_key("hmac"), "HS256", now = oracle_now()),
+    jwt_decode(row$token, oracle_key("hmac"), "HS256", now = oracle_now()),
     class = "zujose_signature_error"
   )
 })
@@ -50,7 +55,7 @@ test_that("a PyJWT token is refused under an algorithm it was not given", {
     family <- substr(row$alg, 1L, 2L)
     other <- setdiff(paste0(family, c("256", "384", "512")), row$alg)
     expect_error(
-      jose_jwt_decode(
+      jwt_decode(
         row$token,
         oracle_key(row$key),
         other,

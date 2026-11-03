@@ -13,11 +13,11 @@ Start with the Get started article, at
 \url{https://pedrobtz.github.io/zujose/articles/zujose.html}. The main
 functions are:
 \itemize{
-\item JWT: \code{\link[=jose_jwt_encode]{jose_jwt_encode()}}, \code{\link[=jose_jwt_decode]{jose_jwt_decode()}}, \code{\link[=jose_jwt_decoder]{jose_jwt_decoder()}}.
-\item JWS: \code{\link[=jose_sign]{jose_sign()}}, \code{\link[=jose_verify]{jose_verify()}}.
-\item JWE: \code{\link[=jose_encrypt]{jose_encrypt()}}, \code{\link[=jose_decrypt]{jose_decrypt()}}.
-\item Keys: \code{\link[=jose_key_oct]{jose_key_oct()}}, \code{\link[=jose_key_generate]{jose_key_generate()}}, \code{\link[=as_jose_key]{as_jose_key()}},
-\code{\link[=jose_keyset]{jose_keyset()}}, \code{\link[=as_jose_keyset]{as_jose_keyset()}}, \code{\link[=jose_jwk]{jose_jwk()}}, \code{\link[=jose_pem]{jose_pem()}}.
+\item JWT: \code{\link[=jwt_encode]{jwt_encode()}}, \code{\link[=jwt_decode]{jwt_decode()}}, \code{\link[=jwt_decoder]{jwt_decoder()}}.
+\item JWS: \code{\link[=jws_sign]{jws_sign()}}, \code{\link[=jws_verify]{jws_verify()}}.
+\item JWE: \code{\link[=jwe_encrypt]{jwe_encrypt()}}, \code{\link[=jwe_decrypt]{jwe_decrypt()}}.
+\item Keys: \code{\link[=jwk_oct]{jwk_oct()}}, \code{\link[=jwk_generate]{jwk_generate()}}, \code{\link[=as_jwk]{as_jwk()}},
+\code{\link[=jwk_set]{jwk_set()}}, \code{\link[=as_jwk_set]{as_jwk_set()}}, \code{\link[=jwk_json]{jwk_json()}}, \code{\link[=jwk_pem]{jwk_pem()}}.
 \item Inspection: \code{\link[=jose_peek]{jose_peek()}}, \code{\link[=zujose_info]{zujose_info()}}.
 }
 
@@ -37,9 +37,9 @@ are needed.
 }
 
 \examples{
-key <- jose_key_generate("oct", alg = "HS256")
-jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = 3600)
-jose_jwt_decode(jwt, key, algorithms = "HS256")$sub
+key <- jwk_generate("oct", alg = "HS256")
+jwt <- jwt_encode(list(sub = "user-1"), key, expires_in = 3600)
+jwt_decode(jwt, key, algorithms = "HS256")$sub
 }
 \seealso{
 Useful links:

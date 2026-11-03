@@ -41,6 +41,12 @@ development version.
 The two optional rows don't block anything. `zujose` composes key wrap and
 padding in R until a primitive exists.
 
+
+**Renamed functions, 2026-11-03.** After Stage 11 the public functions
+were renamed from one `jose_` prefix to `jwt_*`, `jws_*`, `jwe_*` and
+`jwk_*` (design §7.1). The finished stages below keep the names they were
+built with.
+
 ## Stages
 
 | Stage | Title | CI | Issue | Pull request | Done |

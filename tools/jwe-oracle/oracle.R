@@ -69,7 +69,7 @@ write_keys <- function(dir) {
         A192GCM = 192,
         A256GCM = 256
       )[[enc]]
-      jose_key_generate("oct", size = size, kid = paste0("dir-", enc))
+      jwk_generate("oct", size = size, kid = paste0("dir-", enc))
     }),
     # No `alg` on the keys: one A*KW key serves every `enc`.
     lapply(oct_algs, function(alg) {
@@ -78,28 +78,28 @@ write_keys <- function(dir) {
       } else {
         as.numeric(sub("^A([0-9]+).*", "\\1", alg))
       }
-      jose_key_generate("oct", size = size, kid = alg)
+      jwk_generate("oct", size = size, kid = alg)
     }),
-    list(jose_key_generate("RSA", kid = "rsa")),
+    list(jwk_generate("RSA", kid = "rsa")),
     lapply(names(curves), function(kid) {
-      jose_key_generate("EC", crv = curves[[kid]], kid = kid)
+      jwk_generate("EC", crv = curves[[kid]], kid = kid)
     }),
-    list(jose_key_generate("OKP", crv = "X25519", kid = "x25519"))
+    list(jwk_generate("OKP", crv = "X25519", kid = "x25519"))
   )
   writeLines(
-    jose_jwk(do.call(jose_keyset, keys), private = TRUE),
+    jwk_json(do.call(jwk_set, keys), private = TRUE),
     file.path(dir, "keys.jwks")
   )
   cat(sprintf("oracle.R: wrote %d keys\n", length(keys)))
 }
 
 read_keys <- function(dir) {
-  as_jose_keyset(paste(readLines(file.path(dir, "keys.jwks")), collapse = ""))
+  as_jwk_set(paste(readLines(file.path(dir, "keys.jwks")), collapse = ""))
 }
 
 # Encrypt to the public half, as a sender would; an oct key has none.
 recipient_key <- function(key) {
-  if (key$kty == "oct") key else jose_public(key)
+  if (key$kty == "oct") key else jwk_public(key)
 }
 
 encrypt_all <- function(dir) {
@@ -113,7 +113,7 @@ encrypt_all <- function(dir) {
         # jwcrypto refuses more than 16384 iterations.
         header$p2c <- 10000L
       }
-      jose_encrypt(
+      jwe_encrypt(
         plaintext,
         recipient_key(keys[[rows$kid[[i]]]]),
         alg = rows$alg[[i]],
@@ -141,7 +141,7 @@ decrypt_all <- function(dir) {
     quote = ""
   )
   for (i in seq_len(nrow(rows))) {
-    out <- jose_decrypt(
+    out <- jwe_decrypt(
       rows$token[[i]],
       keys,
       algorithms = rows$alg[[i]],

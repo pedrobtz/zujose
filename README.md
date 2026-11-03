@@ -27,9 +27,9 @@ practices.
 - **You name the algorithms.** Every function that checks a token takes
   an `algorithms` argument with no default, and the key must agree with
   it. `none` does not exist.
-- **Claims are checked in the same call.** `jose_jwt_decode()` verifies
-  the signature and then `exp`, `nbf`, `aud`, `iss` and whatever else
-  you ask for. There is no second step to forget.
+- **Claims are checked in the same call.** `jwt_decode()` verifies the
+  signature and then `exp`, `nbf`, `aud`, `iss` and whatever else you
+  ask for. There is no second step to forget.
 - **Keys come only from you.** A key in a token’s header is never used,
   and zujose never fetches anything.
 - **Every algorithm of RFC 7518 but `none`**: HMAC, RSA, RSA-PSS and
@@ -60,9 +60,9 @@ An API that issues its own tokens needs a key. This one is a random
 256-bit HMAC key, meant for `HS256` only:
 
 ``` r
-key <- jose_key_generate("oct", alg = "HS256", kid = "api-2026")
+key <- jwk_generate("oct", alg = "HS256", kid = "api-2026")
 key
-#> <jose_key> oct, 256 bits
+#> <jwk> oct, 256 bits
 #>   kid "api-2026"
 #>   alg HS256
 #>   private: yes (not shown)
@@ -71,31 +71,31 @@ key
 Sign a set of claims as a JWT that expires in an hour:
 
 ``` r
-jwt <- jose_jwt_encode(
+jwt <- jwt_encode(
   list(sub = "user-17", aud = "orders-api"),
   key,
   expires_in = 3600
 )
 jwt
-#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcwODg0NiwiaWF0IjoxNzkzNzA1MjQ2fQ.T8qCVj7fHrCFEQySv7zBV2fiSzBciJJ-_Oi2whX048g"
+#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcxNDAzMCwiaWF0IjoxNzkzNzEwNDMwfQ.g2c23WtUjbTMFTq3nA_Ogp2Zq4KNupo27wOi1N8EL1Y"
 ```
 
 Checking it names the algorithm and the audience. The result is the
 claims, with the times as `POSIXct`:
 
 ``` r
-claims <- jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
+claims <- jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
 claims$sub
 #> [1] "user-17"
 claims$exp
-#> [1] "2026-11-03 12:27:26 UTC"
+#> [1] "2026-11-03 13:53:50 UTC"
 ```
 
 A token meant for another service is refused:
 
 ``` r
-jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api")
-#> Error in `jose_jwt_decode()`:
+jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api")
+#> Error in `jwt_decode()`:
 #> ! The token is not for this `audience`.
 ```
 
@@ -104,7 +104,7 @@ reading the message:
 
 ``` r
 tryCatch(
-  jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api"),
+  jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api"),
   zujose_audience_error = function(e) "403: wrong audience"
 )
 #> [1] "403: wrong audience"
@@ -115,15 +115,16 @@ algorithms it is for. This one wraps the content key of a JWE with AES
 key wrap, and the content is encrypted with AES-GCM:
 
 ``` r
-kek <- jose_key_generate("oct", alg = "A256KW")
-jwe <- jose_encrypt("account 42: balance 100", kek, enc = "A256GCM")
-rawToChar(jose_decrypt(jwe, kek, "A256KW", "A256GCM")$plaintext)
+kek <- jwk_generate("oct", alg = "A256KW")
+jwe <- jwe_encrypt("account 42: balance 100", kek, enc = "A256GCM")
+rawToChar(jwe_decrypt(jwe, kek, "A256KW", "A256GCM")$plaintext)
 #> [1] "account 42: balance 100"
 ```
 
-Every function is prefixed `jose_`, the token or payload comes first and
-the key second, and a token is only ever read without being checked by
-`jose_peek()`, whose result says so when printed.
+Each function is named after the object it works on, `jwt_*`, `jws_*`,
+`jwe_*` or `jwk_*`; the token or payload comes first and the key second;
+and a token is only ever read without being checked by `jose_peek()`,
+whose result says so when printed.
 
 ## Learn more
 

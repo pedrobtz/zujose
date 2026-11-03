@@ -35,7 +35,7 @@ practices.
 * **You name the algorithms.** Every function that checks a token takes an
   `algorithms` argument with no default, and the key must agree with it.
   `none` does not exist.
-* **Claims are checked in the same call.** `jose_jwt_decode()` verifies the
+* **Claims are checked in the same call.** `jwt_decode()` verifies the
   signature and then `exp`, `nbf`, `aud`, `iss` and whatever else you ask
   for. There is no second step to forget.
 * **Keys come only from you.** A key in a token's header is never used,
@@ -68,14 +68,14 @@ An API that issues its own tokens needs a key. This one is a random
 256-bit HMAC key, meant for `HS256` only:
 
 ```{r}
-key <- jose_key_generate("oct", alg = "HS256", kid = "api-2026")
+key <- jwk_generate("oct", alg = "HS256", kid = "api-2026")
 key
 ```
 
 Sign a set of claims as a JWT that expires in an hour:
 
 ```{r}
-jwt <- jose_jwt_encode(
+jwt <- jwt_encode(
   list(sub = "user-17", aud = "orders-api"),
   key,
   expires_in = 3600
@@ -87,7 +87,7 @@ Checking it names the algorithm and the audience. The result is the
 claims, with the times as `POSIXct`:
 
 ```{r}
-claims <- jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
+claims <- jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
 claims$sub
 claims$exp
 ```
@@ -95,7 +95,7 @@ claims$exp
 A token meant for another service is refused:
 
 ```{r, error = TRUE}
-jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api")
+jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api")
 ```
 
 Each failure has a class of its own, so code can catch one cause without
@@ -103,7 +103,7 @@ reading the message:
 
 ```{r}
 tryCatch(
-  jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api"),
+  jwt_decode(jwt, key, algorithms = "HS256", audience = "billing-api"),
   zujose_audience_error = function(e) "403: wrong audience"
 )
 ```
@@ -113,14 +113,15 @@ it is for. This one wraps the content key of a JWE with AES key wrap, and
 the content is encrypted with AES-GCM:
 
 ```{r}
-kek <- jose_key_generate("oct", alg = "A256KW")
-jwe <- jose_encrypt("account 42: balance 100", kek, enc = "A256GCM")
-rawToChar(jose_decrypt(jwe, kek, "A256KW", "A256GCM")$plaintext)
+kek <- jwk_generate("oct", alg = "A256KW")
+jwe <- jwe_encrypt("account 42: balance 100", kek, enc = "A256GCM")
+rawToChar(jwe_decrypt(jwe, kek, "A256KW", "A256GCM")$plaintext)
 ```
 
-Every function is prefixed `jose_`, the token or payload comes first and
-the key second, and a token is only ever read without being checked by
-`jose_peek()`, whose result says so when printed.
+Each function is named after the object it works on, `jwt_*`, `jws_*`,
+`jwe_*` or `jwk_*`; the token or payload comes first and the key second;
+and a token is only ever read without being checked by `jose_peek()`,
+whose result says so when printed.
 
 ## Learn more
 
