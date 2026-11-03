@@ -210,6 +210,17 @@ protected_header <- function(signer, b64, call) {
     )
   }
   header <- signer$header
+  # `b64` and `crit` describe how the payload is encoded, which the `b64`
+  # argument decides; zujose writes them itself (RFC 7797).
+  for (name in c("b64", "crit")) {
+    if (name %in% c(names(header), names(signer$unprotected))) {
+      abort_zujose(
+        "argument",
+        sprintf("Set `%s` through the `b64` argument, not a header.", name),
+        call = call
+      )
+    }
+  }
   if ("alg" %in% names(header) && !identical(header$alg, alg)) {
     abort_zujose("argument", "`header$alg` disagrees with `alg`.")
   }
