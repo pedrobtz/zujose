@@ -21,26 +21,26 @@ Start with the Get started article, at
 functions are:
 
 - JWT:
-  [`jose_jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_encode.md),
-  [`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md),
-  [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md).
+  [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md),
+  [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md),
+  [`jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jwt_decoder.md).
 
 - JWS:
-  [`jose_sign()`](https://pedrobtz.github.io/zujose/reference/jose_sign.md),
-  [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md).
+  [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md),
+  [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md).
 
 - JWE:
-  [`jose_encrypt()`](https://pedrobtz.github.io/zujose/reference/jose_encrypt.md),
-  [`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md).
+  [`jwe_encrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_encrypt.md),
+  [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md).
 
 - Keys:
-  [`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md),
-  [`jose_key_generate()`](https://pedrobtz.github.io/zujose/reference/jose_key_generate.md),
-  [`as_jose_key()`](https://pedrobtz.github.io/zujose/reference/as_jose_key.md),
-  [`jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md),
-  [`as_jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md),
-  [`jose_jwk()`](https://pedrobtz.github.io/zujose/reference/jose_jwk.md),
-  [`jose_pem()`](https://pedrobtz.github.io/zujose/reference/jose_pem.md).
+  [`jwk_oct()`](https://pedrobtz.github.io/zujose/reference/jwk_oct.md),
+  [`jwk_generate()`](https://pedrobtz.github.io/zujose/reference/jwk_generate.md),
+  [`as_jwk()`](https://pedrobtz.github.io/zujose/reference/as_jwk.md),
+  [`jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md),
+  [`as_jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md),
+  [`jwk_json()`](https://pedrobtz.github.io/zujose/reference/jwk_json.md),
+  [`jwk_pem()`](https://pedrobtz.github.io/zujose/reference/jwk_pem.md).
 
 - Inspection:
   [`jose_peek()`](https://pedrobtz.github.io/zujose/reference/jose_peek.md),
@@ -81,8 +81,8 @@ Authors:
 ## Examples
 
 ``` r
-key <- jose_key_generate("oct", alg = "HS256")
-jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = 3600)
-jose_jwt_decode(jwt, key, algorithms = "HS256")$sub
+key <- jwk_generate("oct", alg = "HS256")
+jwt <- jwt_encode(list(sub = "user-1"), key, expires_in = 3600)
+jwt_decode(jwt, key, algorithms = "HS256")$sub
 #> [1] "user-1"
 ```

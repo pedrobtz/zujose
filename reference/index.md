@@ -2,53 +2,53 @@
 
 ## JSON Web Tokens
 
-- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_encode.md)
+- [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md)
   : Encode a JWT
-- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
+- [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
   : Check a JWT and return its claims
-- [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md)
+- [`jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jwt_decoder.md)
   : A reusable JWT check
 
 ## Signatures (JWS)
 
-- [`jose_sign()`](https://pedrobtz.github.io/zujose/reference/jose_sign.md)
+- [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md)
   : Sign a payload as a JWS
-- [`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md)
+- [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md)
   : One signer of a multi-signature JWS
-- [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)
+- [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
   : Verify a JWS
 
 ## Encryption (JWE)
 
-- [`jose_encrypt()`](https://pedrobtz.github.io/zujose/reference/jose_encrypt.md)
+- [`jwe_encrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_encrypt.md)
   : Encrypt a payload as a JWE
-- [`jose_recipient()`](https://pedrobtz.github.io/zujose/reference/jose_recipient.md)
+- [`jwe_recipient()`](https://pedrobtz.github.io/zujose/reference/jwe_recipient.md)
   : One recipient of a multi-recipient JWE
-- [`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
+- [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
   : Decrypt a JWE
-- [`jose_decryption()`](https://pedrobtz.github.io/zujose/reference/jose_decryption.md)
+- [`jwe_decryption()`](https://pedrobtz.github.io/zujose/reference/jwe_decryption.md)
   : Accept an encrypted JWT
 
 ## Keys and key sets
 
-- [`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md)
+- [`jwk_oct()`](https://pedrobtz.github.io/zujose/reference/jwk_oct.md)
   : Make a symmetric key
-- [`jose_key_generate()`](https://pedrobtz.github.io/zujose/reference/jose_key_generate.md)
+- [`jwk_generate()`](https://pedrobtz.github.io/zujose/reference/jwk_generate.md)
   : Generate a random key
-- [`as_jose_key()`](https://pedrobtz.github.io/zujose/reference/as_jose_key.md)
-  : Read a JSON Web Key
-- [`jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md)
-  [`as_jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md)
+- [`as_jwk()`](https://pedrobtz.github.io/zujose/reference/as_jwk.md) :
+  Read a JSON Web Key
+- [`jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md)
+  [`as_jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md)
   : Key sets
-- [`jose_public()`](https://pedrobtz.github.io/zujose/reference/jose_public.md)
+- [`jwk_public()`](https://pedrobtz.github.io/zujose/reference/jwk_public.md)
   : The public part of a key or key set
-- [`jose_jwk()`](https://pedrobtz.github.io/zujose/reference/jose_jwk.md)
+- [`jwk_json()`](https://pedrobtz.github.io/zujose/reference/jwk_json.md)
   : Write a key or key set as JSON
-- [`jose_pem()`](https://pedrobtz.github.io/zujose/reference/jose_pem.md)
+- [`jwk_pem()`](https://pedrobtz.github.io/zujose/reference/jwk_pem.md)
   : Write a key as PEM
-- [`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md)
+- [`jwk_with_kid()`](https://pedrobtz.github.io/zujose/reference/jwk_with_kid.md)
   : Set a key's identifier
-- [`jose_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jose_thumbprint.md)
+- [`jwk_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jwk_thumbprint.md)
   : JWK thumbprint
 
 ## Inspection, limits and errors

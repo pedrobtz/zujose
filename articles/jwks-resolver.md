@@ -25,20 +25,20 @@ you allowed, and the signature must verify with it.
 
 ``` r
 
-current <- jose_key_generate("EC", crv = "P-256", alg = "ES256", kid = "2026-11")
-provider_keys <- jose_keyset(current)
+current <- jwk_generate("EC", crv = "P-256", alg = "ES256", kid = "2026-11")
+provider_keys <- jwk_set(current)
 
 resolver <- function(header) {
   message("resolving kid ", header$kid)
-  jose_public(provider_keys)
+  jwk_public(provider_keys)
 }
 
-jwt <- jose_jwt_encode(
+jwt <- jwt_encode(
   list(iss = "https://auth.example", aud = "orders-api"),
   current,
   expires_in = 600
 )
-jose_jwt_decode(jwt, resolver, algorithms = "ES256", audience = "orders-api")$iss
+jwt_decode(jwt, resolver, algorithms = "ES256", audience = "orders-api")$iss
 #> resolving kid 2026-11
 #> [1] "https://auth.example"
 ```
@@ -73,7 +73,7 @@ jwks_resolver <- function(issuer, ttl = 3600, min_refresh = 60) {
     jwks <- httr2::request(config$jwks_uri) |>
       httr2::req_perform() |>
       httr2::resp_body_string()
-    cache$keys <- as_jose_keyset(jwks)
+    cache$keys <- as_jwk_set(jwks)
     cache$fetched <- Sys.time()
   }
 
@@ -105,12 +105,12 @@ jwks_resolver <- function(issuer, ttl = 3600, min_refresh = 60) {
 ```
 
 Build the resolver once, when the app starts, and give it to
-[`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md)
+[`jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jwt_decoder.md)
 with the rest of the policy. Every call then shares one cache:
 
 ``` r
 
-check <- jose_jwt_decoder(
+check <- jwt_decoder(
   key = jwks_resolver("https://accounts.google.com"),
   algorithms = "RS256",
   issuer = "https://accounts.google.com",
@@ -131,7 +131,7 @@ from the payload with
 [`jose_peek()`](https://pedrobtz.github.io/zujose/reference/jose_peek.md),
 pick that provider’s resolver, and then check the token against it. The
 `issuer` check inside
-[`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
+[`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
 makes sure the token really came from the issuer whose keys were used:
 
 ``` r
@@ -146,7 +146,7 @@ check_token <- function(token) {
   if (!is.character(iss) || !iss %in% names(resolvers)) {
     stop("Unknown issuer.")
   }
-  jose_jwt_decode(
+  jwt_decode(
     token,
     resolvers[[iss]],
     algorithms = c("RS256", "ES256"),

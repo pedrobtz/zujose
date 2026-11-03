@@ -2,13 +2,45 @@
 
 ## zujose 0.0.0.9000
 
+- Functions are named after the object they work on:
+  [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md),
+  [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
+  and
+  [`jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jwt_decoder.md);
+  [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md),
+  [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md)
+  and
+  [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md);
+  [`jwe_encrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_encrypt.md),
+  [`jwe_recipient()`](https://pedrobtz.github.io/zujose/reference/jwe_recipient.md),
+  [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
+  and
+  [`jwe_decryption()`](https://pedrobtz.github.io/zujose/reference/jwe_decryption.md);
+  [`jwk_oct()`](https://pedrobtz.github.io/zujose/reference/jwk_oct.md),
+  [`jwk_generate()`](https://pedrobtz.github.io/zujose/reference/jwk_generate.md),
+  [`as_jwk()`](https://pedrobtz.github.io/zujose/reference/as_jwk.md),
+  [`jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md),
+  [`as_jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md),
+  [`jwk_public()`](https://pedrobtz.github.io/zujose/reference/jwk_public.md),
+  [`jwk_json()`](https://pedrobtz.github.io/zujose/reference/jwk_json.md),
+  [`jwk_pem()`](https://pedrobtz.github.io/zujose/reference/jwk_pem.md),
+  [`jwk_with_kid()`](https://pedrobtz.github.io/zujose/reference/jwk_with_kid.md)
+  and
+  [`jwk_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jwk_thumbprint.md).
+  They replace the `jose_` names of the development version;
+  [`jose_peek()`](https://pedrobtz.github.io/zujose/reference/jose_peek.md)
+  and
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md)
+  keep theirs. Classes follow: `jwk`, `jwk_set`, `jws_verified`,
+  `jwe_decrypted`, `jwt_claims`.
+
 - Documentation: a README, and three articles on the package website:
   Get started, migrating from `jose`, and verifying tokens against a
   provider’s JWKS with a caching resolver. The key help pages explain
   how secrets are held in R memory.
 
-- `jose_key_generate("oct")` accepts 128-bit keys when no `alg` is
-  given, or for `dir`, as documented; it required 256 bits
+- `jwk_generate("oct")` accepts 128-bit keys when no `alg` is given, or
+  for `dir`, as documented; it required 256 bits
   ([\#30](https://github.com/pedrobtz/zujose/issues/30)).
 
 - The package, developed as `zujwt`, is renamed `zujose`, the name of
@@ -30,61 +62,61 @@
   anything is decoded.
 
 - Keys:
-  [`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md)
+  [`jwk_oct()`](https://pedrobtz.github.io/zujose/reference/jwk_oct.md)
   makes a symmetric key,
-  [`as_jose_key()`](https://pedrobtz.github.io/zujose/reference/as_jose_key.md)
+  [`as_jwk()`](https://pedrobtz.github.io/zujose/reference/as_jwk.md)
   reads a JWK,
-  [`jose_jwk()`](https://pedrobtz.github.io/zujose/reference/jose_jwk.md)
+  [`jwk_json()`](https://pedrobtz.github.io/zujose/reference/jwk_json.md)
   writes one,
-  [`jose_public()`](https://pedrobtz.github.io/zujose/reference/jose_public.md)
+  [`jwk_public()`](https://pedrobtz.github.io/zujose/reference/jwk_public.md)
   strips private members, and
-  [`jose_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jose_thumbprint.md)
+  [`jwk_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jwk_thumbprint.md)
   computes RFC 7638 thumbprints and RFC 9278 thumbprint URIs.
-  [`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md)
+  [`jwk_with_kid()`](https://pedrobtz.github.io/zujose/reference/jwk_with_kid.md)
   sets `kid`, by default to the thumbprint. `RSA`, `EC` and `OKP` keys
   are read and kept but cannot be used yet.
 
 - Key sets:
-  [`jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md)
+  [`jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md)
   and
-  [`as_jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md),
+  [`as_jwk_set()`](https://pedrobtz.github.io/zujose/reference/jwk_set.md),
   with `[[` selecting by `kid`. Malformed entries in a JWK Set are
   ignored, as RFC 7517 asks.
 
-- [`jose_sign()`](https://pedrobtz.github.io/zujose/reference/jose_sign.md)
+- [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md)
   and
-  [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)
+  [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
   sign and verify JWS with `HS256`, `HS384` and `HS512`, in all three
   serializations, with several signers through
-  [`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md),
+  [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md),
   detached payloads, and RFC 7797 unencoded payloads.
-  [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)
+  [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
   needs `algorithms`, has no way to accept `none`, and refuses a key
   that does not fit the token’s algorithm.
 
 - [`zujose_info()`](https://pedrobtz.github.io/zujose/reference/zujose_info.md)
   lists every JOSE algorithm and whether this installation can use it.
 
-- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_encode.md)
+- [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md)
   and
-  [`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
+  [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
   sign and check JWTs. Decoding checks `exp`, `nbf`, `iat`, `max_age`,
   `iss`, `sub`, `aud`, `typ`, required claims, per-claim expectations
   and a `validate` hook in one call; `exp` is required by default. Each
   failure has its own condition class under `zujose_claim_error`.
-  [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md)
+  [`jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jwt_decoder.md)
   fixes a policy once and returns a checking function.
 
-- [`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
+- [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
   decrypts JWE with `dir`, `A128KW`, `A192KW` and `A256KW` key
   management and `A128CBC-HS256`, `A192CBC-HS384` and `A256CBC-HS512`
   content encryption, in all three serializations and for several
   recipients. Every decryption failure raises one class with one
   message. Compressed (`zip`) tokens are refused.
 
-- [`jose_encrypt()`](https://pedrobtz.github.io/zujose/reference/jose_encrypt.md)
+- [`jwe_encrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_encrypt.md)
   encrypts to one recipient, or to several through
-  [`jose_recipient()`](https://pedrobtz.github.io/zujose/reference/jose_recipient.md),
+  [`jwe_recipient()`](https://pedrobtz.github.io/zujose/reference/jwe_recipient.md),
   with the same algorithms. Every message gets a fresh content
   encryption key and IV from the operating system’s random source, which
   cannot be supplied by the caller.
@@ -103,9 +135,9 @@
   like a wrong key when its padding is bad. RSA keys are read from JWKs
   (with all CRT parameters for a private key) and from PEM, written with
   the new
-  [`jose_pem()`](https://pedrobtz.github.io/zujose/reference/jose_pem.md),
-  generated with `jose_key_generate("RSA")`, and must be at least 2048
-  bits to be used.
+  [`jwk_pem()`](https://pedrobtz.github.io/zujose/reference/jwk_pem.md),
+  generated with `jwk_generate("RSA")`, and must be at least 2048 bits
+  to be used.
 
 - Elliptic curves: `ES256`, `ES384` and `ES512` signatures (raw
   `r || s`), and `ECDH-ES`, `ECDH-ES+A128KW`, `ECDH-ES+A192KW` and
@@ -114,15 +146,15 @@
   its curve is a parse error, and one on another curve than the key a
   key error, before any key agreement. EC and X25519 keys are read from
   JWKs and PEM, written by
-  [`jose_pem()`](https://pedrobtz.github.io/zujose/reference/jose_pem.md)
-  and generated by `jose_key_generate("EC")` and `("OKP")`. Ed25519 keys
-  are read and kept but cannot be used.
+  [`jwk_pem()`](https://pedrobtz.github.io/zujose/reference/jwk_pem.md)
+  and generated by `jwk_generate("EC")` and `("OKP")`. Ed25519 keys are
+  read and kept but cannot be used.
 
-- [`jose_key_generate()`](https://pedrobtz.github.io/zujose/reference/jose_key_generate.md)
+- [`jwk_generate()`](https://pedrobtz.github.io/zujose/reference/jwk_generate.md)
   makes a random `oct` key, sized for its `alg`. `RSA`, `EC` and `OKP`
   generation names the zucrypt version it needs.
 
-- `jose_jwt_encode(jti = TRUE)` adds a random 128-bit `jti`.
+- `jwt_encode(jti = TRUE)` adds a random 128-bit `jti`.
 
 - zujose now needs the development version of zucrypt, for
   `crypt_rand_bytes()`, `crypt_aes_gcm_encrypt()` and `crypt_pbkdf2()`.
@@ -130,6 +162,5 @@
   reports an algorithm available when the installed zucrypt exports what
   it needs, so a development zucrypt counts.
 
-- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
-  accepts a JWT sent as a JWE only with
-  `decrypt = jose_decryption(...)`.
+- [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
+  accepts a JWT sent as a JWE only with `decrypt = jwe_decryption(...)`.

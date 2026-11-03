@@ -63,11 +63,11 @@
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Start with the Get started article, at
 <a href="https://pedrobtz.github.io/zujose/articles/zujose.html">https://pedrobtz.github.io/zujose/articles/zujose.html</a>. The main
-functions are:</p><ul><li><p>JWT: <code><a href="jose_jwt_encode.html">jose_jwt_encode()</a></code>, <code><a href="jose_jwt_decode.html">jose_jwt_decode()</a></code>, <code><a href="jose_jwt_decoder.html">jose_jwt_decoder()</a></code>.</p></li>
-<li><p>JWS: <code><a href="jose_sign.html">jose_sign()</a></code>, <code><a href="jose_verify.html">jose_verify()</a></code>.</p></li>
-<li><p>JWE: <code><a href="jose_encrypt.html">jose_encrypt()</a></code>, <code><a href="jose_decrypt.html">jose_decrypt()</a></code>.</p></li>
-<li><p>Keys: <code><a href="jose_key_oct.html">jose_key_oct()</a></code>, <code><a href="jose_key_generate.html">jose_key_generate()</a></code>, <code><a href="as_jose_key.html">as_jose_key()</a></code>,
-<code><a href="jose_keyset.html">jose_keyset()</a></code>, <code><a href="jose_keyset.html">as_jose_keyset()</a></code>, <code><a href="jose_jwk.html">jose_jwk()</a></code>, <code><a href="jose_pem.html">jose_pem()</a></code>.</p></li>
+functions are:</p><ul><li><p>JWT: <code><a href="jwt_encode.html">jwt_encode()</a></code>, <code><a href="jwt_decode.html">jwt_decode()</a></code>, <code><a href="jwt_decoder.html">jwt_decoder()</a></code>.</p></li>
+<li><p>JWS: <code><a href="jws_sign.html">jws_sign()</a></code>, <code><a href="jws_verify.html">jws_verify()</a></code>.</p></li>
+<li><p>JWE: <code><a href="jwe_encrypt.html">jwe_encrypt()</a></code>, <code><a href="jwe_decrypt.html">jwe_decrypt()</a></code>.</p></li>
+<li><p>Keys: <code><a href="jwk_oct.html">jwk_oct()</a></code>, <code><a href="jwk_generate.html">jwk_generate()</a></code>, <code><a href="as_jwk.html">as_jwk()</a></code>,
+<code><a href="jwk_set.html">jwk_set()</a></code>, <code><a href="jwk_set.html">as_jwk_set()</a></code>, <code><a href="jwk_json.html">jwk_json()</a></code>, <code><a href="jwk_pem.html">jwk_pem()</a></code>.</p></li>
 <li><p>Inspection: <code><a href="jose_peek.html">jose_peek()</a></code>, <code><a href="zujose_info.html">zujose_info()</a></code>.</p></li>
 </ul><p>zujose never fetches anything: keys come only from the caller, as a
 key, a key set, or a function that returns one (a resolver).</p>
@@ -100,9 +100,9 @@ are needed.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-1"</span><span class="op">)</span>, <span class="va">key</span>, expires_in <span class="op">=</span> <span class="fl">3600</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span><span class="op">$</span><span class="va">sub</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwt_encode.html">jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-1"</span><span class="op">)</span>, <span class="va">key</span>, expires_in <span class="op">=</span> <span class="fl">3600</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span><span class="op">$</span><span class="va">sub</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "user-1"</span>
 </code></pre></div>
     </div>

@@ -65,7 +65,7 @@
 <li>
 <strong>You name the algorithms.</strong> Every function that checks a token takes an <code>algorithms</code> argument with no default, and the key must agree with it. <code>none</code> does not exist.</li>
 <li>
-<strong>Claims are checked in the same call.</strong> <code><a href="reference/jose_jwt_decode.html">jose_jwt_decode()</a></code> verifies the signature and then <code>exp</code>, <code>nbf</code>, <code>aud</code>, <code>iss</code> and whatever else you ask for. There is no second step to forget.</li>
+<strong>Claims are checked in the same call.</strong> <code><a href="reference/jwt_decode.html">jwt_decode()</a></code> verifies the signature and then <code>exp</code>, <code>nbf</code>, <code>aud</code>, <code>iss</code> and whatever else you ask for. There is no second step to forget.</li>
 <li>
 <strong>Keys come only from you.</strong> A key in a token’s header is never used, and zujose never fetches anything.</li>
 <li>
@@ -88,47 +88,47 @@
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pedrobtz/zujose" class="external-link">zujose</a></span><span class="op">)</span></span></code></pre></div>
 <p>An API that issues its own tokens needs a key. This one is a random 256-bit HMAC key, meant for <code>HS256</code> only:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span>, kid <span class="op">=</span> <span class="st">"api-2026"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span>, kid <span class="op">=</span> <span class="st">"api-2026"</span><span class="op">)</span></span>
 <span><span class="va">key</span></span>
-<span><span class="co">#&gt; &lt;jose_key&gt; oct, 256 bits</span></span>
+<span><span class="co">#&gt; &lt;jwk&gt; oct, 256 bits</span></span>
 <span><span class="co">#&gt;   kid "api-2026"</span></span>
 <span><span class="co">#&gt;   alg HS256</span></span>
 <span><span class="co">#&gt;   private: yes (not shown)</span></span></code></pre></div>
 <p>Sign a set of claims as a JWT that expires in an hour:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwt_encode.html">jwt_encode</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span>,</span>
 <span>  <span class="va">key</span>,</span>
 <span>  expires_in <span class="op">=</span> <span class="fl">3600</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">jwt</span></span>
-<span><span class="co">#&gt; [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcwODg0NiwiaWF0IjoxNzkzNzA1MjQ2fQ.T8qCVj7fHrCFEQySv7zBV2fiSzBciJJ-_Oi2whX048g"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcxNDAzMCwiaWF0IjoxNzkzNzEwNDMwfQ.g2c23WtUjbTMFTq3nA_Ogp2Zq4KNupo27wOi1N8EL1Y"</span></span></code></pre></div>
 <p>Checking it names the algorithm and the audience. The result is the claims, with the times as <code>POSIXct</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
 <span><span class="va">claims</span><span class="op">$</span><span class="va">sub</span></span>
 <span><span class="co">#&gt; [1] "user-17"</span></span>
 <span><span class="va">claims</span><span class="op">$</span><span class="va">exp</span></span>
-<span><span class="co">#&gt; [1] "2026-11-03 12:27:26 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "2026-11-03 13:53:50 UTC"</span></span></code></pre></div>
 <p>A token meant for another service is refused:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in `jose_jwt_decode()`:</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in `jwt_decode()`:</span></span>
 <span><span class="co">#&gt; ! The token is not for this `audience`.</span></span></code></pre></div>
 <p>Each failure has a class of its own, so code can catch one cause without reading the message:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span>,</span>
 <span>  zujose_audience_error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="st">"403: wrong audience"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "403: wrong audience"</span></span></code></pre></div>
 <p>Encryption takes a key of its own, because a key fits only the algorithms it is for. This one wraps the content key of a JWE with AES key wrap, and the content is encrypted with AES-GCM:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">kek</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A256KW"</span><span class="op">)</span></span>
-<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_encrypt.html">jose_encrypt</a></span><span class="op">(</span><span class="st">"account 42: balance 100"</span>, <span class="va">kek</span>, enc <span class="op">=</span> <span class="st">"A256GCM"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="reference/jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">jwe</span>, <span class="va">kek</span>, <span class="st">"A256KW"</span>, <span class="st">"A256GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">kek</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A256KW"</span><span class="op">)</span></span>
+<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwe_encrypt.html">jwe_encrypt</a></span><span class="op">(</span><span class="st">"account 42: balance 100"</span>, <span class="va">kek</span>, enc <span class="op">=</span> <span class="st">"A256GCM"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="reference/jwe_decrypt.html">jwe_decrypt</a></span><span class="op">(</span><span class="va">jwe</span>, <span class="va">kek</span>, <span class="st">"A256KW"</span>, <span class="st">"A256GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "account 42: balance 100"</span></span></code></pre></div>
-<p>Every function is prefixed <code>jose_</code>, the token or payload comes first and the key second, and a token is only ever read without being checked by <code><a href="reference/jose_peek.html">jose_peek()</a></code>, whose result says so when printed.</p>
+<p>Each function is named after the object it works on, <code>jwt_*</code>, <code>jws_*</code>, <code>jwe_*</code> or <code>jwk_*</code>; the token or payload comes first and the key second; and a token is only ever read without being checked by <code><a href="reference/jose_peek.html">jose_peek()</a></code>, whose result says so when printed.</p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>

@@ -24,8 +24,13 @@ It outranks this file. The package was scaffolded as `zujwt` and renamed
 back to the RFC’s name, `zujose`, on 2026-11-03, before any release:
 condition classes are `zujose_*` and the information function is
 [`zujose_info()`](https://pedrobtz.github.io/zujose/reference/zujose_info.md).
-The `jose_` prefix on public functions names the JOSE standards, not the
-package.
+Public functions are named after the object they work on: `jwt_*`,
+`jws_*`, `jwe_*` and `jwk_*` (renamed from one `jose_` prefix on
+2026-11-03, design §7.1).
+[`jose_peek()`](https://pedrobtz.github.io/zujose/reference/jose_peek.md)
+and
+[`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md)
+keep `jose_` because they apply to any JOSE object.
 
 ## Current state
 

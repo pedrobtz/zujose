@@ -90,27 +90,27 @@ a compatibility layer would hide them.</p>
 <tr class="odd">
 <td><code>jwt_claim(iss, sub, aud, exp, ...)</code></td>
 <td>a plain named list; <code>expires_in</code> and
-<code>not_before</code> in <code><a href="../reference/jose_jwt_encode.html">jose_jwt_encode()</a></code> set
+<code>not_before</code> in <code><a href="../reference/jwt_encode.html">jwt_encode()</a></code> set
 <code>exp</code> and <code>nbf</code>
 </td>
 </tr>
 <tr class="even">
 <td><code>jwt_encode_hmac(claim, secret, size = 256)</code></td>
-<td><code>jose_jwt_encode(claims, jose_key_oct(secret), alg = "HS256")</code></td>
+<td><code>jwt_encode(claims, jwk_oct(secret), alg = "HS256")</code></td>
 </tr>
 <tr class="odd">
 <td><code>jwt_decode_hmac(jwt, secret)</code></td>
-<td><code>jose_jwt_decode(jwt, jose_key_oct(secret), algorithms = "HS256")</code></td>
+<td><code>jwt_decode(jwt, jwk_oct(secret), algorithms = "HS256")</code></td>
 </tr>
 <tr class="even">
 <td><code>jwt_encode_sig(claim, key, size = 256)</code></td>
 <td>
-<code>jose_jwt_encode(claims, as_jose_key(pem), alg = "RS256")</code>,
-or <code>"ES256"</code>, <code>"PS256"</code>…</td>
+<code>jwt_encode(claims, as_jwk(pem), alg = "RS256")</code>, or
+<code>"ES256"</code>, <code>"PS256"</code>…</td>
 </tr>
 <tr class="odd">
 <td><code>jwt_decode_sig(jwt, pubkey)</code></td>
-<td><code>jose_jwt_decode(jwt, as_jose_key(pem), algorithms = "RS256")</code></td>
+<td><code>jwt_decode(jwt, as_jwk(pem), algorithms = "RS256")</code></td>
 </tr>
 <tr class="even">
 <td><code>jwt_split(jwt)</code></td>
@@ -121,15 +121,15 @@ or <code>"ES256"</code>, <code>"PS256"</code>…</td>
 <code>jwk_read(x)</code>, <code>read_jwk(x)</code>
 </td>
 <td>
-<code>as_jose_key(x)</code>, or <code>as_jose_keyset(x)</code> for a
-JWK Set</td>
+<code>as_jwk(x)</code>, or <code>as_jwk_set(x)</code> for a JWK
+Set</td>
 </tr>
 <tr class="even">
 <td>
 <code>jwk_write(x)</code>, <code>write_jwk(x)</code>
 </td>
 <td>
-<code>jose_jwk(x)</code>; <code>jose_pem(x)</code> for PEM</td>
+<code>jwk_json(x)</code>; <code>jwk_pem(x)</code> for PEM</td>
 </tr>
 <tr class="odd">
 <td>
@@ -143,6 +143,10 @@ JWK Set</td>
 </tr>
 </tbody>
 </table>
+<p>Some names look alike across the two packages,
+<code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_encode_hmac()</a></code> and <code><a href="../reference/jwt_encode.html">jwt_encode()</a></code> for one,
+but no zujose function has the same name as a jose function, so both
+packages can be attached at once.</p>
 <p>zujose also covers what jose does not: JWE, the JSON serializations,
 detached and unencoded payloads (RFC 7797), key sets, thumbprints, and
 encrypted JWTs.</p>
@@ -155,8 +159,8 @@ encrypted JWTs.</p>
 </h3>
 <p><code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_decode_hmac()</a></code> and <code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_decode_sig()</a></code> take
 the algorithm from the token’s header, limited only by the type of key.
-<code><a href="../reference/jose_jwt_decode.html">jose_jwt_decode()</a></code> has an <code>algorithms</code> argument
-with no default, and refuses any other algorithm before it does any
+<code><a href="../reference/jwt_decode.html">jwt_decode()</a></code> has an <code>algorithms</code> argument with
+no default, and refuses any other algorithm before it does any
 cryptography. This closes algorithm confusion, where a token picks a
 weaker algorithm than the one you meant (RFC 8725, section 2.1).</p>
 </div>
@@ -181,12 +185,12 @@ against <code>audience</code>, <code>issuer</code> and
 <h3 id="keys-are-typed">Keys are typed<a class="anchor" aria-label="anchor" href="#keys-are-typed"></a>
 </h3>
 <p>jose takes a secret as a string or raw vector and a public key as an
-openssl key object. zujose takes a <code>jose_key</code> built from raw
+openssl key object. zujose takes a <code>jwk</code> built from raw
 bytes, JWK text or PEM. A string is not taken as a secret, because a
 password is not a key:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">secret</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"a shared secret of at least 32 bytes!"</span><span class="op">)</span></span>
-<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_oct.html">jose_key_oct</a></span><span class="op">(</span><span class="va">secret</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="va">secret</span><span class="op">)</span></span></code></pre></div>
 <p>A key may name its one algorithm with <code>alg</code>, and is then
 refused for any other.</p>
 </div>
@@ -215,13 +219,13 @@ text; <code><a href="../reference/zujose_error.html">?zujose_error</a></code> li
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="va">claims</span><span class="op">$</span><span class="va">aud</span> <span class="op">==</span> <span class="st">"orders-api"</span><span class="op">)</span></span></code></pre></div>
 <p>does the same with zujose like this:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_oct.html">jose_key_oct</a></span><span class="op">(</span><span class="va">secret</span>, alg <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span>
-<span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="va">secret</span>, alg <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span>
+<span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_encode.html">jwt_encode</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span>,</span>
 <span>  <span class="va">key</span>,</span>
 <span>  expires_in <span class="op">=</span> <span class="fl">600</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
+<span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
 <span><span class="va">claims</span><span class="op">$</span><span class="va">sub</span></span>
 <span><span class="co">#&gt; [1] "user-17"</span></span></code></pre></div>
 <p>The audience check moves into the decode call, where it cannot be

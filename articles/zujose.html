@@ -89,114 +89,116 @@ or a JWE.</li>
 </ul>
 <p>Each comes in a <em>compact</em> serialization, the familiar
 <code>xxxxx.yyyyy.zzzzz</code>, and a JSON one. RFC 7518 lists the
-algorithms. Every function in zujose starts with <code>jose_</code>; the
-token or payload is the first argument and the key the second.</p>
+algorithms. zujose names each function after the object it works on:
+<code><a href="../reference/jwt_encode.html">jwt_encode()</a></code>, <code><a href="../reference/jws_sign.html">jws_sign()</a></code>,
+<code><a href="../reference/jwe_decrypt.html">jwe_decrypt()</a></code>, <code><a href="../reference/jwk_generate.html">jwk_generate()</a></code>. The token or
+payload is the first argument and the key the second.</p>
 </div>
 <div class="section level2">
 <h2 id="keys">Keys<a class="anchor" aria-label="anchor" href="#keys"></a>
 </h2>
-<p>A key is a <code>jose_key</code>. A symmetric key, of type
+<p>A key is a <code>jwk</code>. A symmetric key, of type
 <code>oct</code>, is a secret shared by whoever signs and whoever
 verifies. Generate one for the algorithm you mean to use, and it is the
 right length:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hmac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span>, kid <span class="op">=</span> <span class="st">"hmac-1"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">hmac</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span>, kid <span class="op">=</span> <span class="st">"hmac-1"</span><span class="op">)</span></span>
 <span><span class="va">hmac</span></span>
-<span><span class="co">#&gt; &lt;jose_key&gt; oct, 256 bits</span></span>
+<span><span class="co">#&gt; &lt;jwk&gt; oct, 256 bits</span></span>
 <span><span class="co">#&gt;   kid "hmac-1"</span></span>
 <span><span class="co">#&gt;   alg HS256</span></span>
 <span><span class="co">#&gt;   private: yes (not shown)</span></span></code></pre></div>
 <p>Printing never shows the secret. An existing secret, as raw bytes, is
-wrapped with <code><a href="../reference/jose_key_oct.html">jose_key_oct()</a></code>. A password is not a key: turn
-it into one with a key derivation function, or use PBES2 encryption,
-which does that for you.</p>
+wrapped with <code><a href="../reference/jwk_oct.html">jwk_oct()</a></code>. A password is not a key: turn it
+into one with a key derivation function, or use PBES2 encryption, which
+does that for you.</p>
 <p>Public-key algorithms need a key pair. zujose makes RSA keys and
 elliptic-curve keys on P-256, P-384, P-521 and X25519:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">signer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"EC"</span>, crv <span class="op">=</span> <span class="st">"P-256"</span>, alg <span class="op">=</span> <span class="st">"ES256"</span>, kid <span class="op">=</span> <span class="st">"ec-1"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">signer</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"EC"</span>, crv <span class="op">=</span> <span class="st">"P-256"</span>, alg <span class="op">=</span> <span class="st">"ES256"</span>, kid <span class="op">=</span> <span class="st">"ec-1"</span><span class="op">)</span></span>
 <span><span class="va">signer</span></span>
-<span><span class="co">#&gt; &lt;jose_key&gt; EC, 256 bits</span></span>
+<span><span class="co">#&gt; &lt;jwk&gt; EC, 256 bits</span></span>
 <span><span class="co">#&gt;   kid "ec-1"</span></span>
 <span><span class="co">#&gt;   alg ES256</span></span>
 <span><span class="co">#&gt;   private: yes (not shown)</span></span></code></pre></div>
-<p><code><a href="../reference/as_jose_key.html">as_jose_key()</a></code> reads a key from JWK text or from PEM, and
-<code><a href="../reference/jose_jwk.html">jose_jwk()</a></code> and <code><a href="../reference/jose_pem.html">jose_pem()</a></code> write one. Both
-write only the public part unless you ask for the private one:</p>
+<p><code><a href="../reference/as_jwk.html">as_jwk()</a></code> reads a key from JWK text or from PEM, and
+<code><a href="../reference/jwk_json.html">jwk_json()</a></code> and <code><a href="../reference/jwk_pem.html">jwk_pem()</a></code> write one. Both write
+only the public part unless you ask for the private one:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/jose_jwk.html">jose_jwk</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"9slBwRl76KjAz59esExxNhBexiBRNnjrFdc-xCUhL2Y\",\"y\":\"e9Tt8atVypgb8v80-X5Bfeq1zTrRu4Y2WNM3pW_psGE\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/jwk_json.html">jwk_json</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"IgMviE5kH4QFEVCnePpLmBUl1srs2IjB-Ok1LmGCsKo\",\"y\":\"iikwvAprc_qe-1BF6THXO60Kh71h4xYnYfEUoJnxF1E\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"</span></span></code></pre></div>
 <p>A key set holds several keys. Its JWK Set text is what an identity
 provider publishes, and what a client reads to verify the provider’s
 tokens:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">keys</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_keyset.html">jose_keyset</a></span><span class="op">(</span><span class="va">signer</span>, <span class="fu"><a href="../reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"RSA"</span>, alg <span class="op">=</span> <span class="st">"RS256"</span>, kid <span class="op">=</span> <span class="st">"rsa-1"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">keys</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_set.html">jwk_set</a></span><span class="op">(</span><span class="va">signer</span>, <span class="fu"><a href="../reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"RSA"</span>, alg <span class="op">=</span> <span class="st">"RS256"</span>, kid <span class="op">=</span> <span class="st">"rsa-1"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">keys</span></span>
-<span><span class="co">#&gt; &lt;jose_keyset&gt; 2 keys</span></span>
+<span><span class="co">#&gt; &lt;jwk_set&gt; 2 keys</span></span>
 <span><span class="co">#&gt;   EC "ec-1" ES256</span></span>
 <span><span class="co">#&gt;   RSA "rsa-1" RS256</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/jose_jwk.html">jose_jwk</a></span><span class="op">(</span><span class="va">keys</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; {"keys":[{"kty":"EC","crv":"P-256","x":"9slBwRl76KjAz59esExxNhBexiBRNnjrFdc-xCUhL2Y","y":"e9Tt8atVypgb8v80-X5Bfeq1zTrRu4Y2WNM3pW_psGE","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"3MFEpT8VKo-3tLu4R2fSumXBETc7bxcCmdo-a4BWSCLUqcHuI7JMRzOEH1F4W-9S4y-tFxs9fy6mePf2Wht3jpEPToT54XhUY4AeviypiQWfDs3dtqR3I2HgizoQkVsY9v-niAk1Nq_1bDu3FmIupPz9rWxrdX595B_0IDLd4uxmlqbSDxEStx6Ipn6MUokJuJQ1vZgP5ZTY6awTpEGig8qUqUJfA5LJH6XByixHUPISEijzEgj_fJB1ZAwGgiv1Wtq740tYfATw9bdL7Ed5bKH4Da_zbMfI2YmQlJ9ROxDYk5lD7dPwW8yy_teCpyu1-zq5WfRmoh8_e7IaInU62w","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}</span></span></code></pre></div>
-<p><code><a href="../reference/jose_keyset.html">as_jose_keyset()</a></code> reads that text back. A key in a set is
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/jwk_json.html">jwk_json</a></span><span class="op">(</span><span class="va">keys</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; {"keys":[{"kty":"EC","crv":"P-256","x":"IgMviE5kH4QFEVCnePpLmBUl1srs2IjB-Ok1LmGCsKo","y":"iikwvAprc_qe-1BF6THXO60Kh71h4xYnYfEUoJnxF1E","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"nUezMYjB0o8PNQJddRAkAxNqdXcrw8NaXO15hVEyMeOpp9EDrSvp624pvs4PMX9OkqsFLm2CCauDWthG3WSYuohzO5XVBYl5UDp05pdJSrYm8Vk-NGt9jmW-m1BPf40Q_O_zb4rx4KV0WsvqXUXNcNKXTocYoGzLJcq4cMoGiHD0-5Pdz1O6vVyX6cf8hlpwrcraItW0aKvsGk_q0-J3nV4JphrcNHTOfilaKNexjQp-W94yj9F-x9dq32MrXxZnuJtn-tPngCu-9iSWtHYxEGKhyKAizJI1nyvxo7mibdFyy3EWXVrLFFgwBJw-NmGgyKOx3dr1sTdX-tQjZChY2w","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}</span></span></code></pre></div>
+<p><code><a href="../reference/jwk_set.html">as_jwk_set()</a></code> reads that text back. A key in a set is
 picked by the <code>kid</code> in a token’s header. Two more tools help
-with naming keys: <code><a href="../reference/jose_with_kid.html">jose_with_kid()</a></code> names a key by its RFC
+with naming keys: <code><a href="../reference/jwk_with_kid.html">jwk_with_kid()</a></code> names a key by its RFC
 7638 thumbprint, which needs no registry, and
-<code><a href="../reference/jose_thumbprint.html">jose_thumbprint()</a></code> computes the thumbprint itself.</p>
+<code><a href="../reference/jwk_thumbprint.html">jwk_thumbprint()</a></code> computes the thumbprint itself.</p>
 <p>Keys live in ordinary R memory, which R can copy and cannot wipe. See
-the “Secrets in memory” section of <code><a href="../reference/jose_key_oct.html">?jose_key_oct</a></code> for what
-that means.</p>
+the “Secrets in memory” section of <code><a href="../reference/jwk_oct.html">?jwk_oct</a></code> for what that
+means.</p>
 </div>
 <div class="section level2">
 <h2 id="json-web-tokens">JSON Web Tokens<a class="anchor" aria-label="anchor" href="#json-web-tokens"></a>
 </h2>
-<p><code><a href="../reference/jose_jwt_encode.html">jose_jwt_encode()</a></code> signs a list of claims.
+<p><code><a href="../reference/jwt_encode.html">jwt_encode()</a></code> signs a list of claims.
 <code>expires_in</code> sets <code>exp</code>, and <code>iat</code> is
 added for you:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_encode.html">jwt_encode</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>iss <span class="op">=</span> <span class="st">"https://auth.example"</span>, sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span>,</span>
 <span>  <span class="va">signer</span>,</span>
 <span>  expires_in <span class="op">=</span> <span class="fl">600</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/jose_jwt_decode.html">jose_jwt_decode()</a></code> checks the token in one call. You say
-which algorithms you accept; there is no default, so a token cannot
-choose a weaker one for you. The key must fit the algorithm. Then the
-claims are checked: <code>exp</code> is required by default,
-<code>nbf</code> and <code>iat</code> are checked when present, with a
-leeway of 60 seconds, and <code>audience</code>, <code>issuer</code> and
-<code>subject</code> are matched when you give them:</p>
+<p><code><a href="../reference/jwt_decode.html">jwt_decode()</a></code> checks the token in one call. You say which
+algorithms you accept; there is no default, so a token cannot choose a
+weaker one for you. The key must fit the algorithm. Then the claims are
+checked: <code>exp</code> is required by default, <code>nbf</code> and
+<code>iat</code> are checked when present, with a leeway of 60 seconds,
+and <code>audience</code>, <code>issuer</code> and <code>subject</code>
+are matched when you give them:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span></span>
 <span>  <span class="va">jwt</span>,</span>
-<span>  <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="st">"ES256"</span>,</span>
 <span>  audience <span class="op">=</span> <span class="st">"orders-api"</span>,</span>
 <span>  issuer <span class="op">=</span> <span class="st">"https://auth.example"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">claims</span></span>
-<span><span class="co">#&gt; &lt;jose_claims&gt; verified ES256, key "ec-1"</span></span>
+<span><span class="co">#&gt; &lt;jwt_claims&gt; verified ES256, key "ec-1"</span></span>
 <span><span class="co">#&gt;   iss: "https://auth.example"</span></span>
 <span><span class="co">#&gt;   sub: "user-17"</span></span>
 <span><span class="co">#&gt;   aud: "orders-api"</span></span>
-<span><span class="co">#&gt;   exp: 2026-11-03 12:26:06 UTC</span></span>
-<span><span class="co">#&gt;   iat: 2026-11-03 12:16:06 UTC</span></span></code></pre></div>
+<span><span class="co">#&gt;   exp: 2026-11-03 13:13:19 UTC</span></span>
+<span><span class="co">#&gt;   iat: 2026-11-03 13:03:19 UTC</span></span></code></pre></div>
 <p><code>claims</code> takes per-claim expectations, as a value or as a
 function that must return <code>TRUE</code>, and <code>validate</code>
 takes one function of all the claims:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span></span>
 <span>  <span class="va">jwt</span>,</span>
-<span>  <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="st">"ES256"</span>,</span>
 <span>  audience <span class="op">=</span> <span class="st">"orders-api"</span>,</span>
 <span>  claims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">sub</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/startsWith.html" class="external-link">startsWith</a></span><span class="op">(</span><span class="va">sub</span>, <span class="st">"user-"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">$</span><span class="va">sub</span></span>
 <span><span class="co">#&gt; [1] "user-17"</span></span></code></pre></div>
 <p>When the same checks apply to every request,
-<code><a href="../reference/jose_jwt_decoder.html">jose_jwt_decoder()</a></code> fixes them once and returns a function
-of the token:</p>
+<code><a href="../reference/jwt_decoder.html">jwt_decoder()</a></code> fixes them once and returns a function of the
+token:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">check</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_decoder.html">jose_jwt_decoder</a></span><span class="op">(</span></span>
-<span>  key <span class="op">=</span> <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">keys</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="va">check</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_decoder.html">jwt_decoder</a></span><span class="op">(</span></span>
+<span>  key <span class="op">=</span> <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">keys</span><span class="op">)</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ES256"</span>, <span class="st">"RS256"</span><span class="op">)</span>,</span>
 <span>  audience <span class="op">=</span> <span class="st">"orders-api"</span>,</span>
 <span>  issuer <span class="op">=</span> <span class="st">"https://auth.example"</span></span>
@@ -211,17 +213,17 @@ of the token:</p>
 inheriting from <code>zujose_error</code>. Catch the class, not the
 message:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">expired</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span><span class="op">)</span>, <span class="va">hmac</span>, expires_in <span class="op">=</span> <span class="op">-</span><span class="fl">3600</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">expired</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_encode.html">jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span><span class="op">)</span>, <span class="va">hmac</span>, expires_in <span class="op">=</span> <span class="op">-</span><span class="fl">3600</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">expired</span>, <span class="va">hmac</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">expired</span>, <span class="va">hmac</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span>,</span>
 <span>  zujose_expired_error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"expired at"</span>, <span class="va">e</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "expired at 2026-11-03 11:16:06"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "expired at 2026-11-03 12:03:19"</span></span></code></pre></div>
 <p>A token signed with an algorithm you did not allow is a policy error,
 raised before any cryptography is done:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>, algorithms <span class="op">=</span> <span class="st">"RS256"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `jose_jwt_decode()`:</span></span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>, algorithms <span class="op">=</span> <span class="st">"RS256"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `jwt_decode()`:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> The token's algorithm is not in `algorithms`.</span></span></code></pre></div>
 <p><code><a href="../reference/zujose_error.html">?zujose_error</a></code> lists every class and the fields each
 carries.</p>
@@ -230,28 +232,28 @@ carries.</p>
 <h2 id="signatures-jws">Signatures: JWS<a class="anchor" aria-label="anchor" href="#signatures-jws"></a>
 </h2>
 <p>A JWT is a JWS whose payload is a JSON object.
-<code><a href="../reference/jose_sign.html">jose_sign()</a></code> and <code><a href="../reference/jose_verify.html">jose_verify()</a></code> sign and verify
+<code><a href="../reference/jws_sign.html">jws_sign()</a></code> and <code><a href="../reference/jws_verify.html">jws_verify()</a></code> sign and verify
 any payload, given as a string or as raw bytes:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_sign.html">jose_sign</a></span><span class="op">(</span><span class="st">"Order 1042 shipped."</span>, <span class="va">hmac</span><span class="op">)</span></span>
-<span><span class="va">verified</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_verify.html">jose_verify</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">hmac</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jws_sign.html">jws_sign</a></span><span class="op">(</span><span class="st">"Order 1042 shipped."</span>, <span class="va">hmac</span><span class="op">)</span></span>
+<span><span class="va">verified</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jws_verify.html">jws_verify</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">hmac</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="va">verified</span><span class="op">$</span><span class="va">payload</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Order 1042 shipped."</span></span></code></pre></div>
 <p><code>format = "flattened"</code> or <code>"general"</code> writes
 the JSON serialization, and several signers, made with
-<code><a href="../reference/jose_signer.html">jose_signer()</a></code>, sign one payload together:</p>
+<code><a href="../reference/jws_signer.html">jws_signer()</a></code>, sign one payload together:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_sign.html">jose_sign</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jws_sign.html">jws_sign</a></span><span class="op">(</span></span>
 <span>  <span class="st">"Order 1042 shipped."</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/jose_signer.html">jose_signer</a></span><span class="op">(</span><span class="va">hmac</span><span class="op">)</span>, <span class="fu"><a href="../reference/jose_signer.html">jose_signer</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="../reference/jws_signer.html">jws_signer</a></span><span class="op">(</span><span class="va">hmac</span><span class="op">)</span>, <span class="fu"><a href="../reference/jws_signer.html">jws_signer</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  format <span class="op">=</span> <span class="st">"general"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>By default every signature must verify. A recipient that holds only
 one of the keys asks for any one signature instead:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/jose_verify.html">jose_verify</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/jws_verify.html">jws_verify</a></span><span class="op">(</span></span>
 <span>  <span class="va">token</span>,</span>
-<span>  <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="st">"ES256"</span>,</span>
 <span>  require <span class="op">=</span> <span class="st">"any"</span></span>
 <span><span class="op">)</span><span class="op">$</span><span class="va">kid</span></span>
@@ -265,17 +267,17 @@ encrypts the payload (<code>enc</code>), and the key management
 algorithm (<code>alg</code>) delivers that key to the recipient. To
 encrypt for a public key, use the recipient’s public key:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">recipient</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"RSA"</span>, kid <span class="op">=</span> <span class="st">"rsa-enc"</span><span class="op">)</span></span>
-<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_encrypt.html">jose_encrypt</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">recipient</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"RSA"</span>, kid <span class="op">=</span> <span class="st">"rsa-enc"</span><span class="op">)</span></span>
+<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwe_encrypt.html">jwe_encrypt</a></span><span class="op">(</span></span>
 <span>  <span class="st">"card ending 4242"</span>,</span>
-<span>  <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">recipient</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">recipient</span><span class="op">)</span>,</span>
 <span>  alg <span class="op">=</span> <span class="st">"RSA-OAEP-256"</span>,</span>
 <span>  enc <span class="op">=</span> <span class="st">"A256GCM"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Decrypting names both the key management and the content encryption
 algorithms you accept:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwe_decrypt.html">jwe_decrypt</a></span><span class="op">(</span></span>
 <span>  <span class="va">jwe</span>,</span>
 <span>  <span class="va">recipient</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="st">"RSA-OAEP-256"</span>,</span>
@@ -287,16 +289,16 @@ algorithms you accept:</p>
 with the same message, whatever went wrong, so a failure tells an
 attacker nothing about the key.</p>
 <p>A password encrypts through PBES2, which derives the key from it.
-Give the password to <code><a href="../reference/jose_key_oct.html">jose_key_oct()</a></code> as bytes:</p>
+Give the password to <code><a href="../reference/jwk_oct.html">jwk_oct()</a></code> as bytes:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">password</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_key_oct.html">jose_key_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_encrypt.html">jose_encrypt</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">password</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwe_encrypt.html">jwe_encrypt</a></span><span class="op">(</span></span>
 <span>  <span class="st">"backup notes"</span>,</span>
 <span>  <span class="va">password</span>,</span>
 <span>  alg <span class="op">=</span> <span class="st">"PBES2-HS256+A128KW"</span>,</span>
 <span>  enc <span class="op">=</span> <span class="st">"A128GCM"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="../reference/jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">jwe</span>, <span class="va">password</span>, <span class="st">"PBES2-HS256+A128KW"</span>, <span class="st">"A128GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="../reference/jwe_decrypt.html">jwe_decrypt</a></span><span class="op">(</span><span class="va">jwe</span>, <span class="va">password</span>, <span class="st">"PBES2-HS256+A128KW"</span>, <span class="st">"A128GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "backup notes"</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -305,22 +307,22 @@ Give the password to <code><a href="../reference/jose_key_oct.html">jose_key_oct
 <p>A JWT can be signed and then encrypted, so that only the recipient
 can read the claims. Compose the two steps:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nested</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span><span class="op">)</span>, <span class="va">signer</span>, expires_in <span class="op">=</span> <span class="fl">600</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/jose_encrypt.html">jose_encrypt</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">recipient</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="va">nested</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/jwt_encode.html">jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span><span class="op">)</span>, <span class="va">signer</span>, expires_in <span class="op">=</span> <span class="fl">600</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/jwe_encrypt.html">jwe_encrypt</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">recipient</span><span class="op">)</span>,</span>
 <span>    alg <span class="op">=</span> <span class="st">"RSA-OAEP-256"</span>,</span>
 <span>    enc <span class="op">=</span> <span class="st">"A256GCM"</span>,</span>
 <span>    header <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cty <span class="op">=</span> <span class="st">"JWT"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/jose_jwt_decode.html">jose_jwt_decode()</a></code> accepts an encrypted JWT only when you
-say how to decrypt it, with <code><a href="../reference/jose_decryption.html">jose_decryption()</a></code>. Without it,
-a JWE where a signed token was expected is refused:</p>
+<p><code><a href="../reference/jwt_decode.html">jwt_decode()</a></code> accepts an encrypted JWT only when you say
+how to decrypt it, with <code><a href="../reference/jwe_decryption.html">jwe_decryption()</a></code>. Without it, a JWE
+where a signed token was expected is refused:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span></span>
 <span>  <span class="va">nested</span>,</span>
-<span>  <span class="fu"><a href="../reference/jose_public.html">jose_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="../reference/jwk_public.html">jwk_public</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span>,</span>
 <span>  algorithms <span class="op">=</span> <span class="st">"ES256"</span>,</span>
-<span>  decrypt <span class="op">=</span> <span class="fu"><a href="../reference/jose_decryption.html">jose_decryption</a></span><span class="op">(</span><span class="va">recipient</span>, <span class="st">"RSA-OAEP-256"</span>, <span class="st">"A256GCM"</span><span class="op">)</span></span>
+<span>  decrypt <span class="op">=</span> <span class="fu"><a href="../reference/jwe_decryption.html">jwe_decryption</a></span><span class="op">(</span><span class="va">recipient</span>, <span class="st">"RSA-OAEP-256"</span>, <span class="st">"A256GCM"</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">$</span><span class="va">sub</span></span>
 <span><span class="co">#&gt; [1] "user-17"</span></span></code></pre></div>
 </div>
@@ -343,8 +345,8 @@ verifies nothing:</p>
 <span><span class="co">#&gt;   iss: "https://auth.example"</span></span>
 <span><span class="co">#&gt;   sub: "user-17"</span></span>
 <span><span class="co">#&gt;   aud: "orders-api"</span></span>
-<span><span class="co">#&gt;   exp: 1793708766</span></span>
-<span><span class="co">#&gt;   iat: 1793708166</span></span>
+<span><span class="co">#&gt;   exp: 1793711599</span></span>
+<span><span class="co">#&gt;   iat: 1793710999</span></span>
 <span><span class="co">#&gt; Signature: 64 bytes</span></span></code></pre></div>
 <p>Its result is classed <code>jose_unverified</code> and says so. Use
 it to decide which key or policy to apply, never to decide whether to
