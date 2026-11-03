@@ -5,7 +5,7 @@
     Output
       <jose_key> OKP
         kid "ed"
-        ! not usable: zujwt has no Ed25519
+        ! not usable: zujose has no Ed25519
 
 # printing a key never shows its secret
 

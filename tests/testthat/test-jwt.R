@@ -17,9 +17,9 @@ test_that("RFC 7519 §3.1 decodes before it expires", {
 test_that("RFC 7519 §3.1 is expired now", {
   err <- expect_error(
     jose_jwt_decode(rfc7519_jwt(), rfc7515_key(), algorithms = "HS256"),
-    class = "zujwt_expired_error"
+    class = "zujose_expired_error"
   )
-  expect_s3_class(err, "zujwt_claim_error")
+  expect_s3_class(err, "zujose_claim_error")
   expect_identical(err$claim, "exp")
   expect_identical(err$time, as_posixct(1300819380))
   expect_s3_class(err$now, "POSIXct")
@@ -38,7 +38,7 @@ test_that("RFC 7519 §6.1, the unsecured JWT, is refused", {
       "HS256",
       now = as_posixct(1300819000)
     ),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -130,21 +130,21 @@ test_that("jti = TRUE adds a random identifier, unless the claims set one", {
 
 test_that("expiry and not-before allow the leeway, and no more", {
   expect_no_error(decode_at_1000(list(exp = 950)))
-  expect_error(decode_at_1000(list(exp = 940)), class = "zujwt_expired_error")
+  expect_error(decode_at_1000(list(exp = 940)), class = "zujose_expired_error")
   expect_error(
     decode_at_1000(list(exp = 999), leeway = 0),
-    class = "zujwt_expired_error"
+    class = "zujose_expired_error"
   )
   expect_error(
     decode_at_1000(list(exp = 1000), leeway = 0),
-    class = "zujwt_expired_error"
+    class = "zujose_expired_error"
   )
   expect_no_error(decode_at_1000(list(exp = 1001), leeway = 0))
 
   expect_no_error(decode_at_1000(list(nbf = 1060)))
   err <- expect_error(
     decode_at_1000(list(nbf = 1061)),
-    class = "zujwt_not_yet_valid_error"
+    class = "zujose_not_yet_valid_error"
   )
   expect_identical(err$claim, "nbf")
 })
@@ -153,19 +153,19 @@ test_that("iat in the future and max_age are checked", {
   expect_no_error(decode_at_1000(list(iat = 1060)))
   err <- expect_error(
     decode_at_1000(list(iat = 1061)),
-    class = "zujwt_not_yet_valid_error"
+    class = "zujose_not_yet_valid_error"
   )
   expect_identical(err$claim, "iat")
 
   expect_no_error(decode_at_1000(list(iat = 900), max_age = 100))
   err <- expect_error(
     decode_at_1000(list(iat = 800), max_age = 100),
-    class = "zujwt_expired_error"
+    class = "zujose_expired_error"
   )
   expect_identical(err$claim, "iat")
   expect_error(
     decode_at_1000(list(), max_age = 100),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
 })
 
@@ -177,7 +177,7 @@ test_that("time claims must be numbers", {
     jwt <- jose_sign(payload, key, "HS256", header = list(typ = "JWT"))
     expect_error(
       jose_jwt_decode(jwt, key, "HS256", required = character()),
-      class = "zujwt_parse_error",
+      class = "zujose_parse_error",
       info = payload
     )
   }
@@ -188,13 +188,13 @@ test_that("exp is required by default", {
   jwt <- jose_jwt_encode(list(sub = "u"), key, "HS256")
   err <- expect_error(
     jose_jwt_decode(jwt, key, "HS256"),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
   expect_identical(err$claim, "exp")
   expect_no_error(jose_jwt_decode(jwt, key, "HS256", required = character()))
   expect_error(
     decode_at_1000(list(a = 1), required = c("a", "b")),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
 })
 
@@ -202,32 +202,32 @@ test_that("issuer and subject are exact single-string matches", {
   expect_no_error(decode_at_1000(list(iss = "me"), issuer = "me"))
   expect_error(
     decode_at_1000(list(iss = "me2"), issuer = "me"),
-    class = "zujwt_issuer_error"
+    class = "zujose_issuer_error"
   )
   expect_error(
     decode_at_1000(list(iss = "Me"), issuer = "me"),
-    class = "zujwt_issuer_error"
+    class = "zujose_issuer_error"
   )
   expect_error(
     decode_at_1000(list(), issuer = "me"),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
   # An array is never a membership test.
   expect_error(
     decode_at_1000(list(iss = list("me", "x")), issuer = "me"),
-    class = "zujwt_issuer_error"
+    class = "zujose_issuer_error"
   )
   expect_error(
     decode_at_1000(list(iss = list("me"))),
-    class = "zujwt_issuer_error"
+    class = "zujose_issuer_error"
   )
 
   expect_no_error(decode_at_1000(list(sub = "u"), subject = "u"))
   expect_error(
     decode_at_1000(list(sub = "v"), subject = "u"),
-    class = "zujwt_subject_error"
+    class = "zujose_subject_error"
   )
-  expect_error(decode_at_1000(list(sub = 1)), class = "zujwt_subject_error")
+  expect_error(decode_at_1000(list(sub = 1)), class = "zujose_subject_error")
 })
 
 test_that("aud must contain one of audience", {
@@ -238,25 +238,25 @@ test_that("aud must contain one of audience", {
   ))
   expect_error(
     decode_at_1000(list(aud = "x"), audience = "api"),
-    class = "zujwt_audience_error"
+    class = "zujose_audience_error"
   )
   expect_error(
     decode_at_1000(list(), audience = "api"),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
   # RFC 7519 §4.1.3: a token with an audience needs a caller who names one.
   err <- expect_error(
     decode_at_1000(list(aud = "api")),
-    class = "zujwt_audience_error"
+    class = "zujose_audience_error"
   )
   expect_identical(err$claim, "aud")
   expect_error(
     decode_at_1000(list(aud = list())),
-    class = "zujwt_audience_error"
+    class = "zujose_audience_error"
   )
   expect_error(
     decode_at_1000(list(aud = list(1))),
-    class = "zujwt_audience_error"
+    class = "zujose_audience_error"
   )
 })
 
@@ -272,7 +272,7 @@ test_that("claims holds values and predicates", {
   ))
   expect_error(
     decode_at_1000(list(n = 4), claims = list(n = 3)),
-    class = "zujwt_claim_error"
+    class = "zujose_claim_error"
   )
   has_read <- function(scope) "read" %in% strsplit(scope, " ")[[1]]
   expect_no_error(decode_at_1000(
@@ -281,12 +281,12 @@ test_that("claims holds values and predicates", {
   ))
   err <- expect_error(
     decode_at_1000(list(scope = "write"), claims = list(scope = has_read)),
-    class = "zujwt_claim_error"
+    class = "zujose_claim_error"
   )
   expect_identical(err$claim, "scope")
   expect_error(
     decode_at_1000(list(), claims = list(scope = has_read)),
-    class = "zujwt_missing_claim_error"
+    class = "zujose_missing_claim_error"
   )
 })
 
@@ -295,7 +295,7 @@ test_that("validate sees every claim", {
   expect_no_error(decode_at_1000(list(nbf = 900, exp = 1100), validate = ok))
   expect_error(
     decode_at_1000(list(nbf = 1050, exp = 1040), validate = ok, leeway = 100),
-    class = "zujwt_claim_error"
+    class = "zujose_claim_error"
   )
 })
 
@@ -314,11 +314,11 @@ test_that("typ must match type", {
   expect_no_error(decode_at_1000(list(), header = list(typ = "x"), type = NULL))
   expect_error(
     decode_at_1000(list(), header = list(typ = "JWT"), type = "at+jwt"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
   expect_error(
     decode_at_1000(list(), header = NULL, type = "at+jwt"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -328,7 +328,7 @@ test_that("claims must be a JSON object", {
     jwt <- jose_sign(payload, key, "HS256")
     expect_error(
       jose_jwt_decode(jwt, key, "HS256", required = character()),
-      class = "zujwt_parse_error",
+      class = "zujose_parse_error",
       info = payload
     )
   }
@@ -351,7 +351,7 @@ test_that("a nested JWT is unwrapped one level", {
   outer <- jose_sign(inner512, key, "HS256", header = list(cty = "JWT"))
   expect_error(
     jose_jwt_decode(outer, key, "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 
   twice <- jose_sign(
@@ -362,17 +362,17 @@ test_that("a nested JWT is unwrapped one level", {
   )
   expect_error(
     jose_jwt_decode(twice, key, "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
 test_that("only the compact JWS serialization is a JWT", {
   key <- jose_key_oct(as.raw(1:32))
   json <- jose_sign('{"exp":2000000000}', key, "HS256", format = "flattened")
-  expect_error(jose_jwt_decode(json, key, "HS256"), class = "zujwt_parse_error")
+  expect_error(jose_jwt_decode(json, key, "HS256"), class = "zujose_parse_error")
   expect_error(
     jose_jwt_decode(rfc7520_token(81), key, "HS256"),
-    class = "zujwt_policy_error"
+    class = "zujose_policy_error"
   )
 })
 
@@ -381,7 +381,7 @@ test_that("signature checks come first", {
   jwt <- jose_jwt_encode(list(exp = 1), jose_key_oct(as.raw(2:33)), "HS256")
   expect_error(
     jose_jwt_decode(jwt, key, "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
   expect_error(jose_jwt_decode(jwt, key), "algorithms")
 })
@@ -419,12 +419,12 @@ test_that("jose_jwt_decoder() applies the same checks every time", {
     expires_in = 60
   )
   expect_identical(check_token(good)$iss, "me")
-  expect_error(check_token(bad), class = "zujwt_issuer_error")
+  expect_error(check_token(bad), class = "zujose_issuer_error")
   expect_error(
     check_token(good, now = Sys.time() + 3600),
-    class = "zujwt_expired_error"
+    class = "zujose_expired_error"
   )
-  expect_error(jose_jwt_decoder(key, "none"), class = "zujwt_policy_error")
+  expect_error(jose_jwt_decoder(key, "none"), class = "zujose_policy_error")
   expect_error(jose_jwt_decoder(key, "HS256", leeway = -1), "leeway")
 })
 
@@ -432,7 +432,7 @@ test_that("an error's call never holds the token's text", {
   key <- jose_key_oct(as.raw(1:32))
   check_token <- jose_jwt_decoder(key, "HS256")
   jwt <- jose_jwt_encode(list(), key, "HS256", expires_in = -3600)
-  err <- expect_error(check_token(jwt), class = "zujwt_expired_error")
+  err <- expect_error(check_token(jwt), class = "zujose_expired_error")
   expect_no_match(
     paste(deparse(conditionCall(err)), collapse = ""),
     jwt,

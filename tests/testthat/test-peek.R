@@ -27,7 +27,7 @@ test_that("a JWE shows one merged header per recipient and no payload", {
 })
 
 test_that("jose_peek() refuses a malformed token", {
-  expect_error(jose_peek("a.b"), class = "zujwt_parse_error")
+  expect_error(jose_peek("a.b"), class = "zujose_parse_error")
 })
 
 test_that("printing says the token is not verified", {

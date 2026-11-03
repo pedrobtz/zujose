@@ -1,4 +1,4 @@
-# JOSE APIs in Python and Go: survey for zujwt §7
+# JOSE APIs in Python and Go: survey for zujose §7
 
 Surveyed 2026-11-02 to shape [design.md](design.md) §7. Signatures marked
 [doc] were checked against current documentation. The rest come from

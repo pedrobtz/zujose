@@ -7,7 +7,7 @@
 #' `as_jose_keyset()` reads a JWK Set from its JSON text or from a parsed
 #' list. Following RFC 7517 section 5, a member of `keys` that is not a
 #' well-formed JWK is ignored rather than failing the whole set, as is a key
-#' of a type zujwt does not know. Keys of a known type that zujwt cannot use
+#' of a type zujose does not know. Keys of a known type that zujose cannot use
 #' yet (`RSA`, `EC`, `OKP`) are kept.
 #'
 #' @param ... `jose_key` and `jose_keyset` objects, combined in order.
@@ -30,7 +30,7 @@ jose_keyset <- function(...) {
     } else if (inherits(item, "jose_key")) {
       keys <- c(keys, list(item))
     } else {
-      abort_zujwt(
+      abort_zujose(
         "key",
         "`...` must hold jose_key or jose_keyset objects.",
         call = sys.call()
@@ -53,12 +53,12 @@ as_jose_keyset <- function(x) {
   }
   if (is.character(x)) {
     if (!is_string(x)) {
-      abort_zujwt("key", "A JWK Set must be a single string.", call = call)
+      abort_zujose("key", "A JWK Set must be a single string.", call = call)
     }
     x <- json_key_object(x, "JWK Set", call)
   }
   if (!is_json_object(x) || has_repeated_names(x)) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "A JWK Set must be a JSON object without repeated names.",
       call = call
@@ -66,11 +66,11 @@ as_jose_keyset <- function(x) {
   }
   entries <- member(x, "keys")
   if (!is.list(entries) || !is.null(names(entries))) {
-    abort_zujwt("key", "A JWK Set must have a `keys` array.", call = call)
+    abort_zujose("key", "A JWK Set must have a `keys` array.", call = call)
   }
   known <- c("oct", names(pending_key_types))
   keys <- lapply(entries, function(entry) {
-    key <- tryCatch(as_jose_key(entry), zujwt_key_error = function(e) NULL)
+    key <- tryCatch(as_jose_key(entry), zujose_key_error = function(e) NULL)
     if (!is.null(key) && key$kty %in% known) key
   })
   new_jose_keyset(Filter(Negate(is.null), keys))
@@ -83,12 +83,12 @@ as_jose_keyset <- function(x) {
     return(keys[[i]])
   }
   if (!is_string(i)) {
-    abort_zujwt("key", "Select a key with a single `kid`.", call = sys.call())
+    abort_zujose("key", "Select a key with a single `kid`.", call = sys.call())
   }
   kids <- vapply(keys, function(key) key$kid %||% NA_character_, "")
   found <- which(kids == i)
   if (length(found) != 1L) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       if (length(found) == 0L) {
         "No key in the set has this `kid`."

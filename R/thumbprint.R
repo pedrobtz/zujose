@@ -37,7 +37,7 @@ jose_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   call <- sys.call()
   key <- check_key(key, call)
   if (!is_string(hash) || !hash %in% names(thumbprint_hashes)) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "`hash` must be \"sha256\", \"sha384\" or \"sha512\".",
       call = call
@@ -45,7 +45,7 @@ jose_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   }
   required <- thumbprint_members[[key$kty]]
   if (is.null(required)) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "RFC 7638 defines no thumbprint for this key type.",
       call = call
@@ -53,7 +53,7 @@ jose_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   }
   jwk <- key_to_jwk(key)
   if (!all(required %in% names(jwk))) {
-    abort_zujwt(
+    abort_zujose(
       "key",
       "The key lacks a member its thumbprint needs.",
       call = call

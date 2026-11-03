@@ -1,5 +1,5 @@
-# The algorithm table (design §6): every JWA identifier zujwt knows, with
-# the zucrypt version it needs and whether this version of zujwt implements
+# The algorithm table (design §6): every JWA identifier zujose knows, with
+# the zucrypt version it needs and whether this version of zujose implements
 # it. An identifier is usable only when both hold; otherwise it is reported
 # as unsupported, never silently skipped.
 
@@ -51,7 +51,7 @@ jwa_table <- function() {
   )
 }
 
-# The identifiers this version of zujwt has code for. Each stage adds its
+# The identifiers this version of zujose has code for. Each stage adds its
 # own.
 implemented_algorithms <- c(
   "HS256",
@@ -91,7 +91,7 @@ implemented_algorithms <- c(
   "ECDH-ES+A256KW"
 )
 
-# The zucrypt functions each release adds that zujwt uses. An algorithm is
+# The zucrypt functions each release adds that zujose uses. An algorithm is
 # available when the installed zucrypt is that release or later, or when it
 # already exports those functions: a development zucrypt (0.1.0.9000) can
 # carry a later release's functions before it is numbered.
@@ -118,21 +118,21 @@ zucrypt_provides <- function(version, installed) {
 
 #' Algorithms available in this installation
 #'
-#' `zujwt_info()` lists every JOSE algorithm zujwt knows and whether it can
-#' be used here. An algorithm is available when this version of zujwt
+#' `zujose_info()` lists every JOSE algorithm zujose knows and whether it can
+#' be used here. An algorithm is available when this version of zujose
 #' implements it and the installed zucrypt provides what it needs: zucrypt is
 #' the version in the `zucrypt` column or later, or already exports the
 #' functions that version adds. Using one that
-#' is not raises `zujwt_unsupported_error`.
+#' is not raises `zujose_unsupported_error`.
 #'
 #' @returns A data frame with columns `algorithm`, `kind` (`"signature"`,
 #'   `"key management"` or `"content encryption"`), `available`, and
 #'   `zucrypt`, the zucrypt version the algorithm needs.
 #' @export
 #' @examples
-#' info <- zujwt_info()
+#' info <- zujose_info()
 #' info[info$available, ]
-zujwt_info <- function() {
+zujose_info <- function() {
   table <- jwa_table()
   installed <- utils::packageVersion("zucrypt")
   table$available <- table$algorithm %in%
@@ -157,7 +157,7 @@ check_algorithms <- function(algorithms, kind, arg = "algorithms", call) {
     !anyNA(algorithms) &&
     all(algorithms %in% known)
   if (!ok) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
       sprintf(
         "`%s` must name %s algorithms from RFC 7518; \"none\" is never allowed.",
@@ -172,20 +172,20 @@ check_algorithms <- function(algorithms, kind, arg = "algorithms", call) {
 
 # Refuse an algorithm this installation cannot run, naming what it needs.
 check_available <- function(alg, call) {
-  info <- zujwt_info()
+  info <- zujose_info()
   row <- info[info$algorithm == alg, ]
   if (nrow(row) == 0L) {
-    abort_zujwt(
+    abort_zujose(
       "policy",
-      "The token's algorithm is not a JOSE algorithm zujwt knows.",
+      "The token's algorithm is not a JOSE algorithm zujose knows.",
       call = call
     )
   }
   if (!alg %in% implemented_algorithms) {
-    stop(zujwt_condition(
-      "zujwt_unsupported_error",
+    stop(zujose_condition(
+      "zujose_unsupported_error",
       sprintf(
-        "Algorithm \"%s\" is not implemented in this version of zujwt.",
+        "Algorithm \"%s\" is not implemented in this version of zujose.",
         alg
       ),
       algorithm = alg,

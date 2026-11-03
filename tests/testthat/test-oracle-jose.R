@@ -1,7 +1,7 @@
 # The jose package as an oracle (design §10): each package verifies what
 # the other signs, for the algorithms both support.
 
-test_that("jose verifies the HMAC JWTs zujwt signs", {
+test_that("jose verifies the HMAC JWTs zujose signs", {
   skip_if_not_installed("jose")
   secret <- as.raw(1:64)
   key <- jose_key_oct(secret)
@@ -19,7 +19,7 @@ test_that("jose verifies the HMAC JWTs zujwt signs", {
   }
 })
 
-test_that("zujwt verifies the HMAC JWTs jose signs", {
+test_that("zujose verifies the HMAC JWTs jose signs", {
   skip_if_not_installed("jose")
   secret <- as.raw(1:64)
   key <- jose_key_oct(secret)
@@ -32,11 +32,11 @@ test_that("zujwt verifies the HMAC JWTs jose signs", {
     )
     claims <- jose_jwt_decode(jwt, key, alg, audience = "api")
     expect_identical(claims$sub, "u2", info = alg)
-    # jose cannot make zujwt accept an algorithm it was not given.
+    # jose cannot make zujose accept an algorithm it was not given.
     other <- setdiff(c("HS256", "HS384", "HS512"), alg)
     expect_error(
       jose_jwt_decode(jwt, key, other, audience = "api"),
-      class = "zujwt_policy_error"
+      class = "zujose_policy_error"
     )
   }
 })
@@ -49,11 +49,11 @@ test_that("a jose token signed with the wrong secret is refused", {
   )
   expect_error(
     jose_jwt_decode(jwt, jose_key_oct(as.raw(1:64)), "HS256"),
-    class = "zujwt_signature_error"
+    class = "zujose_signature_error"
   )
 })
 
-test_that("jose verifies the RSA JWTs zujwt signs, and the reverse", {
+test_that("jose verifies the RSA JWTs zujose signs, and the reverse", {
   skip_if_not_installed("jose")
   skip_if_not_installed("openssl")
   theirs <- openssl::rsa_keygen(2048)

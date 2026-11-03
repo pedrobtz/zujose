@@ -41,7 +41,7 @@ jobs:
       # skip_if_not_installed() fails here and nowhere else.
       nosuggests: true
 
-      # CRAN's NOLD flavor, R without long double. zujwt's arithmetic is on
+      # CRAN's NOLD flavor, R without long double. zujose's arithmetic is on
       # NumericDate seconds as doubles; this checks it does not lean on
       # 80-bit intermediates. Both legs run in the full profile only.
       nold: true

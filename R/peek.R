@@ -10,7 +10,7 @@
 #' The token must still be well formed: strict unpadded Base64url, headers
 #' that are JSON objects without repeated members, and the rules on `crit`
 #' and `b64` (RFC 7515, RFC 7797). A malformed token raises
-#' `zujwt_parse_error`.
+#' `zujose_parse_error`.
 #'
 #' @param token A token: a compact serialization, or the text of a JSON
 #'   serialization.
