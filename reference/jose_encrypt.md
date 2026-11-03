@@ -77,8 +77,12 @@ encryption. If the random source fails, the error is zucrypt's
 
 Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
 `A192GCMKW`, `A256GCMKW`, one of the `PBES2-*` algorithms, or `RSA-OAEP`
-or `RSA-OAEP-256` to an RSA public key of at least 2048 bits. `RSA1_5`
-is refused: it is accepted by
+or `RSA-OAEP-256` to an RSA public key of at least 2048 bits, or
+`ECDH-ES`, `ECDH-ES+A128KW`, `ECDH-ES+A192KW` or `ECDH-ES+A256KW` to an
+EC key on P-256, P-384 or P-521 or an X25519 key. ECDH-ES generates a
+fresh ephemeral key, written as `epk`, and takes `apu` and `apv` from
+`header`; in direct mode (`ECDH-ES`) it encrypts to one recipient.
+`RSA1_5` is refused: it is accepted by
 [`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
 only, when `algorithms` names it, and it never encrypts. Content
 encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
@@ -103,7 +107,7 @@ accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
 token <- jose_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.pRcAHZbUslBl05VofBHOEeTDw-1QHiYWaqnYdk-5bYLgMTAjC1BDeg.A38WSc3EyCJwJTsFtZiTow.sLBInhBQDFb52XE6L6W_cw.V6mzRiienOvMH6hNXPtBXg"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.K7OxpCR8blQSyebJmSujCbFvZPyLSqXO2yUtPkaMLT0un6DxOemzAA.ZIW2pnsMxngFDMKezNYNtA.jg42Acd4VJTz9GCNSc-ZeQ.pZa5KPCVa95ExqHik5X4gQ"
 jose_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jose_decrypted> A128KW with A128CBC-HS256, key "kek"

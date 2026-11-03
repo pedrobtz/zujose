@@ -75,8 +75,11 @@ gains `b64: false` and `crit: ["b64"]`.
 
 The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
 `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
-RSA key of at least 2048 bits. `RS*` signatures are deterministic; `PS*`
-ones are randomised, with a salt as long as the digest.
+RSA key of at least 2048 bits, and `ES256`, `ES384` and `ES512` with a
+private EC key on P-256, P-384 and P-521 respectively. `RS*` signatures
+are deterministic; `PS*` and `ES*` ones are randomised. An `ES*`
+signature is `r` followed by `s`, each of fixed length, as RFC 7518
+section 3.4 specifies.
 
 ## Examples
 

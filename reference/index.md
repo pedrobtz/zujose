@@ -30,7 +30,7 @@
 - [`jose_peek()`](https://pedrobtz.github.io/zujwt/reference/jose_peek.md)
   : Look inside a token without verifying it
 - [`jose_pem()`](https://pedrobtz.github.io/zujwt/reference/jose_pem.md)
-  : Write an RSA key as PEM
+  : Write a key as PEM
 - [`jose_public()`](https://pedrobtz.github.io/zujwt/reference/jose_public.md)
   : The public part of a key or key set
 - [`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md)

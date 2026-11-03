@@ -70,9 +70,10 @@ already parsed. A raw vector is taken as an <code>oct</code> secret, as by
     <p><code>RSA</code> keys need <code>n</code> and <code>e</code>, and for a private key all of <code>d</code>, <code>p</code>, <code>q</code>,
 <code>dp</code>, <code>dq</code> and <code>qi</code>; they are checked when read. A PEM string holding an
 RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.</p>
-<p>Keys of type <code>EC</code> and <code>OKP</code> are read and kept, so they can be listed,
-selected, written and thumbprinted, but using one before zujwt supports it
-raises <code>zujwt_unsupported_error</code>.</p>
+<p><code>EC</code> keys on P-256, P-384 and P-521 and <code>OKP</code> keys on X25519 are checked
+when read: the point must be on its curve. PEM holding an EC or X25519 key
+is read too. Other <code>OKP</code> keys, such as Ed25519, are read and kept so that
+they can be listed, selected and thumbprinted, but cannot be used.</p>
     </div>
 
     <div class="section level2">

@@ -1,9 +1,8 @@
 # Generate a random key
 
 `jose_key_generate()` makes a new key from the operating system's
-cryptographic random source, through zucrypt: `oct` keys and `RSA` keys.
-`EC` and `OKP` keys raise `zujwt_unsupported_error`, naming the zucrypt
-version that will add them.
+cryptographic random source, through zucrypt: `oct`, `RSA`, `EC` (on
+P-256, P-384 or P-521) and `OKP` (X25519) keys. There is no Ed25519.
 
 ## Usage
 
@@ -33,7 +32,8 @@ jose_key_generate(
 
 - crv:
 
-  The curve of an `EC` or `OKP` key. Not used for `oct`.
+  The curve: `"P-256"` (the default), `"P-384"` or `"P-521"` for an `EC`
+  key, `"X25519"` for an `OKP` key. Not used otherwise.
 
 - alg:
 
@@ -89,7 +89,7 @@ key
 # A key encryption key, named by its thumbprint.
 jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
 #> <jose_key> oct, 256 bits
-#>   kid "JPmeeFqwVBjU4_k3dsqBs0sqXc6qPwOMQGsypZpRk5E"
+#>   kid "mZqdxsxQzZUXPX6Ol4NtCbT_bLfXy8GQ5L4kNV1-FeA"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```

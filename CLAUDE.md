@@ -30,18 +30,20 @@ stays.
 
 ## Current state
 
-Scaffolded 2026-11-02 with `create-pkg.sh`. Stages 0–8 are done
-(2026-11-03): codec, `oct` and RSA keys (JWK and PEM) and key sets, JWS
-with `HS*`, `RS*` and `PS*`, JWT, and JWE with `dir`, `A*KW`, `A*GCMKW`,
-`PBES2-*`, `RSA-OAEP`, `RSA-OAEP-256` and decrypt-only `RSA1_5` key
-management and `A*CBC-HS*` and `A*GCM` content encryption, with
-generated keys, CEKs and IVs. RSA keys stay JWK members;
-`rsa_crypt_key()` builds the zucrypt key for each operation. The roadmap
-in `.agents/roadmap.md` takes it to v0.1.0. The design’s release gate
-(§11.2) holds the CRAN submission until `zuutf` and `zucrypt` (\>=
-0.5.0) are on CRAN. Randomness comes from `zucrypt`’s development
-version (`Remotes: pedrobtz/zucrypt`), as do AES-GCM and PBKDF2 (zucrypt
-Stage 14a) and RSA (15a). Stage 9 (EC, X25519) uses zucrypt’s Stage 16a.
+Scaffolded 2026-11-02 with `create-pkg.sh`. Stages 0–9 are done
+(2026-11-03): every algorithm of design §3. Codec; `oct`, RSA, EC and
+X25519 keys (JWK and PEM) and key sets; JWS with `HS*`, `RS*`, `PS*` and
+`ES*`; JWT; and JWE with `dir`, `A*KW`, `A*GCMKW`, `PBES2-*`,
+`RSA-OAEP`, `RSA-OAEP-256`, decrypt-only `RSA1_5` and `ECDH-ES` (with
+the Concat KDF in R) key management and `A*CBC-HS*` and `A*GCM` content
+encryption. Asymmetric keys stay JWK members; `rsa_crypt_key()` and
+`ec_crypt_key()` build the zucrypt key for each operation. Next is Stage
+10, the documentation. The roadmap in `.agents/roadmap.md` takes it to
+v0.1.0. The design’s release gate (§11.2) holds the CRAN submission
+until `zuutf` and `zucrypt` (\>= 0.5.0) are on CRAN. Randomness comes
+from `zucrypt`’s development version (`Remotes: pedrobtz/zucrypt`), as
+do AES-GCM and PBKDF2 (zucrypt Stage 14a), RSA (15a) and the curves
+(16a).
 
 ## Stage tracking
 

@@ -112,8 +112,11 @@ verifier then supplies it to <code><a href="jose_verify.html">jose_verify()</a><
 and the header gains <code>b64: false</code> and <code>crit: ["b64"]</code>.</p>
 <p>The algorithms are <code>HS256</code>, <code>HS384</code> and <code>HS512</code> with an <code>oct</code> key, and
 <code>RS256</code>, <code>RS384</code>, <code>RS512</code>, <code>PS256</code>, <code>PS384</code> and <code>PS512</code> with a private
-RSA key of at least 2048 bits. <code>RS*</code> signatures are deterministic; <code>PS*</code>
-ones are randomised, with a salt as long as the digest.</p>
+RSA key of at least 2048 bits, and <code>ES256</code>, <code>ES384</code> and <code>ES512</code> with a
+private EC key on P-256, P-384 and P-521 respectively. <code>RS*</code> signatures
+are deterministic; <code>PS*</code> and <code>ES*</code> ones are randomised. An <code>ES*</code>
+signature is <code>r</code> followed by <code>s</code>, each of fixed length, as RFC 7518
+section 3.4 specifies.</p>
     </div>
 
     <div class="section level2">
