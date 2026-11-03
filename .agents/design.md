@@ -513,10 +513,14 @@ Each is checked before decoding.
 - **Skips by capability.** A vector needing an algorithm the installed
   `zucrypt` lacks is skipped with the version named; one CI leg asserts
   that zero vectors are skipped before release.
-- **Oracle.** `jose` under `skip_if_not_installed()`: tokens each package
-  signs, the other verifies, for the shared algorithms. JWE has no R
-  oracle; a development-only job checks against a Python or JavaScript
-  JOSE library, never at check time.
+- **Oracle.** PyJWT, through fixtures written offline by
+  `tools/make-oracle-fixtures.py`: JWTs it signs with `HS*`, `RS*`, `PS*`
+  and `ES*`, and the PEM keys (from `cryptography`) that sign them.
+  zujose verifies each, and reproduces the deterministic `HS*` and `RS*`
+  signatures byte for byte. JWE has no oracle at check time; a
+  development-only job checks against a Python or JavaScript JOSE library.
+  (2026-11-03: replaces `jose` and `openssl` in `Suggests`, so the suite
+  needs no other JOSE implementation installed.)
 - **RFC 8725 attacks** as named tests: `alg: none`, `HS256` signed with
   an RSA public key's bytes, `alg` swapped within a family, `kid`
   injection, `crit` with unknown names, repeated header members, invalid

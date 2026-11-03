@@ -227,8 +227,7 @@ test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
 # Keys ---------------------------------------------------------------------
 
 test_that("RSA moduli under 2048 bits are refused for use", {
-  skip_if_not_installed("openssl")
-  small <- as_jose_key(openssl::write_pem(openssl::rsa_keygen(1024)))
+  small <- as_jose_key(oracle_pem("rsa-1024"))
   expect_error(jose_sign("x", small, "RS256"), class = "zujose_key_error")
   expect_error(
     jose_encrypt("x", jose_public(small), "RSA-OAEP"),
@@ -239,15 +238,15 @@ test_that("RSA moduli under 2048 bits are refused for use", {
 })
 
 test_that("PEM keys are read, and written back as PEM", {
-  skip_if_not_installed("openssl")
-  theirs <- openssl::rsa_keygen(2048)
-  key <- as_jose_key(openssl::write_pem(theirs))
+  pem <- oracle_pem("rsa-2048")
+  pub_pem <- oracle_pem("rsa-2048", public = TRUE)
+  key <- as_jose_key(pem)
   expect_identical(key$kty, "RSA")
-  expect_identical(jose_pem(key, private = TRUE), openssl::write_pem(theirs))
-  expect_identical(jose_pem(key), openssl::write_pem(theirs$pubkey))
-  pub <- as_jose_key(openssl::write_pem(theirs$pubkey))
+  expect_identical(jose_pem(key, private = TRUE), pem)
+  expect_identical(jose_pem(key), pub_pem)
+  pub <- as_jose_key(pub_pem)
   expect_false("d" %in% names(pub$members))
-  expect_identical(jose_pem(pub), openssl::write_pem(theirs$pubkey))
+  expect_identical(jose_pem(pub), pub_pem)
   expect_error(jose_pem(pub, private = TRUE), class = "zujose_key_error")
   expect_error(jose_pem(jose_key_oct(as.raw(1:32))), class = "zujose_key_error")
 })
