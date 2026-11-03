@@ -181,7 +181,10 @@ jwt_decode <- function(
     leeway,
     now
   )
-  if (is_string(token) && grepl("^[[:space:]]*\\{", token)) {
+  if (!is_string(token)) {
+    abort_zujose("parse", "`token` must be a single string.", call = call)
+  }
+  if (grepl("^[[:space:]]*\\{", token)) {
     abort_zujose(
       "parse",
       "A JWT uses the compact serialization.",

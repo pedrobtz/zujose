@@ -451,3 +451,16 @@ test_that("printing claims shows times in UTC", {
     now = as_posixct(1800000000)
   )))
 })
+
+test_that("a token that is not a single string is a parse error", {
+  key <- jwk_oct(as.raw(1:32))
+  for (token in list(
+    NA_character_,
+    123,
+    c("a.b.c", "d.e.f"),
+    NULL,
+    character()
+  )) {
+    expect_error(jwt_decode(token, key, "HS256"), class = "zujose_parse_error")
+  }
+})
