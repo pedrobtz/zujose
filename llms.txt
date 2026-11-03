@@ -7,10 +7,10 @@ library refuses: a token that names its own algorithm, a key smuggled in
 its header, an expired claim that nobody looked at.
 
 zujose implements the JOSE standards, JWS, JWE, JWK and JWT ([RFC
-7515](https://www.rfc-editor.org/rfc/rfc7515) to
-[7519](https://www.rfc-editor.org/rfc/rfc7519)), in both the compact and
-the JSON serializations, with the defaults of [RFC
-8725](https://www.rfc-editor.org/rfc/rfc8725), the JWT best current
+7515](https://www.rfc-editor.org/info/rfc7515/) to
+[7519](https://www.rfc-editor.org/info/rfc7519/)), in both the compact
+and the JSON serializations, with the defaults of [RFC
+8725](https://www.rfc-editor.org/info/rfc8725/), the JWT best current
 practices.
 
 - **You name the algorithms.** Every function that checks a token takes
@@ -71,7 +71,7 @@ jwt <- jwt_encode(
   expires_in = 3600
 )
 jwt
-#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcxNDAzMCwiaWF0IjoxNzkzNzEwNDMwfQ.g2c23WtUjbTMFTq3nA_Ogp2Zq4KNupo27wOi1N8EL1Y"
+#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcyMDMzNywiaWF0IjoxNzkzNzE2NzM3fQ.clyCMihuhOcj-V6rpCYuKviH5qpBPOEN5zLUFSpq97Y"
 ```
 
 Checking it names the algorithm and the audience. The result is the
@@ -83,7 +83,7 @@ claims <- jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
 claims$sub
 #> [1] "user-17"
 claims$exp
-#> [1] "2026-11-03 13:53:50 UTC"
+#> [1] "2026-11-03 15:38:57 UTC"
 ```
 
 A token meant for another service is refused:
@@ -143,7 +143,7 @@ whose result says so when printed.
 ## Related work
 
 zujose is checked against the [RFC
-7520](https://www.rfc-editor.org/rfc/rfc7520) cookbook and the vectors
+7520](https://www.rfc-editor.org/info/rfc7520/) cookbook and the vectors
 of RFCs 7515 to 7518, 7638, 7797 and 8037. Its JWS and JWT code is
 checked against tokens made by
 [PyJWT](https://github.com/jpadilla/pyjwt), and its JWE code against

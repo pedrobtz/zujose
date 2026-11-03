@@ -101,7 +101,7 @@ key
 # A key encryption key, named by its thumbprint.
 jwk_with_kid(jwk_generate("oct", alg = "A256KW"))
 #> <jwk> oct, 256 bits
-#>   kid "v58ngx-l8IoBbB2l7FDVQplpf9eS0Plln7CKlQ5Owzc"
+#>   kid "NGoSCpdqJMoNw-3ZqclS1J8-CrooatV_0uJ8PM-91lQ"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```

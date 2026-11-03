@@ -107,7 +107,7 @@ accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
 token <- jwe_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.w_lD6vTHi6BG4UYB030bdRL2rr81JycbpcsLIdBqarbFkX27TY2WZg.F6ZhcVXsy4a9Ykbhtk-v3w.NrfFNJ9l3x1WvOjKDfkRAA.cvlUKtrNAnVYMfKVvfVqBw"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.RXwVnom5gr1xXd7jDClXfUAZcVB9Lzz5g4FUMfcgl9_81uEolFyS7A.6UQU9_3ZWbeyDXmkj0Kphw.oOotvNicdiBWXobTzw6Ivw.eTD61alOcXKFCMOMNw2Z1g"
 jwe_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jwe_decrypted> A128KW with A128CBC-HS256, key "kek"

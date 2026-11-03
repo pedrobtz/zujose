@@ -1,7 +1,8 @@
 # zujose: Sign, Verify, Encrypt and Decrypt JSON Web Tokens
 
-Signs, verifies, encrypts and decrypts JSON Object Signing and
-Encryption ('JOSE') objects: JSON Web Signatures (RFC 7515)
+Signs, verifies, encrypts and decrypts JavaScript Object Notation (JSON)
+Object Signing and Encryption ('JOSE') objects: JSON Web Signatures
+(Request for Comments (RFC) 7515)
 [doi:10.17487/RFC7515](https://doi.org/10.17487/RFC7515) , JSON Web
 Encryption (RFC 7516)
 [doi:10.17487/RFC7516](https://doi.org/10.17487/RFC7516) , JSON Web Keys
@@ -11,7 +12,7 @@ JSON Web Tokens (RFC 7519)
 compact and JSON serializations. The caller names the algorithms it
 accepts, and tokens are checked against the current best practices of
 RFC 8725 [doi:10.17487/RFC8725](https://doi.org/10.17487/RFC8725) .
-Written in R over 'zucrypt', so no system cryptography library is
+Written in 'R' over 'zucrypt', so no system cryptography library is
 needed.
 
 ## Details
