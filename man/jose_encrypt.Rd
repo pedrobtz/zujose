@@ -48,15 +48,18 @@ through \code{\link[=jose_recipient]{jose_recipient()}}, and returns the JWE in 
 flattened JSON or general JSON serialization (RFC 7516).
 }
 \details{
-Encryption generates a fresh content encryption key and initialization
-vector for every message, so it needs cryptographic randomness from
-zucrypt (>= 0.2.0). Until that is installed it raises
-\code{zujwt_unsupported_error}; decryption works without it.
+Every message gets a fresh content encryption key and initialization
+vector, drawn from the operating system's cryptographic random source
+through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
+encryption. If the random source fails, the error is zucrypt's
+\code{zucrypt_entropy_error}, and nothing is returned.
 }
 \examples{
-key <- jose_key_oct(as.raw(1:16), kid = "kek")
-# Until zucrypt (>= 0.2.0) supplies randomness, this is unsupported.
-try(jose_encrypt("secret", key, alg = "A128KW"))
+key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
+token <- jose_encrypt("secret", key)
+token
+jose_decrypt(token, key, algorithms = "A128KW",
+             encryptions = "A128CBC-HS256")
 }
 \seealso{
 \code{\link[=jose_decrypt]{jose_decrypt()}}.

@@ -40,9 +40,20 @@
   key management and `A128CBC-HS256`, `A192CBC-HS384` and `A256CBC-HS512`
   content encryption, in all three serializations and for several
   recipients. Every decryption failure raises one class with one message.
-  Compressed (`zip`) tokens are refused. `jose_encrypt()` and
-  `jose_recipient()` are in place but need zucrypt (>= 0.2.0) for random
-  keys and IVs.
+  Compressed (`zip`) tokens are refused.
+
+* `jose_encrypt()` encrypts to one recipient, or to several through
+  `jose_recipient()`, with the same algorithms. Every message gets a fresh
+  content encryption key and IV from the operating system's random source,
+  which cannot be supplied by the caller.
+
+* `jose_key_generate()` makes a random `oct` key, sized for its `alg`.
+  `RSA`, `EC` and `OKP` generation names the zucrypt version it needs.
+
+* `jose_jwt_encode(jti = TRUE)` adds a random 128-bit `jti`.
+
+* zujwt now needs the development version of zucrypt, for
+  `crypt_rand_bytes()`.
 
 * `jose_jwt_decode()` accepts a JWT sent as a JWE only with
   `decrypt = jose_decryption(...)`.

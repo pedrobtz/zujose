@@ -106,11 +106,24 @@ test_that("jose_jwt_encode() refuses bad arguments", {
     jose_jwt_encode(list(), key, "HS256", issued_at = NA),
     "issued_at"
   )
-  err <- expect_error(
-    jose_jwt_encode(list(), key, "HS256", jti = TRUE),
-    class = "zujwt_unsupported_error"
+  expect_error(jose_jwt_encode(list(), key, "HS256", jti = NA), "jti")
+})
+
+test_that("jti = TRUE adds a random identifier, unless the claims set one", {
+  key <- jose_key_oct(as.raw(1:32))
+  jti_of <- function(jwt) {
+    jose_jwt_decode(jwt, key, "HS256", required = character())$jti
+  }
+  a <- jti_of(jose_jwt_encode(list(), key, "HS256", jti = TRUE))
+  b <- jti_of(jose_jwt_encode(list(), key, "HS256", jti = TRUE))
+  # 128 random bits, as unpadded Base64url.
+  expect_match(a, "^[A-Za-z0-9_-]{22}$")
+  expect_false(identical(a, b))
+  expect_identical(
+    jti_of(jose_jwt_encode(list(jti = "mine"), key, "HS256", jti = TRUE)),
+    "mine"
   )
-  expect_identical(err$needs, "0.2.0")
+  expect_null(jti_of(jose_jwt_encode(list(), key, "HS256")))
 })
 
 # Claim checks (design §8.5) ----------------------------------------------
