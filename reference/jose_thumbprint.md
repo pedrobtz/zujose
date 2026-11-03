@@ -33,7 +33,7 @@ A single string.
 
 The thumbprint of a private key equals that of its public key, since
 private members are never part of it. It is a common `kid`; see
-[`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md).
+[`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md).
 
 ## Examples
 

@@ -2,7 +2,7 @@
 
 `jose_encrypt()` encrypts `plaintext` to one recipient, or to several
 through
-[`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md),
+[`jose_recipient()`](https://pedrobtz.github.io/zujose/reference/jose_recipient.md),
 and returns the JWE in the compact, flattened JSON or general JSON
 serialization (RFC 7516).
 
@@ -30,7 +30,7 @@ jose_encrypt(
 - key:
 
   A `jose_key`, or a list of
-  [`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md)
+  [`jose_recipient()`](https://pedrobtz.github.io/zujose/reference/jose_recipient.md)
   objects for several recipients.
 
 - alg:
@@ -83,7 +83,7 @@ EC key on P-256, P-384 or P-521 or an X25519 key. ECDH-ES generates a
 fresh ephemeral key, written as `epk`, and takes `apu` and `apv` from
 `header`; in direct mode (`ECDH-ES`) it encrypts to one recipient.
 `RSA1_5` is refused: it is accepted by
-[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+[`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
 only, when `algorithms` names it, and it never encrypts. Content
 encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
 `A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping
@@ -94,12 +94,12 @@ For `PBES2-*` the key is the password, as an `oct` key:
 `jose_key_oct(charToRaw(enc2utf8(password)))`. The iteration count is
 `p2c` in `header`, a whole number of at least 1000, and defaults to 600
 000. A recipient decrypting with
-[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+[`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
 accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 
 ## See also
 
-[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md).
+[`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md).
 
 ## Examples
 
@@ -107,7 +107,7 @@ accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
 token <- jose_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.K7OxpCR8blQSyebJmSujCbFvZPyLSqXO2yUtPkaMLT0un6DxOemzAA.ZIW2pnsMxngFDMKezNYNtA.jg42Acd4VJTz9GCNSc-ZeQ.pZa5KPCVa95ExqHik5X4gQ"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.PMJOxdBEemUjCJKuex0U0xGSansKMGfl1AeICWZfPJKY5YmAxBYJeA.tuy-FrEt3ygIX3R5bszV0g.KUVA_GCRmIk-cQxsSbnTxQ.jSOuvgUzVR-aglZYRp2a8g"
 jose_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jose_decrypted> A128KW with A128CBC-HS256, key "kek"

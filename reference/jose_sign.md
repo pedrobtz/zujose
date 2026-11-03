@@ -1,7 +1,7 @@
 # Sign a payload as a JWS
 
 `jose_sign()` signs `payload` with one key, or with several through
-[`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md),
+[`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md),
 and returns the JWS in the compact, flattened JSON or general JSON
 serialization (RFC 7515).
 
@@ -29,7 +29,7 @@ jose_sign(
 - key:
 
   A `jose_key`, or a list of
-  [`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md)
+  [`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md)
   objects for several signatures.
 
 - alg:
@@ -60,7 +60,7 @@ jose_sign(
 
   Whether to leave the payload out of the token. The verifier then
   supplies it to
-  [`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md).
+  [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md).
 
 ## Value
 

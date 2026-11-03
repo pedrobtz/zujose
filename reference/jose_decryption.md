@@ -1,7 +1,7 @@
 # Accept an encrypted JWT
 
 `jose_decryption()` bundles the key and algorithms that
-[`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+[`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
 uses to decrypt a JWT sent as a JWE. Without it, a JWE is refused where
 a JWT is expected, which keeps a signed-token check from silently
 accepting encrypted tokens (jwcrypto's CVE-2022-3102).

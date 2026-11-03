@@ -24,7 +24,7 @@ jose_key_oct(secret, alg = NULL, kid = NULL, use = NULL, key_ops = NULL)
 - kid:
 
   A key identifier, or `NULL`. See
-  [`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md).
+  [`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md).
 
 - use:
 
@@ -49,9 +49,9 @@ workspaces.
 
 ## See also
 
-[`as_jose_key()`](https://pedrobtz.github.io/zujwt/reference/as_jose_key.md)
+[`as_jose_key()`](https://pedrobtz.github.io/zujose/reference/as_jose_key.md)
 to read a JWK,
-[`jose_jwk()`](https://pedrobtz.github.io/zujwt/reference/jose_jwk.md)
+[`jose_jwk()`](https://pedrobtz.github.io/zujose/reference/jose_jwk.md)
 to write one.
 
 ## Examples

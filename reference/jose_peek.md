@@ -5,9 +5,9 @@ headers and, for a JWS, its payload. **Nothing is verified.** The result
 is classed `jose_unverified` and says so when printed. Use it to decide
 which key or policy to apply, or to debug, never to make a decision that
 trusts the token.
-[`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)
+[`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)
 and
-[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+[`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
 are the functions that check a token.
 
 ## Usage
@@ -25,7 +25,7 @@ jose_peek(token, limits = jose_limits())
 - limits:
 
   Resource limits, from
-  [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md).
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md).
 
 ## Value
 
@@ -49,7 +49,7 @@ A list of class `jose_unverified` with:
 The token must still be well formed: strict unpadded Base64url, headers
 that are JSON objects without repeated members, and the rules on `crit`
 and `b64` (RFC 7515, RFC 7797). A malformed token raises
-`zujwt_parse_error`.
+`zujose_parse_error`.
 
 ## Examples
 

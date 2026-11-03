@@ -1,7 +1,7 @@
 # Check a JWT and return its claims
 
 `jose_jwt_decode()` verifies a JWT's signature with
-[`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)'s
+[`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)'s
 rules and then checks its claims (RFC 7519, RFC 8725). The checks happen
 here, in one call, so none can be forgotten.
 
@@ -85,13 +85,13 @@ jose_jwt_decode(
 - decrypt:
 
   For a JWT sent as a JWE, the key and algorithms to decrypt it, from
-  [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md);
+  [`jose_decryption()`](https://pedrobtz.github.io/zujose/reference/jose_decryption.md);
   `NULL` refuses a JWE.
 
 - limits:
 
   Resource limits, from
-  [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md).
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md).
 
 ## Value
 
@@ -134,14 +134,15 @@ it, so a check meant for signed tokens never silently accepts encrypted
 ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
 above, or the claims themselves.
 
-Each failed check raises a subclass of `zujwt_claim_error` carrying the
-claim name: `zujwt_expired_error`, `zujwt_not_yet_valid_error`,
-`zujwt_audience_error`, `zujwt_issuer_error`, `zujwt_subject_error` or
-`zujwt_missing_claim_error`. Time errors also carry `time` and `now`.
+Each failed check raises a subclass of `zujose_claim_error` carrying the
+claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
+`zujose_audience_error`, `zujose_issuer_error`, `zujose_subject_error`
+or `zujose_missing_claim_error`. Time errors also carry `time` and
+`now`.
 
 ## See also
 
-[`jose_jwt_decoder()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.md)
+[`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md)
 to fix these arguments once.
 
 ## Examples
@@ -158,7 +159,7 @@ claims$iss
 # Claim failures have classes of their own.
 tryCatch(
   jose_jwt_decode(jwt, key, "HS256", audience = "other"),
-  zujwt_audience_error = function(e) "wrong audience"
+  zujose_audience_error = function(e) "wrong audience"
 )
 #> [1] "wrong audience"
 ```

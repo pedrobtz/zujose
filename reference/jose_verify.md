@@ -48,7 +48,7 @@ jose_verify(
 - limits:
 
   Resource limits, from
-  [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md).
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md).
 
 ## Value
 

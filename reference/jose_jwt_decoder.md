@@ -1,7 +1,7 @@
 # A reusable JWT check
 
 `jose_jwt_decoder()` fixes the key and every check of
-[`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+[`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
 once, and returns a function of the token that applies them. Use it
 where the same policy guards many requests.
 
@@ -75,18 +75,18 @@ jose_jwt_decoder(
 - decrypt:
 
   For a JWT sent as a JWE, the key and algorithms to decrypt it, from
-  [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md);
+  [`jose_decryption()`](https://pedrobtz.github.io/zujose/reference/jose_decryption.md);
   `NULL` refuses a JWE.
 
 - limits:
 
   Resource limits, from
-  [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md).
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md).
 
 ## Value
 
 A function `function(token, now = Sys.time())` returning the claims, as
-[`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+[`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
 does.
 
 ## Examples

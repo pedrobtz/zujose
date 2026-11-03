@@ -2,7 +2,7 @@
 
 `as_jose_key()` reads a JWK (RFC 7517) from its JSON text or from a list
 already parsed. A raw vector is taken as an `oct` secret, as by
-[`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md).
+[`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md).
 
 ## Usage
 

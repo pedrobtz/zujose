@@ -34,7 +34,7 @@ jose_decrypt(token, key, algorithms, encryptions, limits = jose_limits())
 - limits:
 
   Resource limits, from
-  [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md).
+  [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md).
 
 ## Value
 
@@ -51,7 +51,7 @@ that it fails exactly as a wrong key does. Prefer `RSA-OAEP-256`.
 
 Every failure after the header checks (a wrong key, a bad tag, bad
 padding, a failed key unwrap, a wrong length) raises the same
-`zujwt_decrypt_error` with the same message, so that the error cannot
+`zujose_decrypt_error` with the same message, so that the error cannot
 tell an attacker which step failed (RFC 7516 section 11.5).
 
 With several recipients, those whose algorithm is not in `algorithms`,

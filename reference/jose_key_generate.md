@@ -43,7 +43,7 @@ jose_key_generate(
 - kid:
 
   A key identifier, or `NULL`. See
-  [`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md).
+  [`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md).
 
 - use:
 
@@ -72,9 +72,9 @@ An `RSA` key's `size` is its modulus, 2048 bits by default and at most
 
 ## See also
 
-[`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
+[`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md)
 to wrap a secret you already have,
-[`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md)
+[`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md)
 to name the new key by its thumbprint.
 
 ## Examples
@@ -89,7 +89,7 @@ key
 # A key encryption key, named by its thumbprint.
 jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
 #> <jose_key> oct, 256 bits
-#>   kid "mZqdxsxQzZUXPX6Ol4NtCbT_bLfXy8GQ5L4kNV1-FeA"
+#>   kid "K0oAQFE4ywPgCBbdEizsXHfxQA4cxJitc5maoc_Kxck"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```

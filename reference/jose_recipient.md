@@ -2,7 +2,7 @@
 
 `jose_recipient()` pairs a key with its key management algorithm and
 per-recipient header, for
-[`jose_encrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_encrypt.md)
+[`jose_encrypt()`](https://pedrobtz.github.io/zujose/reference/jose_encrypt.md)
 to produce a general JSON serialization with several recipients.
 
 ## Usage

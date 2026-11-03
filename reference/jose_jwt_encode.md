@@ -27,7 +27,7 @@ jose_jwt_encode(
 - key:
 
   A `jose_key`, or a list of
-  [`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md)
+  [`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md)
   objects for several signatures.
 
 - alg:
@@ -68,7 +68,7 @@ written as NumericDate, whole seconds since 1970. `expires_in` and
 
 ## See also
 
-[`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+[`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
 to check one.
 
 ## Examples
@@ -81,6 +81,6 @@ jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 #> <jose_claims> verified HS256, key "k1"
 #>   sub: "u1"
 #>   aud: "api"
-#>   exp: 2026-11-03 11:36:21 UTC
-#>   iat: 2026-11-03 10:36:21 UTC
+#>   exp: 2026-11-03 11:59:16 UTC
+#>   iat: 2026-11-03 10:59:16 UTC
 ```

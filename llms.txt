@@ -1,16 +1,16 @@
-# zujwt
+# zujose
 
-The goal of zujwt is to …
+The goal of zujose is to …
 
 ## Installation
 
-You can install the development version of zujwt from
+You can install the development version of zujose from
 [GitHub](https://github.com/) with:
 
 ``` r
 
 # install.packages("pak")
-pak::pak("pedrobtz/zujwt")
+pak::pak("pedrobtz/zujose")
 ```
 
 ## Example
@@ -19,7 +19,7 @@ This is a basic example which shows you how to solve a common problem:
 
 ``` r
 
-library(zujwt)
+library(zujose)
 ## basic example code
 ```
 
@@ -27,51 +27,51 @@ library(zujwt)
 
 ## All functions
 
-- [`as_jose_key()`](https://pedrobtz.github.io/zujwt/reference/as_jose_key.md)
+- [`as_jose_key()`](https://pedrobtz.github.io/zujose/reference/as_jose_key.md)
   : Read a JSON Web Key
-- [`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+- [`jose_decrypt()`](https://pedrobtz.github.io/zujose/reference/jose_decrypt.md)
   : Decrypt a JWE
-- [`jose_decryption()`](https://pedrobtz.github.io/zujwt/reference/jose_decryption.md)
+- [`jose_decryption()`](https://pedrobtz.github.io/zujose/reference/jose_decryption.md)
   : Accept an encrypted JWT
-- [`jose_encrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_encrypt.md)
+- [`jose_encrypt()`](https://pedrobtz.github.io/zujose/reference/jose_encrypt.md)
   : Encrypt a payload as a JWE
-- [`jose_jwk()`](https://pedrobtz.github.io/zujwt/reference/jose_jwk.md)
+- [`jose_jwk()`](https://pedrobtz.github.io/zujose/reference/jose_jwk.md)
   : Write a key or key set as JSON
-- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
+- [`jose_jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decode.md)
   : Check a JWT and return its claims
-- [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decoder.md)
+- [`jose_jwt_decoder()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_decoder.md)
   : A reusable JWT check
-- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_encode.md)
+- [`jose_jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jose_jwt_encode.md)
   : Encode a JWT
-- [`jose_key_generate()`](https://pedrobtz.github.io/zujwt/reference/jose_key_generate.md)
+- [`jose_key_generate()`](https://pedrobtz.github.io/zujose/reference/jose_key_generate.md)
   : Generate a random key
-- [`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
+- [`jose_key_oct()`](https://pedrobtz.github.io/zujose/reference/jose_key_oct.md)
   : Make a symmetric key
-- [`jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)
-  [`as_jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)
+- [`jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md)
+  [`as_jose_keyset()`](https://pedrobtz.github.io/zujose/reference/jose_keyset.md)
   : Key sets
-- [`jose_limits()`](https://pedrobtz.github.io/zujwt/reference/jose_limits.md)
+- [`jose_limits()`](https://pedrobtz.github.io/zujose/reference/jose_limits.md)
   : Resource limits for untrusted tokens
-- [`jose_peek()`](https://pedrobtz.github.io/zujwt/reference/jose_peek.md)
+- [`jose_peek()`](https://pedrobtz.github.io/zujose/reference/jose_peek.md)
   : Look inside a token without verifying it
-- [`jose_pem()`](https://pedrobtz.github.io/zujwt/reference/jose_pem.md)
+- [`jose_pem()`](https://pedrobtz.github.io/zujose/reference/jose_pem.md)
   : Write a key as PEM
-- [`jose_public()`](https://pedrobtz.github.io/zujwt/reference/jose_public.md)
+- [`jose_public()`](https://pedrobtz.github.io/zujose/reference/jose_public.md)
   : The public part of a key or key set
-- [`jose_recipient()`](https://pedrobtz.github.io/zujwt/reference/jose_recipient.md)
+- [`jose_recipient()`](https://pedrobtz.github.io/zujose/reference/jose_recipient.md)
   : One recipient of a multi-recipient JWE
-- [`jose_sign()`](https://pedrobtz.github.io/zujwt/reference/jose_sign.md)
+- [`jose_sign()`](https://pedrobtz.github.io/zujose/reference/jose_sign.md)
   : Sign a payload as a JWS
-- [`jose_signer()`](https://pedrobtz.github.io/zujwt/reference/jose_signer.md)
+- [`jose_signer()`](https://pedrobtz.github.io/zujose/reference/jose_signer.md)
   : One signer of a multi-signature JWS
-- [`jose_thumbprint()`](https://pedrobtz.github.io/zujwt/reference/jose_thumbprint.md)
+- [`jose_thumbprint()`](https://pedrobtz.github.io/zujose/reference/jose_thumbprint.md)
   : JWK thumbprint
-- [`jose_verify()`](https://pedrobtz.github.io/zujwt/reference/jose_verify.md)
+- [`jose_verify()`](https://pedrobtz.github.io/zujose/reference/jose_verify.md)
   : Verify a JWS
-- [`jose_with_kid()`](https://pedrobtz.github.io/zujwt/reference/jose_with_kid.md)
+- [`jose_with_kid()`](https://pedrobtz.github.io/zujose/reference/jose_with_kid.md)
   : Set a key's identifier
-- [`zujwt_error`](https://pedrobtz.github.io/zujwt/reference/zujwt_error.md)
-  : Conditions raised by zujwt
-- [`zujwt_info()`](https://pedrobtz.github.io/zujwt/reference/zujwt_info.md)
+- [`zujose_error`](https://pedrobtz.github.io/zujose/reference/zujose_error.md)
+  : Conditions raised by zujose
+- [`zujose_info()`](https://pedrobtz.github.io/zujose/reference/zujose_info.md)
   : Algorithms available in this installation
 

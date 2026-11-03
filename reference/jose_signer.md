@@ -1,7 +1,7 @@
 # One signer of a multi-signature JWS
 
 `jose_signer()` pairs a key with its algorithm and headers, for
-[`jose_sign()`](https://pedrobtz.github.io/zujwt/reference/jose_sign.md)
+[`jose_sign()`](https://pedrobtz.github.io/zujose/reference/jose_sign.md)
 to produce a general JSON serialization with several signatures.
 
 ## Usage
