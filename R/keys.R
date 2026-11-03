@@ -1,6 +1,6 @@
 # Keys (design §7.2, §8.3).
 #
-# A jose_key is a list of class "jose_key" with:
+# A jwk is a list of class "jwk" with:
 #
 # * `kty`, `kid`, `alg`, `use`, `key_ops`: the JWK's common members, NULL
 #   when absent;
@@ -50,7 +50,7 @@ key_type_usable <- function(kty, crv = NULL) {
 }
 
 # RSA (Stage 8). The JWK members hold the key; a zucrypt key object is
-# built from them for each operation, so that a jose_key stays an ordinary
+# built from them for each operation, so that a jwk stays an ordinary
 # R object that survives saveRDS().
 rsa_private_members <- c("d", "p", "q", "dp", "dq", "qi")
 
@@ -99,7 +99,7 @@ ec_members <- function(ck) {
   out
 }
 
-# A jose_key's type, members and size, from any zucrypt key.
+# A jwk's type, members and size, from any zucrypt key.
 crypt_key_members <- function(ck) {
   if (inherits(ck, "crypt_rsa")) {
     list(
@@ -148,7 +148,7 @@ check_rsa_size <- function(key, call) {
 
 #' Make a symmetric key
 #'
-#' `jose_key_oct()` wraps a secret as a JSON Web Key of type `oct` (RFC 7518
+#' `jwk_oct()` wraps a secret as a JSON Web Key of type `oct` (RFC 7518
 #' section 6.4), the key type of the `HS*`, `A*KW`, `A*GCMKW` and `dir`
 #' algorithms.
 #'
@@ -168,18 +168,18 @@ check_rsa_size <- function(key, call) {
 #' @param secret The key, as a raw vector of at least one byte.
 #' @param alg The one algorithm the key is meant for, such as `"HS256"`, or
 #'   `NULL`. When set, a token whose `alg` differs is refused.
-#' @param kid A key identifier, or `NULL`. See [jose_with_kid()].
+#' @param kid A key identifier, or `NULL`. See [jwk_with_kid()].
 #' @param use `"sig"` or `"enc"`, or `NULL`.
 #' @param key_ops The operations the key may be used for, from `"sign"`,
 #'   `"verify"`, `"encrypt"`, `"decrypt"`, `"wrapKey"`, `"unwrapKey"`,
 #'   `"deriveKey"` and `"deriveBits"`, or `NULL`.
-#' @returns A `jose_key`.
-#' @seealso [as_jose_key()] to read a JWK, [jose_jwk()] to write one.
+#' @returns A `jwk`.
+#' @seealso [as_jwk()] to read a JWK, [jwk_json()] to write one.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32), alg = "HS256", kid = "k1")
+#' key <- jwk_oct(as.raw(1:32), alg = "HS256", kid = "k1")
 #' key
-jose_key_oct <- function(
+jwk_oct <- function(
   secret,
   alg = NULL,
   kid = NULL,
@@ -207,7 +207,7 @@ jose_key_oct <- function(
 
 #' Generate a random key
 #'
-#' `jose_key_generate()` makes a new key from the operating system's
+#' `jwk_generate()` makes a new key from the operating system's
 #' cryptographic random source, through zucrypt: `oct`, `RSA`, `EC` (on
 #' P-256, P-384 or P-521) and `OKP` (X25519) keys. There is no Ed25519.
 #'
@@ -227,19 +227,19 @@ jose_key_oct <- function(
 #'   to 4096, and `NULL` is 2048.
 #' @param crv The curve: `"P-256"` (the default), `"P-384"` or `"P-521"`
 #'   for an `EC` key, `"X25519"` for an `OKP` key. Not used otherwise.
-#' @inheritParams jose_key_oct
-#' @returns A `jose_key`.
-#' @inheritSection jose_key_oct Secrets in memory
-#' @seealso [jose_key_oct()] to wrap a secret you already have,
-#'   [jose_with_kid()] to name the new key by its thumbprint.
+#' @inheritParams jwk_oct
+#' @returns A `jwk`.
+#' @inheritSection jwk_oct Secrets in memory
+#' @seealso [jwk_oct()] to wrap a secret you already have,
+#'   [jwk_with_kid()] to name the new key by its thumbprint.
 #' @export
 #' @examples
-#' key <- jose_key_generate("oct", alg = "HS256")
+#' key <- jwk_generate("oct", alg = "HS256")
 #' key
 #'
 #' # A key encryption key, named by its thumbprint.
-#' jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
-jose_key_generate <- function(
+#' jwk_with_kid(jwk_generate("oct", alg = "A256KW"))
+jwk_generate <- function(
   kty,
   size = NULL,
   crv = NULL,
@@ -477,15 +477,15 @@ new_jose_key <- function(
       supported = supported,
       needs = if (!supported) needs
     ),
-    class = "jose_key"
+    class = "jwk"
   )
 }
 
 #' Read a JSON Web Key
 #'
-#' `as_jose_key()` reads a JWK (RFC 7517) from its JSON text or from a list
+#' `as_jwk()` reads a JWK (RFC 7517) from its JSON text or from a list
 #' already parsed. A raw vector is taken as an `oct` secret, as by
-#' [jose_key_oct()].
+#' [jwk_oct()].
 #'
 #' `RSA` keys need `n` and `e`, and for a private key all of `d`, `p`, `q`,
 #' `dp`, `dq` and `qi`; they are checked when read. A PEM string holding an
@@ -496,33 +496,33 @@ new_jose_key <- function(
 #' is read too. Other `OKP` keys, such as Ed25519, are read and kept so that
 #' they can be listed, selected and thumbprinted, but cannot be used.
 #'
-#' @inheritSection jose_key_oct Secrets in memory
+#' @inheritSection jwk_oct Secrets in memory
 #' @param x JWK text, a parsed JWK as a named list, a raw secret, or a
-#'   `jose_key`.
+#'   `jwk`.
 #' @param ... Not used.
-#' @returns A `jose_key`.
+#' @returns A `jwk`.
 #' @export
 #' @examples
-#' key <- as_jose_key(
+#' key <- as_jwk(
 #'   '{"kty":"oct","kid":"k1","alg":"HS256","k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'
 #' )
 #' key
-as_jose_key <- function(x, ...) {
-  UseMethod("as_jose_key")
+as_jwk <- function(x, ...) {
+  UseMethod("as_jwk")
 }
 
 #' @export
-as_jose_key.jose_key <- function(x, ...) {
+as_jwk.jwk <- function(x, ...) {
   x
 }
 
 #' @export
-as_jose_key.raw <- function(x, ...) {
-  jose_key_oct(x)
+as_jwk.raw <- function(x, ...) {
+  jwk_oct(x)
 }
 
 #' @export
-as_jose_key.character <- function(x, ...) {
+as_jwk.character <- function(x, ...) {
   call <- sys.call(-1)
   if (!is_string(x)) {
     abort_zujose("key", "A JWK must be a single string.", call = call)
@@ -534,7 +534,7 @@ as_jose_key.character <- function(x, ...) {
 }
 
 #' @export
-as_jose_key.list <- function(x, ...) {
+as_jwk.list <- function(x, ...) {
   call <- sys.call(-1)
   if (!is_json_object(x) || has_repeated_names(x)) {
     abort_zujose(
@@ -547,7 +547,7 @@ as_jose_key.list <- function(x, ...) {
 }
 
 #' @export
-as_jose_key.default <- function(x, ...) {
+as_jwk.default <- function(x, ...) {
   abort_zujose(
     "key",
     "Can't read a key from this object.",
@@ -720,20 +720,20 @@ pem_to_key <- function(x, call) {
 
 #' Write a key as PEM
 #'
-#' `jose_pem()` writes an RSA, EC or X25519 key as PEM: the public key as
+#' `jwk_pem()` writes an RSA, EC or X25519 key as PEM: the public key as
 #' SubjectPublicKeyInfo (`PUBLIC KEY`), or with `private = TRUE` the private
 #' key as PKCS#8 (`PRIVATE KEY`), byte for byte as OpenSSL writes them.
 #'
-#' @inheritSection jose_key_oct Secrets in memory
-#' @param key An RSA, EC or X25519 `jose_key`.
+#' @inheritSection jwk_oct Secrets in memory
+#' @param key An RSA, EC or X25519 `jwk`.
 #' @param private Whether to write the private key.
 #' @returns A single string.
-#' @seealso [as_jose_key()], which reads PEM.
+#' @seealso [as_jwk()], which reads PEM.
 #' @export
 #' @examples
-#' key <- jose_key_generate("RSA")
-#' cat(jose_pem(key))
-jose_pem <- function(key, private = FALSE) {
+#' key <- jwk_generate("RSA")
+#' cat(jwk_pem(key))
+jwk_pem <- function(key, private = FALSE) {
   call <- sys.call()
   key <- check_key(key, call)
   if (!isTRUE(private) && !isFALSE(private)) {
@@ -763,17 +763,17 @@ jose_pem <- function(key, private = FALSE) {
 
 #' Set a key's identifier
 #'
-#' `jose_with_kid()` sets `kid`, by default to the key's RFC 7638
+#' `jwk_with_kid()` sets `kid`, by default to the key's RFC 7638
 #' thumbprint, which is stable and needs no registry.
 #'
-#' @param key A `jose_key`.
+#' @param key A `jwk`.
 #' @param kid The identifier.
 #' @returns The key, with `kid` set.
 #' @export
 #' @examples
-#' key <- jose_with_kid(jose_key_oct(as.raw(1:32)))
+#' key <- jwk_with_kid(jwk_oct(as.raw(1:32)))
 #' key$kid
-jose_with_kid <- function(key, kid = jose_thumbprint(key)) {
+jwk_with_kid <- function(key, kid = jwk_thumbprint(key)) {
   key <- check_key(key, sys.call())
   if (!is_string(kid)) {
     abort_zujose("key", "`kid` must be a single string.", call = sys.call())
@@ -784,28 +784,28 @@ jose_with_kid <- function(key, kid = jose_thumbprint(key)) {
 
 #' Write a key or key set as JSON
 #'
-#' `jose_jwk()` writes a `jose_key` as a JWK, or a `jose_keyset` as a JWK
+#' `jwk_json()` writes a `jwk` as a JWK, or a `jwk_set` as a JWK
 #' Set, in compact JSON. By default only public members are written, so the
 #' result is safe to publish; a symmetric (`oct`) key has no public part,
 #' and is refused alone or dropped from a set.
 #'
-#' @param x A `jose_key` or `jose_keyset`.
+#' @param x A `jwk` or `jwk_set`.
 #' @param private Whether to write private members, including the secrets
 #'   of `oct` keys.
 #' @returns A single string.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32), alg = "HS256", kid = "k1")
-#' jose_jwk(key, private = TRUE)
-jose_jwk <- function(x, private = FALSE) {
+#' key <- jwk_oct(as.raw(1:32), alg = "HS256", kid = "k1")
+#' jwk_json(key, private = TRUE)
+jwk_json <- function(x, private = FALSE) {
   call <- sys.call()
   if (!isTRUE(private) && !isFALSE(private)) {
     abort_zujose("key", "`private` must be TRUE or FALSE.", call = call)
   }
   if (!private) {
-    x <- jose_public(x)
+    x <- jwk_public(x)
   }
-  if (inherits(x, "jose_keyset")) {
+  if (inherits(x, "jwk_set")) {
     zujson::json_write(list(keys = lapply(unclass(x), key_to_jwk)))
   } else {
     zujson::json_write(key_to_jwk(check_key(x, call)))
@@ -829,19 +829,19 @@ key_to_jwk <- function(key) {
 
 #' The public part of a key or key set
 #'
-#' `jose_public()` removes private members: `d`, `p`, `q`, `dp`, `dq`,
+#' `jwk_public()` removes private members: `d`, `p`, `q`, `dp`, `dq`,
 #' `qi` and `oth`. A symmetric (`oct`) key is entirely secret, so it is an
 #' error alone and dropped from a key set.
 #'
-#' @param x A `jose_key` or `jose_keyset`.
+#' @param x A `jwk` or `jwk_set`.
 #' @returns An object of the same class.
 #' @export
 #' @examples
-#' set <- as_jose_keyset('{"keys":[{"kty":"oct","k":"AAAA"}]}')
-#' length(jose_public(set))
-jose_public <- function(x) {
+#' set <- as_jwk_set('{"keys":[{"kty":"oct","k":"AAAA"}]}')
+#' length(jwk_public(set))
+jwk_public <- function(x) {
   call <- sys.call()
-  if (inherits(x, "jose_keyset")) {
+  if (inherits(x, "jwk_set")) {
     keys <- Filter(function(key) key$kty != "oct", unclass(x))
     return(new_jose_keyset(lapply(keys, public_key)))
   }
@@ -862,14 +862,14 @@ public_key <- function(key) {
 }
 
 check_key <- function(key, call) {
-  if (!inherits(key, "jose_key")) {
-    abort_zujose("key", "`key` must be a jose_key.", call = call)
+  if (!inherits(key, "jwk")) {
+    abort_zujose("key", "`key` must be a jwk.", call = call)
   }
   key
 }
 
 #' @export
-format.jose_key <- function(x, ...) {
+format.jwk <- function(x, ...) {
   bits <- if (!is.null(x$k)) {
     sprintf(", %d bits", 8L * length(x$k))
   } else if (!is.null(x$bits)) {
@@ -885,7 +885,7 @@ format.jose_key <- function(x, ...) {
       sprintf("key_ops %s", paste(x$key_ops, collapse = ", "))
     }
   )
-  lines <- sprintf("<jose_key> %s%s", x$kty, bits)
+  lines <- sprintf("<jwk> %s%s", x$kty, bits)
   if (length(fields)) {
     lines <- c(lines, paste0("  ", fields))
   }
@@ -907,7 +907,7 @@ format.jose_key <- function(x, ...) {
 }
 
 #' @export
-print.jose_key <- function(x, ...) {
+print.jwk <- function(x, ...) {
   cat(format(x), sep = "\n")
   invisible(x)
 }

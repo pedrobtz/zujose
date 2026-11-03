@@ -27,23 +27,24 @@ JOSE (JSON Object Signing and Encryption) is a family of standards:
   and when it expires, carried as the payload of a JWS or a JWE.
 
 Each comes in a *compact* serialization, the familiar
-`xxxxx.yyyyy.zzzzz`, and a JSON one. RFC 7518 lists the algorithms. Every
-function in zujose starts with `jose_`; the token or payload is the first
-argument and the key the second.
+`xxxxx.yyyyy.zzzzz`, and a JSON one. RFC 7518 lists the algorithms.
+zujose names each function after the object it works on: `jwt_encode()`,
+`jws_sign()`, `jwe_decrypt()`, `jwk_generate()`. The token or payload is
+the first argument and the key the second.
 
 ## Keys
 
-A key is a `jose_key`. A symmetric key, of type `oct`, is a secret shared
+A key is a `jwk`. A symmetric key, of type `oct`, is a secret shared
 by whoever signs and whoever verifies. Generate one for the algorithm you
 mean to use, and it is the right length:
 
 ```{r}
-hmac <- jose_key_generate("oct", alg = "HS256", kid = "hmac-1")
+hmac <- jwk_generate("oct", alg = "HS256", kid = "hmac-1")
 hmac
 ```
 
 Printing never shows the secret. An existing secret, as raw bytes, is
-wrapped with `jose_key_oct()`. A password is not a key: turn it into one
+wrapped with `jwk_oct()`. A password is not a key: turn it into one
 with a key derivation function, or use PBES2 encryption, which does that
 for you.
 
@@ -51,16 +52,16 @@ Public-key algorithms need a key pair. zujose makes RSA keys and
 elliptic-curve keys on P-256, P-384, P-521 and X25519:
 
 ```{r}
-signer <- jose_key_generate("EC", crv = "P-256", alg = "ES256", kid = "ec-1")
+signer <- jwk_generate("EC", crv = "P-256", alg = "ES256", kid = "ec-1")
 signer
 ```
 
-`as_jose_key()` reads a key from JWK text or from PEM, and `jose_jwk()` and
-`jose_pem()` write one. Both write only the public part unless you ask for
+`as_jwk()` reads a key from JWK text or from PEM, and `jwk_json()` and
+`jwk_pem()` write one. Both write only the public part unless you ask for
 the private one:
 
 ```{r}
-jose_jwk(signer)
+jwk_json(signer)
 ```
 
 A key set holds several keys. Its JWK Set text is what an identity
@@ -68,33 +69,33 @@ provider publishes, and what a client reads to verify the provider's
 tokens:
 
 ```{r}
-keys <- jose_keyset(signer, jose_key_generate("RSA", alg = "RS256", kid = "rsa-1"))
+keys <- jwk_set(signer, jwk_generate("RSA", alg = "RS256", kid = "rsa-1"))
 keys
-cat(jose_jwk(keys))
+cat(jwk_json(keys))
 ```
 
-`as_jose_keyset()` reads that text back. A key in a set is picked by the
+`as_jwk_set()` reads that text back. A key in a set is picked by the
 `kid` in a token's header. Two more tools help with naming keys:
-`jose_with_kid()` names a key by its RFC 7638 thumbprint, which needs no
-registry, and `jose_thumbprint()` computes the thumbprint itself.
+`jwk_with_kid()` names a key by its RFC 7638 thumbprint, which needs no
+registry, and `jwk_thumbprint()` computes the thumbprint itself.
 
 Keys live in ordinary R memory, which R can copy and cannot wipe. See the
-"Secrets in memory" section of `?jose_key_oct` for what that means.
+"Secrets in memory" section of `?jwk_oct` for what that means.
 
 ## JSON Web Tokens
 
-`jose_jwt_encode()` signs a list of claims. `expires_in` sets `exp`, and
+`jwt_encode()` signs a list of claims. `expires_in` sets `exp`, and
 `iat` is added for you:
 
 ```{r}
-jwt <- jose_jwt_encode(
+jwt <- jwt_encode(
   list(iss = "https://auth.example", sub = "user-17", aud = "orders-api"),
   signer,
   expires_in = 600
 )
 ```
 
-`jose_jwt_decode()` checks the token in one call. You say which algorithms
+`jwt_decode()` checks the token in one call. You say which algorithms
 you accept; there is no default, so a token cannot choose a weaker one for
 you. The key must fit the algorithm. Then the claims are checked: `exp` is
 required by default, `nbf` and `iat` are checked when present, with a
@@ -102,9 +103,9 @@ leeway of 60 seconds, and `audience`, `issuer` and `subject` are matched
 when you give them:
 
 ```{r}
-claims <- jose_jwt_decode(
+claims <- jwt_decode(
   jwt,
-  jose_public(signer),
+  jwk_public(signer),
   algorithms = "ES256",
   audience = "orders-api",
   issuer = "https://auth.example"
@@ -116,21 +117,21 @@ claims
 must return `TRUE`, and `validate` takes one function of all the claims:
 
 ```{r}
-jose_jwt_decode(
+jwt_decode(
   jwt,
-  jose_public(signer),
+  jwk_public(signer),
   algorithms = "ES256",
   audience = "orders-api",
   claims = list(sub = function(sub) startsWith(sub, "user-"))
 )$sub
 ```
 
-When the same checks apply to every request, `jose_jwt_decoder()` fixes
+When the same checks apply to every request, `jwt_decoder()` fixes
 them once and returns a function of the token:
 
 ```{r}
-check <- jose_jwt_decoder(
-  key = jose_public(keys),
+check <- jwt_decoder(
+  key = jwk_public(keys),
   algorithms = c("ES256", "RS256"),
   audience = "orders-api",
   issuer = "https://auth.example"
@@ -144,9 +145,9 @@ Every error is a condition whose class says what failed, all inheriting
 from `zujose_error`. Catch the class, not the message:
 
 ```{r}
-expired <- jose_jwt_encode(list(sub = "user-17"), hmac, expires_in = -3600)
+expired <- jwt_encode(list(sub = "user-17"), hmac, expires_in = -3600)
 tryCatch(
-  jose_jwt_decode(expired, hmac, algorithms = "HS256"),
+  jwt_decode(expired, hmac, algorithms = "HS256"),
   zujose_expired_error = function(e) paste("expired at", e$time)
 )
 ```
@@ -155,30 +156,30 @@ A token signed with an algorithm you did not allow is a policy error,
 raised before any cryptography is done:
 
 ```{r, error = TRUE}
-jose_jwt_decode(jwt, jose_public(signer), algorithms = "RS256")
+jwt_decode(jwt, jwk_public(signer), algorithms = "RS256")
 ```
 
 `?zujose_error` lists every class and the fields each carries.
 
 ## Signatures: JWS
 
-A JWT is a JWS whose payload is a JSON object. `jose_sign()` and
-`jose_verify()` sign and verify any payload, given as a string or as raw
+A JWT is a JWS whose payload is a JSON object. `jws_sign()` and
+`jws_verify()` sign and verify any payload, given as a string or as raw
 bytes:
 
 ```{r}
-token <- jose_sign("Order 1042 shipped.", hmac)
-verified <- jose_verify(token, hmac, algorithms = "HS256")
+token <- jws_sign("Order 1042 shipped.", hmac)
+verified <- jws_verify(token, hmac, algorithms = "HS256")
 rawToChar(verified$payload)
 ```
 
 `format = "flattened"` or `"general"` writes the JSON serialization, and
-several signers, made with `jose_signer()`, sign one payload together:
+several signers, made with `jws_signer()`, sign one payload together:
 
 ```{r}
-token <- jose_sign(
+token <- jws_sign(
   "Order 1042 shipped.",
-  list(jose_signer(hmac), jose_signer(signer)),
+  list(jws_signer(hmac), jws_signer(signer)),
   format = "general"
 )
 ```
@@ -187,9 +188,9 @@ By default every signature must verify. A recipient that holds only one of
 the keys asks for any one signature instead:
 
 ```{r}
-jose_verify(
+jws_verify(
   token,
-  jose_public(signer),
+  jwk_public(signer),
   algorithms = "ES256",
   require = "any"
 )$kid
@@ -203,10 +204,10 @@ that key to the recipient. To encrypt for a public key, use the
 recipient's public key:
 
 ```{r}
-recipient <- jose_key_generate("RSA", kid = "rsa-enc")
-jwe <- jose_encrypt(
+recipient <- jwk_generate("RSA", kid = "rsa-enc")
+jwe <- jwe_encrypt(
   "card ending 4242",
-  jose_public(recipient),
+  jwk_public(recipient),
   alg = "RSA-OAEP-256",
   enc = "A256GCM"
 )
@@ -216,7 +217,7 @@ Decrypting names both the key management and the content encryption
 algorithms you accept:
 
 ```{r}
-out <- jose_decrypt(
+out <- jwe_decrypt(
   jwe,
   recipient,
   algorithms = "RSA-OAEP-256",
@@ -230,17 +231,17 @@ message, whatever went wrong, so a failure tells an attacker nothing about
 the key.
 
 A password encrypts through PBES2, which derives the key from it. Give the
-password to `jose_key_oct()` as bytes:
+password to `jwk_oct()` as bytes:
 
 ```{r}
-password <- jose_key_oct(charToRaw("correct horse battery staple"))
-jwe <- jose_encrypt(
+password <- jwk_oct(charToRaw("correct horse battery staple"))
+jwe <- jwe_encrypt(
   "backup notes",
   password,
   alg = "PBES2-HS256+A128KW",
   enc = "A128GCM"
 )
-rawToChar(jose_decrypt(jwe, password, "PBES2-HS256+A128KW", "A128GCM")$plaintext)
+rawToChar(jwe_decrypt(jwe, password, "PBES2-HS256+A128KW", "A128GCM")$plaintext)
 ```
 
 ## Encrypted JWTs
@@ -249,25 +250,25 @@ A JWT can be signed and then encrypted, so that only the recipient can read
 the claims. Compose the two steps:
 
 ```{r}
-nested <- jose_jwt_encode(list(sub = "user-17"), signer, expires_in = 600) |>
-  jose_encrypt(
-    jose_public(recipient),
+nested <- jwt_encode(list(sub = "user-17"), signer, expires_in = 600) |>
+  jwe_encrypt(
+    jwk_public(recipient),
     alg = "RSA-OAEP-256",
     enc = "A256GCM",
     header = list(cty = "JWT")
   )
 ```
 
-`jose_jwt_decode()` accepts an encrypted JWT only when you say how to
-decrypt it, with `jose_decryption()`. Without it, a JWE where a signed
+`jwt_decode()` accepts an encrypted JWT only when you say how to
+decrypt it, with `jwe_decryption()`. Without it, a JWE where a signed
 token was expected is refused:
 
 ```{r}
-jose_jwt_decode(
+jwt_decode(
   nested,
-  jose_public(signer),
+  jwk_public(signer),
   algorithms = "ES256",
-  decrypt = jose_decryption(recipient, "RSA-OAEP-256", "A256GCM")
+  decrypt = jwe_decryption(recipient, "RSA-OAEP-256", "A256GCM")
 )$sub
 ```
 

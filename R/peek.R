@@ -4,7 +4,7 @@
 #' headers and, for a JWS, its payload. **Nothing is verified.** The result
 #' is classed `jose_unverified` and says so when printed. Use it to decide
 #' which key or policy to apply, or to debug, never to make a decision that
-#' trusts the token. `jose_verify()` and `jose_decrypt()` are the functions
+#' trusts the token. `jws_verify()` and `jwe_decrypt()` are the functions
 #' that check a token.
 #'
 #' The token must still be well formed: strict unpadded Base64url, headers

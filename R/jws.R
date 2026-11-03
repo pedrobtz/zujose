@@ -2,8 +2,8 @@
 
 #' Sign a payload as a JWS
 #'
-#' `jose_sign()` signs `payload` with one key, or with several through
-#' [jose_signer()], and returns the JWS in the compact, flattened JSON or
+#' `jws_sign()` signs `payload` with one key, or with several through
+#' [jws_signer()], and returns the JWS in the compact, flattened JSON or
 #' general JSON serialization (RFC 7515).
 #'
 #' The protected header holds `alg`, the key's `kid` unless `header` or
@@ -21,7 +21,7 @@
 #'
 #' @param payload The payload: a raw vector, or a single string taken as
 #'   UTF-8 text.
-#' @param key A `jose_key`, or a list of [jose_signer()] objects for several
+#' @param key A `jwk`, or a list of [jws_signer()] objects for several
 #'   signatures.
 #' @param alg The signature algorithm, such as `"HS256"` or `"RS256"`.
 #'   `NULL` takes the key's own `alg`.
@@ -33,15 +33,15 @@
 #' @param b64 Whether the payload is Base64url-encoded in the signing input
 #'   and the token. `FALSE` follows RFC 7797.
 #' @param detached Whether to leave the payload out of the token. The
-#'   verifier then supplies it to [jose_verify()].
+#'   verifier then supplies it to [jws_verify()].
 #' @returns The JWS, as a single string.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32), kid = "k1")
-#' token <- jose_sign("hello", key, alg = "HS256")
+#' key <- jwk_oct(as.raw(1:32), kid = "k1")
+#' token <- jws_sign("hello", key, alg = "HS256")
 #' token
-#' rawToChar(jose_verify(token, key, algorithms = "HS256")$payload)
-jose_sign <- function(
+#' rawToChar(jws_verify(token, key, algorithms = "HS256")$payload)
+jws_sign <- function(
   payload,
   key,
   alg = NULL,
@@ -57,16 +57,16 @@ jose_sign <- function(
   check_flag(b64, "b64", call)
   check_flag(detached, "detached", call)
 
-  signers <- if (inherits(key, "jose_key")) {
-    list(jose_signer(key, alg, header, unprotected))
+  signers <- if (inherits(key, "jwk")) {
+    list(jws_signer(key, alg, header, unprotected))
   } else if (
     is.list(key) &&
       length(key) > 0L &&
-      all(vapply(key, inherits, logical(1), "jose_signer"))
+      all(vapply(key, inherits, logical(1), "jws_signer"))
   ) {
     if (!is.null(alg) || !is.null(header) || !is.null(unprotected)) {
       stop(
-        "With several signers, give `alg` and headers to each jose_signer().",
+        "With several signers, give `alg` and headers to each jws_signer().",
         call. = FALSE
       )
     }
@@ -74,7 +74,7 @@ jose_sign <- function(
   } else {
     abort_zujose(
       "key",
-      "`key` must be a jose_key or a list of jose_signer() objects.",
+      "`key` must be a jwk or a list of jws_signer() objects.",
       call = call
     )
   }
@@ -125,7 +125,7 @@ jose_sign <- function(
       protected = protected_b64,
       header = signer$unprotected,
       signature = b64url_encode(
-        jws_sign(protected$alg, signer$key, input, call)
+        jws_sign_bytes(protected$alg, signer$key, input, call)
       )
     )
   })
@@ -158,23 +158,23 @@ jose_sign <- function(
 
 #' One signer of a multi-signature JWS
 #'
-#' `jose_signer()` pairs a key with its algorithm and headers, for
-#' [jose_sign()] to produce a general JSON serialization with several
+#' `jws_signer()` pairs a key with its algorithm and headers, for
+#' [jws_sign()] to produce a general JSON serialization with several
 #' signatures.
 #'
-#' @inheritParams jose_sign
-#' @param key A `jose_key`.
-#' @returns A `jose_signer`.
+#' @inheritParams jws_sign
+#' @param key A `jwk`.
+#' @returns A `jws_signer`.
 #' @export
 #' @examples
-#' k1 <- jose_key_oct(as.raw(1:32), kid = "a")
-#' k2 <- jose_key_oct(as.raw(33:96), kid = "b")
-#' jose_sign(
+#' k1 <- jwk_oct(as.raw(1:32), kid = "a")
+#' k2 <- jwk_oct(as.raw(33:96), kid = "b")
+#' jws_sign(
 #'   "hello",
-#'   list(jose_signer(k1, "HS256"), jose_signer(k2, "HS512")),
+#'   list(jws_signer(k1, "HS256"), jws_signer(k2, "HS512")),
 #'   format = "general"
 #' )
-jose_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
+jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
   call <- sys.call()
   key <- check_key(key, call)
   if (!is.null(alg) && !is_string(alg)) {
@@ -187,7 +187,7 @@ jose_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
       header = check_header_arg(header, "header"),
       unprotected = check_header_arg(unprotected, "unprotected")
     ),
-    class = "jose_signer"
+    class = "jws_signer"
   )
 }
 
@@ -230,7 +230,7 @@ protected_header <- function(signer, b64, call) {
 
 #' Verify a JWS
 #'
-#' `jose_verify()` checks a JWS in any serialization and returns its
+#' `jws_verify()` checks a JWS in any serialization and returns its
 #' payload. The caller names the algorithms it accepts: a token whose `alg`
 #' is not in `algorithms` is refused before any key is used, and the key
 #' must fit the algorithm (RFC 8725). There is no default and no way to
@@ -242,7 +242,7 @@ protected_header <- function(signer, b64, call) {
 #' `x5u`) are never used.
 #'
 #' @param token The JWS: a compact serialization, or JSON text.
-#' @param key A `jose_key`, a `jose_keyset`, or a function of the header
+#' @param key A `jwk`, a `jwk_set`, or a function of the header
 #'   returning one.
 #' @param algorithms The signature algorithms to accept, such as `"HS256"`.
 #' @param payload For a detached payload (RFC 7515 Appendix F), the payload:
@@ -251,20 +251,20 @@ protected_header <- function(signer, b64, call) {
 #'   default) or `"any"` one is enough. With `"any"`, signatures whose
 #'   algorithm is not in `algorithms` are skipped.
 #' @param limits Resource limits, from [jose_limits()].
-#' @returns A list of class `jose_verified` with `payload` (raw), `header`
+#' @returns A list of class `jws_verified` with `payload` (raw), `header`
 #'   (the protected and unprotected header of the first verified signature),
 #'   `protected` (its protected part), `kid` and `alg` (of the key and
 #'   algorithm that verified it), and `signatures`, one such entry per
 #'   verified signature.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32), kid = "k1")
-#' token <- jose_sign("hello", key, alg = "HS256")
-#' jose_verify(token, key, algorithms = "HS256")
+#' key <- jwk_oct(as.raw(1:32), kid = "k1")
+#' token <- jws_sign("hello", key, alg = "HS256")
+#' jws_verify(token, key, algorithms = "HS256")
 #'
 #' # The token's algorithm must be one you allow.
-#' try(jose_verify(token, key, algorithms = "HS512"))
-jose_verify <- function(
+#' try(jws_verify(token, key, algorithms = "HS512"))
+jws_verify <- function(
   token,
   key,
   algorithms,
@@ -278,7 +278,7 @@ jose_verify <- function(
   verify_jws(token, key, algorithms, payload, require, limits, call)
 }
 
-# The body of jose_verify(), shared with jose_jwt_decode() so that errors
+# The body of jws_verify(), shared with jwt_decode() so that errors
 # name the function the caller called.
 verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
   obj <- jose_parse(token, limits, call)
@@ -343,7 +343,7 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
       alg = first$alg,
       signatures = verified
     ),
-    class = "jose_verified"
+    class = "jws_verified"
   )
 }
 
@@ -368,7 +368,7 @@ verify_signature <- function(
   keys <- resolve_keys(key, header, "verify", limits, call)
   input <- c(charToRaw(s$protected_b64), charToRaw("."), signed_payload)
   for (k in keys) {
-    if (jws_verify(alg, k, input, s$signature, call)) {
+    if (jws_verify_bytes(alg, k, input, s$signature, call)) {
       return(list(
         header = header,
         protected = s$protected,
@@ -416,7 +416,7 @@ digest_fun <- function(name) {
   )
 }
 
-jws_sign <- function(alg, key, input, call) {
+jws_sign_bytes <- function(alg, key, input, call) {
   if (alg %in% names(hmac_hash)) {
     check_hmac_key(key, alg, call)
     return(zucrypt::crypt_hmac(input, key$k, hmac_hash[[alg]]))
@@ -447,7 +447,7 @@ jws_sign <- function(alg, key, input, call) {
   c(pad_left(rs$r, n), pad_left(rs$s, n))
 }
 
-jws_verify <- function(alg, key, input, signature, call) {
+jws_verify_bytes <- function(alg, key, input, signature, call) {
   if (alg %in% names(hmac_hash)) {
     check_hmac_key(key, alg, call)
     expected <- zucrypt::crypt_hmac(input, key$k, hmac_hash[[alg]])
@@ -536,9 +536,9 @@ check_header_arg <- function(x, name) {
 }
 
 #' @export
-print.jose_verified <- function(x, ...) {
+print.jws_verified <- function(x, ...) {
   cat(sprintf(
-    "<jose_verified> %s%s\n",
+    "<jws_verified> %s%s\n",
     x$alg,
     if (!is.null(x$kid)) {
       paste0(", key ", encodeString(x$kid, quote = '"'))

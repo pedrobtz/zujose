@@ -111,7 +111,7 @@ local_no_decoding <- function(what = NULL, env = parent.frame()) {
 
 # RFC 7515 A.1: the HMAC key, also used by RFC 7797 §4.
 rfc7515_key <- function() {
-  as_jose_key(paste0(
+  as_jwk(paste0(
     '{"kty":"oct","k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75',
     'aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"}'
   ))
@@ -134,22 +134,22 @@ sort_members <- function(x) {
 }
 
 # Decode the claims `payload`, signed with a fixed key, at time 1000. The
-# argument is not called `claims`, which would capture jose_jwt_decode()'s.
+# argument is not called `claims`, which would capture jwt_decode()'s.
 decode_at_1000 <- function(
   payload,
   ...,
   required = character(),
   header = list(typ = "JWT")
 ) {
-  key <- jose_key_oct(as.raw(1:32))
-  jwt <- jose_jwt_encode(
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(
     payload,
     key,
     "HS256",
     header = header,
     issued_at = FALSE
   )
-  jose_jwt_decode(
+  jwt_decode(
     jwt,
     key,
     "HS256",
@@ -168,7 +168,7 @@ hex <- function(x) {
 # RFC 7516 A.3: the key, CEK, IV, plaintext and compact JWE.
 rfc7516_a3 <- function() {
   list(
-    key = as_jose_key('{"kty":"oct","k":"GawgguFyGrWKav7AX4VKUg"}'),
+    key = as_jwk('{"kty":"oct","k":"GawgguFyGrWKav7AX4VKUg"}'),
     cek = as.raw(c(
       4,
       211,

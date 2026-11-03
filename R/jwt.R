@@ -2,7 +2,7 @@
 
 #' Encode a JWT
 #'
-#' `jose_jwt_encode()` signs a claims set as a JSON Web Token (RFC 7519),
+#' `jwt_encode()` signs a claims set as a JSON Web Token (RFC 7519),
 #' in the compact serialization.
 #'
 #' Times may be given as `POSIXct` for `exp`, `nbf` and `iat`, and are
@@ -10,7 +10,7 @@
 #' `not_before` count from now.
 #'
 #' @param claims The claims, as a named list. It may be empty.
-#' @inheritParams jose_sign
+#' @inheritParams jws_sign
 #' @param header Protected header members. The default declares
 #'   `typ: "JWT"`.
 #' @param expires_in Seconds, or a `difftime`, until the token expires. Sets
@@ -21,14 +21,14 @@
 #' @param jti Whether to add a random `jti`, 128 bits from the operating
 #'   system's random source as Base64url, unless `claims` sets it.
 #' @returns The JWT, as a single string.
-#' @seealso [jose_jwt_decode()] to check one.
+#' @seealso [jwt_decode()] to check one.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32), kid = "k1")
-#' jwt <- jose_jwt_encode(list(sub = "u1", aud = "api"), key, "HS256",
+#' key <- jwk_oct(as.raw(1:32), kid = "k1")
+#' jwt <- jwt_encode(list(sub = "u1", aud = "api"), key, "HS256",
 #'                        expires_in = 3600)
-#' jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
-jose_jwt_encode <- function(
+#' jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
+jwt_encode <- function(
   claims,
   key,
   alg = NULL,
@@ -71,12 +71,12 @@ jose_jwt_encode <- function(
     claims[["jti"]] <- b64url_encode(zucrypt::crypt_rand_bytes(16L))
   }
 
-  jose_sign(zujson::json_write(claims), key, alg = alg, header = header)
+  jws_sign(zujson::json_write(claims), key, alg = alg, header = header)
 }
 
 #' Check a JWT and return its claims
 #'
-#' `jose_jwt_decode()` verifies a JWT's signature with [jose_verify()]'s
+#' `jwt_decode()` verifies a JWT's signature with [jws_verify()]'s
 #' rules and then checks its claims (RFC 7519, RFC 8725). The checks happen
 #' here, in one call, so none can be forgotten.
 #'
@@ -114,7 +114,7 @@ jose_jwt_encode <- function(
 #' `zujose_missing_claim_error`. Time errors also carry `time` and `now`.
 #'
 #' @param token The JWT, in the compact serialization.
-#' @inheritParams jose_verify
+#' @inheritParams jws_verify
 #' @param audience The audiences this caller accepts, or `NULL`.
 #' @param issuer The issuer this caller accepts, or `NULL`.
 #' @param subject The subject this caller accepts, or `NULL`.
@@ -128,26 +128,26 @@ jose_jwt_encode <- function(
 #' @param leeway Seconds of clock skew to allow.
 #' @param now The current time, as `POSIXct`.
 #' @param decrypt For a JWT sent as a JWE, the key and algorithms to decrypt
-#'   it, from [jose_decryption()]; `NULL` refuses a JWE.
-#' @returns The claims, as a named list of class `jose_claims`, with `exp`,
+#'   it, from [jwe_decryption()]; `NULL` refuses a JWE.
+#' @returns The claims, as a named list of class `jwt_claims`, with `exp`,
 #'   `nbf` and `iat` as `POSIXct` and the verified header as the `header`
 #'   attribute.
-#' @seealso [jose_jwt_decoder()] to fix these arguments once.
+#' @seealso [jwt_decoder()] to fix these arguments once.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32))
-#' jwt <- jose_jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
+#' key <- jwk_oct(as.raw(1:32))
+#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
 #'                        expires_in = 60)
-#' claims <- jose_jwt_decode(jwt, key, "HS256", audience = "api",
+#' claims <- jwt_decode(jwt, key, "HS256", audience = "api",
 #'                           issuer = "me")
 #' claims$iss
 #'
 #' # Claim failures have classes of their own.
 #' tryCatch(
-#'   jose_jwt_decode(jwt, key, "HS256", audience = "other"),
+#'   jwt_decode(jwt, key, "HS256", audience = "other"),
 #'   zujose_audience_error = function(e) "wrong audience"
 #' )
-jose_jwt_decode <- function(
+jwt_decode <- function(
   token,
   key,
   algorithms,
@@ -186,15 +186,15 @@ jose_jwt_decode <- function(
     )
   }
 
-  if (!is.null(decrypt) && !inherits(decrypt, "jose_decryption")) {
-    stop("`decrypt` must be made by jose_decryption().", call. = FALSE)
+  if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
+    stop("`decrypt` must be made by jwe_decryption().", call. = FALSE)
   }
 
   if (compact_parts(token) == 5L) {
     if (is.null(decrypt)) {
       abort_zujose(
         "policy",
-        "The token is a JWE; pass `decrypt = jose_decryption()` to accept one.",
+        "The token is a JWE; pass `decrypt = jwe_decryption()` to accept one.",
         call = call
       )
     }
@@ -244,26 +244,26 @@ jose_jwt_decode <- function(
   for (name in intersect(c("exp", "nbf", "iat"), names(payload))) {
     payload[[name]] <- as_posixct(payload[[name]])
   }
-  structure(payload, header = header, class = "jose_claims")
+  structure(payload, header = header, class = "jwt_claims")
 }
 
 #' A reusable JWT check
 #'
-#' `jose_jwt_decoder()` fixes the key and every check of
-#' [jose_jwt_decode()] once, and returns a function of the token that
+#' `jwt_decoder()` fixes the key and every check of
+#' [jwt_decode()] once, and returns a function of the token that
 #' applies them. Use it where the same policy guards many requests.
 #'
-#' @inheritParams jose_jwt_decode
+#' @inheritParams jwt_decode
 #' @returns A function `function(token, now = Sys.time())` returning the
-#'   claims, as [jose_jwt_decode()] does.
+#'   claims, as [jwt_decode()] does.
 #' @export
 #' @examples
-#' key <- jose_key_oct(as.raw(1:32))
-#' check <- jose_jwt_decoder(key, "HS256", audience = "api", issuer = "me")
-#' jwt <- jose_jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
+#' key <- jwk_oct(as.raw(1:32))
+#' check <- jwt_decoder(key, "HS256", audience = "api", issuer = "me")
+#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
 #'                        expires_in = 60)
 #' check(jwt)$iss
-jose_jwt_decoder <- function(
+jwt_decoder <- function(
   key,
   algorithms,
   audience = NULL,
@@ -279,8 +279,8 @@ jose_jwt_decoder <- function(
   limits = jose_limits()
 ) {
   check_algorithms(algorithms, "signature", call = sys.call())
-  if (!is.null(decrypt) && !inherits(decrypt, "jose_decryption")) {
-    stop("`decrypt` must be made by jose_decryption().", call. = FALSE)
+  if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
+    stop("`decrypt` must be made by jwe_decryption().", call. = FALSE)
   }
   check_decode_args(
     audience,
@@ -297,7 +297,7 @@ jose_jwt_decoder <- function(
   check_limits(limits)
   force(key)
   function(token, now = Sys.time()) {
-    jose_jwt_decode(
+    jwt_decode(
       token,
       key,
       algorithms,
@@ -679,10 +679,10 @@ abort_time <- function(leaf, message, claim, time, now, call) {
 }
 
 #' @export
-print.jose_claims <- function(x, ...) {
+print.jwt_claims <- function(x, ...) {
   header <- attr(x, "header")
   cat(sprintf(
-    "<jose_claims> verified %s%s\n",
+    "<jwt_claims> verified %s%s\n",
     header$alg,
     if (!is.null(header$kid)) {
       paste0(", key ", encodeString(header$kid, quote = '"'))

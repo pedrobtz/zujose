@@ -36,12 +36,12 @@ section 11.5). Messages never contain key material, decrypted bytes or
 token text.
 }
 \examples{
-key <- jose_key_generate("oct", alg = "HS256")
-jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = -120)
+key <- jwk_generate("oct", alg = "HS256")
+jwt <- jwt_encode(list(sub = "user-1"), key, expires_in = -120)
 
 # Catch one kind of failure by its class.
 tryCatch(
-  jose_jwt_decode(jwt, key, algorithms = "HS256"),
+  jwt_decode(jwt, key, algorithms = "HS256"),
   zujose_expired_error = function(e) {
     paste("expired at", format(e$time, tz = "UTC"))
   }

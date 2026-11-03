@@ -3,7 +3,7 @@
     Code
       print(set)
     Output
-      <jose_keyset> 10 keys
+      <jwk_set> 10 keys
         EC "bilbo.baggins@hobbiton.example"
         EC "bilbo.baggins@hobbiton.example"
         RSA "bilbo.baggins@hobbiton.example"

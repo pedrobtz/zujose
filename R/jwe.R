@@ -5,8 +5,8 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 
 #' Encrypt a payload as a JWE
 #'
-#' `jose_encrypt()` encrypts `plaintext` to one recipient, or to several
-#' through [jose_recipient()], and returns the JWE in the compact,
+#' `jwe_encrypt()` encrypts `plaintext` to one recipient, or to several
+#' through [jwe_recipient()], and returns the JWE in the compact,
 #' flattened JSON or general JSON serialization (RFC 7516).
 #'
 #' Every message gets a fresh content encryption key and initialization
@@ -22,7 +22,7 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' an EC key on P-256, P-384 or P-521 or an X25519 key. ECDH-ES generates a
 #' fresh ephemeral key, written as `epk`, and takes `apu` and `apv` from
 #' `header`; in direct mode (`ECDH-ES`) it encrypts to one recipient.
-#' `RSA1_5` is refused: it is accepted by [jose_decrypt()] only, when
+#' `RSA1_5` is refused: it is accepted by [jwe_decrypt()] only, when
 #' `algorithms` names it, and it never encrypts. Content
 #' encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
 #' `A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping `iv`
@@ -30,14 +30,14 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' none of the three can be given.
 #'
 #' For `PBES2-*` the key is the password, as an `oct` key:
-#' `jose_key_oct(charToRaw(enc2utf8(password)))`. The iteration count is
+#' `jwk_oct(charToRaw(enc2utf8(password)))`. The iteration count is
 #' `p2c` in `header`, a whole number of at least 1000, and defaults to
-#' 600 000. A recipient decrypting with [jose_decrypt()] accepts at most
+#' 600 000. A recipient decrypting with [jwe_decrypt()] accepts at most
 #' `jose_limits()$p2c` iterations, by default also 600 000.
 #'
 #' @param plaintext The plaintext: a raw vector, or a single string taken
 #'   as UTF-8 text.
-#' @param key A `jose_key`, or a list of [jose_recipient()] objects for
+#' @param key A `jwk`, or a list of [jwe_recipient()] objects for
 #'   several recipients.
 #' @param alg The key management algorithm, such as `"A256KW"`,
 #'   `"A256GCMKW"`, `"PBES2-HS256+A128KW"` or `"dir"`. `NULL` takes the key's
@@ -53,22 +53,22 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' @param format `"compact"`, `"flattened"` or `"general"`. Several
 #'   recipients need `"general"`.
 #' @returns The JWE, as a single string.
-#' @seealso [jose_decrypt()].
+#' @seealso [jwe_decrypt()].
 #' @export
 #' @examples
-#' key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
-#' token <- jose_encrypt("secret", key)
+#' key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
+#' token <- jwe_encrypt("secret", key)
 #' token
-#' jose_decrypt(token, key, algorithms = "A128KW",
+#' jwe_decrypt(token, key, algorithms = "A128KW",
 #'              encryptions = "A128CBC-HS256")
 #'
 #' # AES-GCM content encryption, under a password.
-#' password <- jose_key_oct(charToRaw("correct horse battery staple"))
-#' token <- jose_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
+#' password <- jwk_oct(charToRaw("correct horse battery staple"))
+#' token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
 #'                       enc = "A256GCM", header = list(p2c = 10000))
-#' jose_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
+#' jwe_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
 #'              encryptions = "A256GCM")$plaintext
-jose_encrypt <- function(
+jwe_encrypt <- function(
   plaintext,
   key,
   alg = NULL,
@@ -97,25 +97,25 @@ jose_encrypt <- function(
 
 #' One recipient of a multi-recipient JWE
 #'
-#' `jose_recipient()` pairs a key with its key management algorithm and
-#' per-recipient header, for [jose_encrypt()] to produce a general JSON
+#' `jwe_recipient()` pairs a key with its key management algorithm and
+#' per-recipient header, for [jwe_encrypt()] to produce a general JSON
 #' serialization with several recipients.
 #'
-#' @param key A `jose_key`.
+#' @param key A `jwk`.
 #' @param alg The key management algorithm, or `NULL` for the key's own.
 #' @param header Per-recipient unprotected header members, as a named list.
-#' @returns A `jose_recipient`.
+#' @returns A `jwe_recipient`.
 #' @export
 #' @examples
-#' jose_recipient(jose_key_oct(as.raw(1:16)), "A128KW")
-jose_recipient <- function(key, alg = NULL, header = NULL) {
+#' jwe_recipient(jwk_oct(as.raw(1:16)), "A128KW")
+jwe_recipient <- function(key, alg = NULL, header = NULL) {
   key <- check_key(key, sys.call())
   if (!is.null(alg) && !is_string(alg)) {
     stop("`alg` must be a single string.", call. = FALSE)
   }
   structure(
     list(key = key, alg = alg, header = check_header_arg(header, "header")),
-    class = "jose_recipient"
+    class = "jwe_recipient"
   )
 }
 
@@ -142,16 +142,16 @@ encrypt_jwe <- function(
     aad <- as_payload_bytes(aad, call)
   }
 
-  recipients <- if (inherits(key, "jose_key")) {
-    list(jose_recipient(key, alg))
+  recipients <- if (inherits(key, "jwk")) {
+    list(jwe_recipient(key, alg))
   } else if (
     is.list(key) &&
       length(key) > 0L &&
-      all(vapply(key, inherits, logical(1), "jose_recipient"))
+      all(vapply(key, inherits, logical(1), "jwe_recipient"))
   ) {
     if (!is.null(alg)) {
       stop(
-        "With several recipients, give `alg` to each jose_recipient().",
+        "With several recipients, give `alg` to each jwe_recipient().",
         call. = FALSE
       )
     }
@@ -159,7 +159,7 @@ encrypt_jwe <- function(
   } else {
     abort_zujose(
       "key",
-      "`key` must be a jose_key or a list of jose_recipient() objects.",
+      "`key` must be a jwk or a list of jwe_recipient() objects.",
       call = call
     )
   }
@@ -404,7 +404,7 @@ encrypt_jwe <- function(
 
 #' Decrypt a JWE
 #'
-#' `jose_decrypt()` decrypts a JWE in any serialization. The caller names
+#' `jwe_decrypt()` decrypts a JWE in any serialization. The caller names
 #' the key management algorithms and the content encryption algorithms it
 #' accepts; neither has a default. A token with `zip` is refused (RFC 8725
 #' section 3.6).
@@ -424,14 +424,14 @@ encrypt_jwe <- function(
 #' first recipient it can decrypt for.
 #'
 #' @param token The JWE: a compact serialization, or JSON text.
-#' @param key A `jose_key`, a `jose_keyset`, or a function of the header
+#' @param key A `jwk`, a `jwk_set`, or a function of the header
 #'   returning one.
 #' @param algorithms The key management algorithms to accept, such as
 #'   `"A256KW"`.
 #' @param encryptions The content encryption algorithms to accept, such as
 #'   `"A256CBC-HS512"`.
 #' @param limits Resource limits, from [jose_limits()].
-#' @returns A list of class `jose_decrypted` with `plaintext` (raw),
+#' @returns A list of class `jwe_decrypted` with `plaintext` (raw),
 #'   `header` (the protected, shared and per-recipient headers merged),
 #'   `protected`, and the `kid`, `alg` and `enc` that decrypted it.
 #' @export
@@ -444,10 +444,10 @@ encrypt_jwe <- function(
 #'   "KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.",
 #'   "U0m_YmjN04DJvceFICbCVQ"
 #' )
-#' key <- as_jose_key('{"kty":"oct","k":"GawgguFyGrWKav7AX4VKUg"}')
-#' out <- jose_decrypt(token, key, "A128KW", "A128CBC-HS256")
+#' key <- as_jwk('{"kty":"oct","k":"GawgguFyGrWKav7AX4VKUg"}')
+#' out <- jwe_decrypt(token, key, "A128KW", "A128CBC-HS256")
 #' rawToChar(out$plaintext)
-jose_decrypt <- function(
+jwe_decrypt <- function(
   token,
   key,
   algorithms,
@@ -462,37 +462,37 @@ jose_decrypt <- function(
 
 #' Accept an encrypted JWT
 #'
-#' `jose_decryption()` bundles the key and algorithms that
-#' [jose_jwt_decode()] uses to decrypt a JWT sent as a JWE. Without it, a
+#' `jwe_decryption()` bundles the key and algorithms that
+#' [jwt_decode()] uses to decrypt a JWT sent as a JWE. Without it, a
 #' JWE is refused where a JWT is expected, which keeps a signed-token check
 #' from silently accepting encrypted tokens (jwcrypto's CVE-2022-3102).
 #'
-#' @inheritParams jose_decrypt
-#' @returns A `jose_decryption`.
+#' @inheritParams jwe_decrypt
+#' @returns A `jwe_decryption`.
 #' @export
 #' @examples
-#' jose_decryption(jose_key_oct(as.raw(1:16)), "A128KW", "A128CBC-HS256")
-jose_decryption <- function(key, algorithms, encryptions) {
+#' jwe_decryption(jwk_oct(as.raw(1:16)), "A128KW", "A128CBC-HS256")
+jwe_decryption <- function(key, algorithms, encryptions) {
   call <- sys.call()
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
-  if (!is.function(key) && !inherits(key, c("jose_key", "jose_keyset"))) {
+  if (!is.function(key) && !inherits(key, c("jwk", "jwk_set"))) {
     abort_zujose(
       "key",
-      "`key` must be a jose_key, a jose_keyset or a resolver function.",
+      "`key` must be a jwk, a jwk_set or a resolver function.",
       call = call
     )
   }
   structure(
     list(key = key, algorithms = algorithms, encryptions = encryptions),
-    class = "jose_decryption"
+    class = "jwe_decryption"
   )
 }
 
 #' @export
-print.jose_decryption <- function(x, ...) {
+print.jwe_decryption <- function(x, ...) {
   cat(sprintf(
-    "<jose_decryption> %s with %s\n",
+    "<jwe_decryption> %s with %s\n",
     paste(x$algorithms, collapse = ", "),
     paste(x$encryptions, collapse = ", ")
   ))
@@ -623,7 +623,7 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
         alg = alg,
         enc = enc
       ),
-      class = "jose_decrypted"
+      class = "jwe_decrypted"
     ))
   }
   abort_decrypt(call = call)
@@ -698,7 +698,7 @@ wrap_cek <- function(
     # A fresh ephemeral key on the recipient's curve (RFC 7518 §4.6);
     # `fixed$epk` injects RFC 7518 Appendix C's.
     eph <- fixed$epk %||%
-      jose_key_generate(key$kty, crv = key$members$crv)
+      jwk_generate(key$kty, crv = key$members$crv)
     z <- ecdh_secret(eph, key)
     out <- list(header = list(epk = epk_jwk(eph)))
     if (alg == "ECDH-ES") {
@@ -944,9 +944,9 @@ check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
 }
 
 #' @export
-print.jose_decrypted <- function(x, ...) {
+print.jwe_decrypted <- function(x, ...) {
   cat(sprintf(
-    "<jose_decrypted> %s with %s%s\n",
+    "<jwe_decrypted> %s with %s%s\n",
     x$alg,
     x$enc,
     if (!is.null(x$kid)) {
@@ -973,7 +973,7 @@ ecdh_kw <- c(
 
 is_ecdh <- function(alg) alg %in% names(ecdh_kw)
 
-# The shared secret Z of a private and a public jose_key on one curve.
+# The shared secret Z of a private and a public jwk on one curve.
 ecdh_secret <- function(private, public) {
   if (private$kty == "OKP") {
     zucrypt::crypt_x25519_diffie_hellman(
@@ -1038,7 +1038,7 @@ ecdh_params <- function(header, call) {
     bad()
   }
   key <- tryCatch(
-    as_jose_key(epk[intersect(c("kty", "crv", "x", "y"), names(epk))]),
+    as_jwk(epk[intersect(c("kty", "crv", "x", "y"), names(epk))]),
     zujose_error = function(e) NULL
   )
   if (is.null(key) || !key$supported) {

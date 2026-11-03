@@ -45,7 +45,7 @@ empty for \code{dir} and \code{ECDH-ES}.
 headers and, for a JWS, its payload. \strong{Nothing is verified.} The result
 is classed \code{jose_unverified} and says so when printed. Use it to decide
 which key or policy to apply, or to debug, never to make a decision that
-trusts the token. \code{jose_verify()} and \code{jose_decrypt()} are the functions
+trusts the token. \code{jws_verify()} and \code{jwe_decrypt()} are the functions
 that check a token.
 }
 \details{

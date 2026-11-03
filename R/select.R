@@ -1,6 +1,6 @@
 # Key resolution, shared by every function that checks a token (D9).
 #
-# `key` is a jose_key, a jose_keyset, or a resolver function(header) that
+# `key` is a jwk, a jwk_set, or a resolver function(header) that
 # returns either. A single key is used as given and must fit the token's
 # algorithm; a key set is narrowed by the header's `kid`, when it has one,
 # and then to the keys that fit (design §8.2, §8.3). Keys named in the
@@ -44,17 +44,17 @@ operation_use <- c(
 resolve_keys <- function(key, header, operation, limits, call = NULL) {
   if (is.function(key)) {
     key <- key(header)
-    if (!inherits(key, c("jose_key", "jose_keyset"))) {
+    if (!inherits(key, c("jwk", "jwk_set"))) {
       abort_zujose(
         "key",
-        "The key resolver must return a jose_key or jose_keyset.",
+        "The key resolver must return a jwk or jwk_set.",
         call = call
       )
     }
   }
   alg <- header[["alg"]]
 
-  if (inherits(key, "jose_key")) {
+  if (inherits(key, "jwk")) {
     if (!key_fits(key, alg, operation, header[["enc"]])) {
       abort_zujose(
         "policy",
@@ -63,7 +63,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
       )
     }
     candidates <- list(key)
-  } else if (inherits(key, "jose_keyset")) {
+  } else if (inherits(key, "jwk_set")) {
     candidates <- unclass(key)
     kid <- member(header, "kid")
     if (!is.null(kid)) {
@@ -83,7 +83,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
   } else {
     abort_zujose(
       "key",
-      "`key` must be a jose_key, a jose_keyset or a resolver function.",
+      "`key` must be a jwk, a jwk_set or a resolver function.",
       call = call
     )
   }
