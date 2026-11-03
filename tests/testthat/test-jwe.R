@@ -570,3 +570,30 @@ test_that("jwk, x5c, jku and x5u in a JWE header are never used as keys", {
     )
   }
 })
+
+test_that("a truncated tag that is a prefix of the real one is refused", {
+  # A decoder that compared only the bytes it was given would accept a
+  # prefix, and a 4-byte tag can be forged in about 2^32 tries (RFC 8725;
+  # design §10). Every truncation is the one decryption error (#73).
+  kek <- jwk_oct(as.raw(1:16))
+  for (enc in c("A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM")) {
+    token <- jwe_encrypt("attack at dawn", kek, "A128KW", enc = enc)
+    parts <- strsplit(token, ".", fixed = TRUE)[[1]]
+    tag <- b64url_decode(parts[[5]], "tag")
+    for (n in unique(c(length(tag) - 1L, 16L, 12L, 8L, 4L, 1L))) {
+      if (n >= length(tag)) {
+        next
+      }
+      truncated <- paste(
+        c(parts[1:4], b64url_encode(tag[seq_len(n)])),
+        collapse = "."
+      )
+      err <- expect_error(
+        jwe_decrypt(truncated, kek, "A128KW", enc),
+        class = "zujose_decrypt_error",
+        info = paste(enc, n)
+      )
+      expect_identical(conditionMessage(err), "Decryption failed.")
+    }
+  }
+})
