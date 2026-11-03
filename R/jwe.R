@@ -15,15 +15,30 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' encryption. If the random source fails, the error is zucrypt's
 #' `zucrypt_entropy_error`, and nothing is returned.
 #'
+#' Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
+#' `A192GCMKW`, `A256GCMKW` or one of the `PBES2-*` algorithms; content
+#' encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
+#' `A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping `iv`
+#' and `tag` into the header, and `PBES2-*` writes a random 16-byte `p2s`;
+#' none of the three can be given.
+#'
+#' For `PBES2-*` the key is the password, as an `oct` key:
+#' `jose_key_oct(charToRaw(enc2utf8(password)))`. The iteration count is
+#' `p2c` in `header`, a whole number of at least 1000, and defaults to
+#' 600 000. A recipient decrypting with [jose_decrypt()] accepts at most
+#' `jose_limits()$p2c` iterations, by default also 600 000.
+#'
 #' @param plaintext The plaintext: a raw vector, or a single string taken
 #'   as UTF-8 text.
 #' @param key A `jose_key`, or a list of [jose_recipient()] objects for
 #'   several recipients.
-#' @param alg The key management algorithm, such as `"A256KW"` or `"dir"`.
-#'   `NULL` takes the key's own `alg`.
+#' @param alg The key management algorithm, such as `"A256KW"`,
+#'   `"A256GCMKW"`, `"PBES2-HS256+A128KW"` or `"dir"`. `NULL` takes the key's
+#'   own `alg`.
 #' @param enc The content encryption algorithm. `"A128CBC-HS256"` is the one
 #'   RFC 7518 requires every implementation to support.
-#' @param header Further protected header members, as a named list.
+#' @param header Further protected header members, as a named list. For
+#'   `PBES2-*`, `p2c` sets the iteration count.
 #' @param unprotected Shared unprotected header members, as a named list.
 #'   Only the JSON serializations carry them.
 #' @param aad Additional authenticated data, as a raw vector or a string.
@@ -39,6 +54,13 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' token
 #' jose_decrypt(token, key, algorithms = "A128KW",
 #'              encryptions = "A128CBC-HS256")
+#'
+#' # AES-GCM content encryption, under a password.
+#' password <- jose_key_oct(charToRaw("correct horse battery staple"))
+#' token <- jose_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
+#'                       enc = "A256GCM", header = list(p2c = 10000))
+#' jose_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
+#'              encryptions = "A256GCM")$plaintext
 jose_encrypt <- function(
   plaintext,
   key,
@@ -101,7 +123,8 @@ encrypt_jwe <- function(
   format,
   cek,
   iv,
-  call
+  call,
+  fixed = list()
 ) {
   bytes <- as_payload_bytes(plaintext, call)
   check_algorithms(enc, "content encryption", "enc", call)
@@ -156,6 +179,17 @@ encrypt_jwe <- function(
       )
     }
   }
+  given <- c(
+    names(header),
+    names(unprotected),
+    unlist(lapply(recipients, function(r) names(r$header)))
+  )
+  for (name in intersect(c("iv", "tag", "p2s"), given)) {
+    stop(
+      sprintf("`%s` is generated for each message; it cannot be given.", name),
+      call. = FALSE
+    )
+  }
 
   algs <- vapply(
     recipients,
@@ -170,7 +204,8 @@ encrypt_jwe <- function(
       }
       check_algorithms(alg, "key management", "alg", call)
       check_available(alg, call)
-      if (!key_fits(r$key, alg, if (alg == "dir") "encrypt" else "wrapKey")) {
+      operation <- if (alg == "dir") "encrypt" else "wrapKey"
+      if (!key_fits(r$key, alg, operation, enc)) {
         abort_zujwt(
           "policy",
           "The key does not fit the algorithm or its intended use.",
@@ -185,13 +220,35 @@ encrypt_jwe <- function(
   if ("dir" %in% algs && length(recipients) > 1L) {
     stop("`dir` encrypts to exactly one recipient.", call. = FALSE)
   }
+  p2cs <- lapply(seq_along(recipients), function(i) {
+    p2c <- recipients[[i]]$header$p2c %||% header$p2c %||% unprotected$p2c
+    if (!is_pbes2(algs[[i]])) {
+      if (!is.null(p2c)) {
+        stop("`p2c` applies only to PBES2 key management.", call. = FALSE)
+      }
+      return(NULL)
+    }
+    check_p2c(p2c %||% pbes2_default_p2c)
+  })
 
   cek <- if (algs[[1]] == "dir") {
     recipients[[1]]$key$k
   } else {
-    cek %||% zucrypt::crypt_rand_bytes(cbc_hs[[enc]]$key)
+    cek %||% zucrypt::crypt_rand_bytes(cek_bytes(enc))
   }
-  iv <- iv %||% zucrypt::crypt_rand_bytes(16L)
+  iv <- iv %||% zucrypt::crypt_rand_bytes(iv_bytes(enc))
+
+  # Key management first: A*GCMKW and PBES2 generate header members (`iv`
+  # and `tag`, `p2s` and `p2c`), which must be in place before the
+  # protected header becomes the content's associated data.
+  wrapped <- lapply(seq_along(recipients), function(i) {
+    wrap_cek(algs[[i]], recipients[[i]]$key, cek, p2cs[[i]], fixed)
+  })
+  # A generated member joins a header only if no header holds it already,
+  # as a `p2c` given in `header` does.
+  fresh <- function(params, ...) {
+    params[setdiff(names(params), unlist(lapply(list(...), names)))]
+  }
 
   recipient_headers <- lapply(seq_along(recipients), function(i) {
     r <- recipients[[i]]
@@ -207,6 +264,7 @@ encrypt_jwe <- function(
         },
         own[setdiff(names(own), "alg")]
       )
+      own <- c(own, fresh(wrapped[[i]]$header, own, header, unprotected))
     }
     own
   })
@@ -220,7 +278,12 @@ encrypt_jwe <- function(
     ) {
       list(kid = r$key$kid)
     }
-    c(list(alg = algs[[1]], enc = enc), kid, header)
+    c(
+      list(alg = algs[[1]], enc = enc),
+      kid,
+      fresh(wrapped[[1]]$header, header, unprotected, r$header),
+      header
+    )
   }
   for (h in recipient_headers) {
     check_headers(protected, list(unprotected, h), "JWE", call)
@@ -234,11 +297,8 @@ encrypt_jwe <- function(
   if (!is.null(aad_b64)) {
     aad_input <- c(aad_input, charToRaw("."), charToRaw(aad_b64))
   }
-  sealed <- cbc_hs_encrypt(enc, cek, iv, bytes, aad_input)
-
-  encrypted_keys <- lapply(seq_along(recipients), function(i) {
-    if (algs[[i]] == "dir") raw() else aes_key_wrap(recipients[[i]]$key$k, cek)
-  })
+  sealed <- content_encrypt(enc, cek, iv, bytes, aad_input)
+  encrypted_keys <- lapply(wrapped, `[[`, "encrypted_key")
 
   if (format == "compact") {
     return(paste(
@@ -433,9 +493,13 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
   for (i in candidates) {
     header <- headers[[i]]
     alg <- header[["alg"]]
+    params <- NULL
     keys <- tryCatch(
       {
         check_available(alg, call)
+        # Header-only: the A*GCMKW and PBES2 members are checked against
+        # their formats and limits before any key is looked up or derived.
+        params <- kek_params(alg, header, limits, call)
         found <- resolve_keys(
           key,
           header,
@@ -460,7 +524,7 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
       }
     )
     for (k in keys) {
-      attempts[[length(attempts) + 1L]] <- list(i = i, key = k)
+      attempts[[length(attempts) + 1L]] <- list(i = i, key = k, params = params)
     }
   }
   if (length(attempts) == 0L) {
@@ -471,11 +535,11 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
     header <- headers[[attempt$i]]
     alg <- header[["alg"]]
     encrypted_key <- obj$recipients[[attempt$i]]$encrypted_key
-    cek <- recover_cek(alg, enc, attempt$key, encrypted_key)
+    cek <- recover_cek(alg, enc, attempt$key, encrypted_key, attempt$params)
     if (is.null(cek)) {
       next
     }
-    plaintext <- cbc_hs_decrypt(
+    plaintext <- content_decrypt(
       enc,
       cek,
       obj$iv,
@@ -501,37 +565,197 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
   abort_decrypt(call = call)
 }
 
+# Key management (RFC 7518 §4) -----------------------------------------
+
+gcmkw_key_bytes <- c(A128GCMKW = 16L, A192GCMKW = 24L, A256GCMKW = 32L)
+
+# PBES2 (RFC 7518 §4.8): the HMAC digest of the PBKDF2 and the AES key wrap
+# the derived key feeds.
+pbes2 <- list(
+  "PBES2-HS256+A128KW" = list(hash = "sha256", bytes = 16L),
+  "PBES2-HS384+A192KW" = list(hash = "sha384", bytes = 24L),
+  "PBES2-HS512+A256KW" = list(hash = "sha512", bytes = 32L)
+)
+
+# The iteration count encryption writes when `header` gives none: OWASP's
+# 2023 figure for PBKDF2-HMAC-SHA256, and the default limit decryption
+# accepts.
+pbes2_default_p2c <- 600000L
+
+is_pbes2 <- function(alg) alg %in% names(pbes2)
+
+# RFC 7518 §4.8.1.2 recommends at least 1000; zucrypt's PBKDF2 counts to
+# 2^32 - 1.
+check_p2c <- function(p2c) {
+  ok <- is.numeric(p2c) &&
+    length(p2c) == 1L &&
+    !is.na(p2c) &&
+    p2c == trunc(p2c) &&
+    p2c >= 1000 &&
+    p2c <= 4294967295
+  if (!ok) {
+    stop(
+      "`p2c` must be a whole number of PBKDF2 iterations, at least 1000.",
+      call. = FALSE
+    )
+  }
+  p2c
+}
+
+# The PBES2 key encryption key: PBKDF2 over the password, salted with
+# UTF8(alg) || 0x00 || p2s.
+pbes2_kek <- function(alg, password, p2s, p2c) {
+  spec <- pbes2[[alg]]
+  zucrypt::crypt_pbkdf2(
+    password,
+    c(charToRaw(alg), as.raw(0L), p2s),
+    iterations = p2c,
+    length = spec$bytes,
+    algorithm = spec$hash
+  )
+}
+
+# Encrypt the CEK for one recipient: the encrypted key, and the header
+# members the algorithm generates. `fixed` injects the key-wrap IV and the
+# salt, for the RFC vectors; callers never pass it.
+wrap_cek <- function(alg, key, cek, p2c = NULL, fixed = list()) {
+  if (alg == "dir") {
+    list(encrypted_key = raw(), header = list())
+  } else if (alg %in% names(kw_key_bytes)) {
+    list(encrypted_key = aes_key_wrap(key$k, cek), header = list())
+  } else if (alg %in% names(gcmkw_key_bytes)) {
+    kw_iv <- fixed$kw_iv %||% zucrypt::crypt_rand_bytes(12L)
+    sealed <- gcm_encrypt(key$k, kw_iv, cek, NULL)
+    list(
+      encrypted_key = sealed$ciphertext,
+      header = list(iv = b64url_encode(kw_iv), tag = b64url_encode(sealed$tag))
+    )
+  } else {
+    p2c <- p2c %||% pbes2_default_p2c
+    p2s <- fixed$p2s %||% zucrypt::crypt_rand_bytes(16L)
+    kek <- pbes2_kek(alg, key$k, p2s, p2c)
+    list(
+      encrypted_key = aes_key_wrap(kek, cek),
+      header = list(p2s = b64url_encode(p2s), p2c = p2c)
+    )
+  }
+}
+
+# The header members key management needs, checked and decoded. Runs on the
+# header alone, before any key is looked up or derived (design §8.6): a
+# malformed member, a `p2c` over the limit or a `p2s` under 8 bytes is a
+# parse error that no cryptography is spent on.
+kek_params <- function(alg, header, limits, call) {
+  member_b64 <- function(name, what) {
+    value <- header[[name]]
+    if (!is_string(value)) {
+      abort_zujwt(
+        "parse",
+        sprintf("`%s` needs a `%s` header member.", alg, name),
+        call = call
+      )
+    }
+    b64url_decode(value, what, call)
+  }
+  if (alg %in% names(gcmkw_key_bytes)) {
+    kw_iv <- member_b64("iv", "key wrapping IV")
+    tag <- member_b64("tag", "key wrapping tag")
+    if (length(kw_iv) != 12L || length(tag) != 16L) {
+      abort_zujwt(
+        "parse",
+        "An A*GCMKW `iv` must be 12 bytes and its `tag` 16.",
+        call = call
+      )
+    }
+    return(list(kw_iv = kw_iv, tag = tag))
+  }
+  if (is_pbes2(alg)) {
+    p2c <- header[["p2c"]]
+    if (
+      !is.numeric(p2c) ||
+        length(p2c) != 1L ||
+        is.na(p2c) ||
+        p2c != trunc(p2c) ||
+        p2c < 1
+    ) {
+      abort_zujwt(
+        "parse",
+        "A PBES2 token needs a positive whole `p2c`.",
+        call = call
+      )
+    }
+    if (p2c > limits$p2c) {
+      abort_zujwt(
+        "parse",
+        sprintf(
+          "The token's `p2c` is over the limit of %s PBES2 iterations.",
+          format(limits$p2c, scientific = FALSE)
+        ),
+        call = call
+      )
+    }
+    p2s <- member_b64("p2s", "PBES2 salt")
+    if (length(p2s) < 8L) {
+      abort_zujwt(
+        "parse",
+        "A PBES2 `p2s` must be at least 8 bytes (RFC 7518 section 4.8.1.1).",
+        call = call
+      )
+    }
+    return(list(p2s = p2s, p2c = p2c))
+  }
+  list()
+}
+
 # The CEK, or NULL on any failure (D5).
-recover_cek <- function(alg, enc, key, encrypted_key) {
+recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
   cek <- if (alg == "dir") {
     if (length(encrypted_key) != 0L) {
       return(NULL)
     }
     key$k
-  } else {
+  } else if (alg %in% names(kw_key_bytes)) {
     aes_key_unwrap(key$k, encrypted_key)
+  } else if (alg %in% names(gcmkw_key_bytes)) {
+    gcm_decrypt(key$k, params$kw_iv, encrypted_key, params$tag, NULL)
+  } else {
+    kek <- pbes2_kek(alg, key$k, params$p2s, params$p2c)
+    aes_key_unwrap(kek, encrypted_key)
   }
-  if (is.null(cek) || length(cek) != cbc_hs[[enc]]$key) {
+  if (is.null(cek) || length(cek) != cek_bytes(enc)) {
     return(NULL)
   }
   cek
 }
 
-# Design §8.2: AES-KW and dir keys of exactly the size the identifier names.
+# Design §8.2: AES-KW, A*GCMKW and dir keys of exactly the size the
+# identifier names. A PBES2 key is a password, of any length.
 kek_bytes <- function(alg, enc) {
-  if (alg == "dir") cbc_hs[[enc]]$key else kw_key_bytes[[alg]]
+  if (alg == "dir") {
+    cek_bytes(enc)
+  } else if (alg %in% names(gcmkw_key_bytes)) {
+    gcmkw_key_bytes[[alg]]
+  } else if (is_pbes2(alg)) {
+    NA_integer_
+  } else {
+    kw_key_bytes[[alg]]
+  }
 }
 
 kek_fits <- function(alg, enc, key) {
-  length(key$k) == kek_bytes(alg, enc)
+  need <- kek_bytes(alg, enc)
+  if (is.na(need)) length(key$k) >= 1L else length(key$k) == need
 }
 
 check_kek <- function(alg, enc, key, call) {
-  need <- kek_bytes(alg, enc)
-  if (length(key$k) != need) {
+  if (!kek_fits(alg, enc, key)) {
     abort_zujwt(
       "key",
-      sprintf("An `%s` key must be exactly %d bytes here.", alg, need),
+      sprintf(
+        "An `%s` key must be exactly %d bytes here.",
+        alg,
+        kek_bytes(alg, enc)
+      ),
       call = call
     )
   }

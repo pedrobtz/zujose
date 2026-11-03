@@ -6,7 +6,13 @@ key-003.json	3	3.3	RSA 2048-Bit Public Key
 key-004.json	4	3.4	RSA 2048-Bit Private Key
 key-005.json	5	3.5	HMAC SHA-256 Symmetric Key
 key-006.json	6	3.6	AES 256-Bit Symmetric Encryption Key
+key-073.json	73	5.1.1	RSA 2048-Bit Key
 key-084.json	84	5.2.1	RSA 4096-Bit Key
+key-108.json	108	5.4.1	Elliptic Curve P-384 Key
+key-111.json	111	5.4.3	Ephemeral Elliptic Curve P-384 Key
 key-120.json	120	5.5.1	Elliptic Curve P-256 Key
+key-122.json	122	5.5.3	Ephemeral Private Key
+key-130.json	130	5.6.1	AES 128-Bit Key
 key-138.json	138	5.7.1	AES 256-Bit Key
 key-151.json	151	5.8.1	AES 128-Bit Key
+key-224.json	224	6.1	RSA 2048-Bit Private Key

@@ -14,7 +14,9 @@ A data frame with columns \code{algorithm}, \code{kind} (\code{"signature"},
 \description{
 \code{zujwt_info()} lists every JOSE algorithm zujwt knows and whether it can
 be used here. An algorithm is available when this version of zujwt
-implements it and the installed zucrypt is recent enough. Using one that
+implements it and the installed zucrypt provides what it needs: zucrypt is
+the version in the \code{zucrypt} column or later, or already exports the
+functions that version adds. Using one that
 is not raises \code{zujwt_unsupported_error}.
 }
 \examples{

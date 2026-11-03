@@ -41,13 +41,6 @@ test_that("RFC 7520 §5.9 (zip) is refused before decryption", {
   }
 })
 
-test_that("RFC 7520 §5.8 needs AES-GCM, which is not available yet", {
-  key <- as_jose_key(rfc7520_key(151))
-  expect_error(
-    jose_decrypt(rfc7520_token(159), key, "A128KW", "A128GCM"),
-    class = "zujwt_unsupported_error"
-  )
-})
 
 # Round trips -------------------------------------------------------------
 
@@ -346,12 +339,9 @@ test_that("encryption refuses inconsistent requests", {
   key <- jose_key_oct(as.raw(1:16))
   two <- list(jose_recipient(key, "A128KW"), jose_recipient(key, "A128KW"))
   expect_error(encrypt_fixed("x", key), class = "zujwt_policy_error")
+  # RSA key management needs zucrypt 0.4.0 (Stage 8).
   expect_error(
-    encrypt_fixed("x", key, "A128GCMKW"),
-    class = "zujwt_unsupported_error"
-  )
-  expect_error(
-    encrypt_fixed("x", key, "A128KW", "A128GCM"),
+    encrypt_fixed("x", key, "RSA-OAEP"),
     class = "zujwt_unsupported_error"
   )
   expect_error(encrypt_fixed("x", key, "HS256"), class = "zujwt_policy_error")

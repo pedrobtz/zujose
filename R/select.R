@@ -55,7 +55,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
   alg <- header[["alg"]]
 
   if (inherits(key, "jose_key")) {
-    if (!key_fits(key, alg, operation)) {
+    if (!key_fits(key, alg, operation, header[["enc"]])) {
       abort_zujwt(
         "policy",
         "The key does not fit the token's algorithm or intended use.",
@@ -69,7 +69,10 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
     if (!is.null(kid)) {
       candidates <- Filter(function(k) identical(k$kid, kid), candidates)
     }
-    candidates <- Filter(function(k) key_fits(k, alg, operation), candidates)
+    candidates <- Filter(
+      function(k) key_fits(k, alg, operation, header[["enc"]]),
+      candidates
+    )
     if (length(candidates) == 0L) {
       abort_zujwt(
         "key",
@@ -99,10 +102,15 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
   usable
 }
 
-key_fits <- function(key, alg, operation) {
+# A `dir` key is the content encryption key itself, so its `alg` may name
+# the content encryption instead, as RFC 7520 section 5.6's key does
+# ("alg": "A128GCM" for a `dir` token). `enc` is the token's.
+key_fits <- function(key, alg, operation, enc = NULL) {
   key$kty %in%
     alg_key_types(alg) &&
-    (is.null(key$alg) || identical(key$alg, alg)) &&
+    (is.null(key$alg) ||
+      identical(key$alg, alg) ||
+      (alg == "dir" && !is.null(enc) && identical(key$alg, enc))) &&
     (is.null(key$use) || identical(key$use, operation_use[[operation]])) &&
     (is.null(key$key_ops) || operation %in% key$key_ops)
 }

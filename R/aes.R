@@ -126,3 +126,48 @@ cbc_hs_decrypt <- function(enc, key, iv, ciphertext, tag, aad) {
   }
   padded[seq_len(length(padded) - pad)]
 }
+
+# AES-GCM (RFC 7518 §5.3), over zucrypt's AEAD: a 96-bit IV and a 128-bit
+# tag. zucrypt verifies the tag before releasing any plaintext.
+gcm_key_bytes <- c(A128GCM = 16L, A192GCM = 24L, A256GCM = 32L)
+
+gcm_encrypt <- function(key, iv, plaintext, aad) {
+  sealed <- zucrypt::crypt_aes_gcm_encrypt(plaintext, key, iv, aad = aad)
+  list(ciphertext = as.vector(sealed), tag = attr(sealed, "tag"))
+}
+
+# NULL on any failure (a bad tag, a wrong key, an IV or tag of the wrong
+# length), never saying which (D5).
+gcm_decrypt <- function(key, iv, ciphertext, tag, aad) {
+  tryCatch(
+    zucrypt::crypt_aes_gcm_decrypt(ciphertext, key, iv, tag, aad = aad),
+    zucrypt_error = function(e) NULL
+  )
+}
+
+# The content encryption algorithms, behind one interface (RFC 7518 §5).
+cek_bytes <- function(enc) {
+  if (enc %in% names(cbc_hs)) cbc_hs[[enc]]$key else gcm_key_bytes[[enc]]
+}
+
+iv_bytes <- function(enc) {
+  if (enc %in% names(cbc_hs)) 16L else 12L
+}
+
+content_encrypt <- function(enc, cek, iv, plaintext, aad) {
+  if (enc %in% names(cbc_hs)) {
+    cbc_hs_encrypt(enc, cek, iv, plaintext, aad)
+  } else {
+    gcm_encrypt(cek, iv, plaintext, aad)
+  }
+}
+
+content_decrypt <- function(enc, cek, iv, ciphertext, tag, aad) {
+  if (enc %in% names(cbc_hs)) {
+    cbc_hs_decrypt(enc, cek, iv, ciphertext, tag, aad)
+  } else if (length(cek) != gcm_key_bytes[[enc]]) {
+    NULL
+  } else {
+    gcm_decrypt(cek, iv, ciphertext, tag, aad)
+  }
+}

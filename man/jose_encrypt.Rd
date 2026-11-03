@@ -22,13 +22,15 @@ as UTF-8 text.}
 \item{key}{A \code{jose_key}, or a list of \code{\link[=jose_recipient]{jose_recipient()}} objects for
 several recipients.}
 
-\item{alg}{The key management algorithm, such as \code{"A256KW"} or \code{"dir"}.
-\code{NULL} takes the key's own \code{alg}.}
+\item{alg}{The key management algorithm, such as \code{"A256KW"},
+\code{"A256GCMKW"}, \code{"PBES2-HS256+A128KW"} or \code{"dir"}. \code{NULL} takes the key's
+own \code{alg}.}
 
 \item{enc}{The content encryption algorithm. \code{"A128CBC-HS256"} is the one
 RFC 7518 requires every implementation to support.}
 
-\item{header}{Further protected header members, as a named list.}
+\item{header}{Further protected header members, as a named list. For
+\verb{PBES2-*}, \code{p2c} sets the iteration count.}
 
 \item{unprotected}{Shared unprotected header members, as a named list.
 Only the JSON serializations carry them.}
@@ -53,6 +55,19 @@ vector, drawn from the operating system's cryptographic random source
 through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
 encryption. If the random source fails, the error is zucrypt's
 \code{zucrypt_entropy_error}, and nothing is returned.
+
+Key management is \code{dir}, \code{A128KW}, \code{A192KW}, \code{A256KW}, \code{A128GCMKW},
+\code{A192GCMKW}, \code{A256GCMKW} or one of the \verb{PBES2-*} algorithms; content
+encryption is \code{A128CBC-HS256}, \code{A192CBC-HS384}, \code{A256CBC-HS512},
+\code{A128GCM}, \code{A192GCM} or \code{A256GCM}. \code{A*GCMKW} writes the key wrapping \code{iv}
+and \code{tag} into the header, and \verb{PBES2-*} writes a random 16-byte \code{p2s};
+none of the three can be given.
+
+For \verb{PBES2-*} the key is the password, as an \code{oct} key:
+\code{jose_key_oct(charToRaw(enc2utf8(password)))}. The iteration count is
+\code{p2c} in \code{header}, a whole number of at least 1000, and defaults to
+600 000. A recipient decrypting with \code{\link[=jose_decrypt]{jose_decrypt()}} accepts at most
+\code{jose_limits()$p2c} iterations, by default also 600 000.
 }
 \examples{
 key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
@@ -60,6 +75,13 @@ token <- jose_encrypt("secret", key)
 token
 jose_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
+
+# AES-GCM content encryption, under a password.
+password <- jose_key_oct(charToRaw("correct horse battery staple"))
+token <- jose_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
+                      enc = "A256GCM", header = list(p2c = 10000))
+jose_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
+             encryptions = "A256GCM")$plaintext
 }
 \seealso{
 \code{\link[=jose_decrypt]{jose_decrypt()}}.

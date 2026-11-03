@@ -30,7 +30,7 @@ development version.
 | --- | --- | --- |
 | 0–5 | `zuutf` 0.1.0 on CRAN before release | [zuutf#10](https://github.com/pedrobtz/zuutf/issues/10) |
 | 6 | `zucrypt` Stage 13a: `crypt_rand_bytes()`, merged on its `main` 2026-11-03 | [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9), closed by [zucrypt#83](https://github.com/pedrobtz/zucrypt/pull/83) |
-| 7 | `zucrypt` Stage 14, v0.3.0: AES-GCM, PBKDF2 | [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10), [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12) |
+| 7 | `zucrypt` Stage 14a: AES-GCM, PBKDF2, merged on its `main` 2026-11-03 | [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10), [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12), done in [zucrypt#84](https://github.com/pedrobtz/zucrypt/pull/84) |
 | 8 | `zucrypt` Stage 15, v0.4.0 (candidate): RSA | [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80) |
 | 9 | `zucrypt` Stage 16, v0.5.0 (candidate): EC, X25519 | [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81) |
 | 5 | Optional: AES key wrap as a `zucrypt` primitive (design D4) | [zucrypt#82](https://github.com/pedrobtz/zucrypt/issues/82) |
@@ -50,7 +50,7 @@ padding in R until a primitive exists.
 | 4 | [JWT](#stage-4--jwt) | full | [#6](https://github.com/pedrobtz/zujwt/issues/6) | [#21](https://github.com/pedrobtz/zujwt/pull/21) | 2026-11-02 |
 | 5 | [JWE, symmetric](#stage-5--jwe-symmetric) | quick | [#7](https://github.com/pedrobtz/zujwt/issues/7) | [#22](https://github.com/pedrobtz/zujwt/pull/22) | 2026-11-02 |
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | [#23](https://github.com/pedrobtz/zujwt/pull/23) | 2026-11-03 |
-| 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | | |
+| 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | [#24](https://github.com/pedrobtz/zujwt/pull/24) | 2026-11-03 |
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | | |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | | |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujwt/issues/12) | | |
@@ -349,6 +349,15 @@ them.
 **Blocked on** `zucrypt` Stage 14 (v0.3.0),
 [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10) and
 [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12).
+On 2026-11-03 zucrypt split its Stage 14 and shipped AES-GCM and PBKDF2 as
+Stage 14a in [zucrypt#84](https://github.com/pedrobtz/zucrypt/pull/84),
+ahead of 0.3.0. Because the development version still says 0.1.0.9000,
+`zujwt_info()` now counts an algorithm available when zucrypt exports the
+functions its release adds, not only by version. RFC 7520 §5.6's key names
+`A128GCM` as its `alg` for a `dir` token, so a `dir` key may name the
+token's `enc`. The RFC's whole tokens are decrypted; their encrypted keys,
+not the whole tokens, are reproduced from the RFC's factors, since the
+tokens' header member order is not ours.
 
 **Goal.** `A*GCM` content encryption, `A*GCMKW` and `PBES2-*` key management.
 
