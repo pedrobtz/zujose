@@ -2,6 +2,14 @@
 
 ## zujose 0.0.0.9000
 
+- [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
+  and
+  [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
+  skip a key in a set that is too weak for the token’s algorithm, such
+  as a legacy 1024-bit RSA key in a provider’s JWKS, instead of failing
+  on it. A set with only weak keys is still a `zujose_key_error`
+  ([\#39](https://github.com/pedrobtz/zujose/issues/39)).
+
 - Argument errors, such as a wrong type, an out-of-range limit or
   `format = "compact"` with several recipients, now raise
   `zujose_argument_error`, a `zujose_error`, instead of a plain error
