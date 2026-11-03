@@ -313,5 +313,4 @@ test_that("zujwt_info() reports RS*, PS* and RSA key management available", {
     "RSA1_5"
   )
   expect_true(all(info$available[info$algorithm %in% rsa]))
-  expect_false(any(info$available[info$algorithm %in% c("ES256", "ECDH-ES")]))
 })

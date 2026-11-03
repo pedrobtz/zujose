@@ -31,16 +31,22 @@ private_members <- c("d", "p", "q", "dp", "dq", "qi", "oth", "k")
 # (zucrypt_provides(), algorithms.R); until then it is read and kept, but
 # not used.
 pending_key_types <- c(RSA = "0.4.0", EC = "0.5.0", OKP = "0.5.0")
-implemented_key_types <- c("oct", "RSA")
+implemented_key_types <- c("oct", "RSA", "EC", "OKP")
 
-key_type_usable <- function(kty) {
-  kty == "oct" ||
-    (kty %in%
-      implemented_key_types &&
-      zucrypt_provides(
-        pending_key_types[[kty]],
-        utils::packageVersion("zucrypt")
-      ))
+# The curves zujwt uses: EC on the three NIST curves, OKP for X25519 only
+# (there is no Ed25519 in zucrypt), with their sizes in bits.
+ec_curves <- c("P-256" = 256L, "P-384" = 384L, "P-521" = 521L)
+
+key_type_usable <- function(kty, crv = NULL) {
+  if (kty == "oct") {
+    return(TRUE)
+  }
+  if (kty == "OKP" && !identical(crv, "X25519")) {
+    return(FALSE)
+  }
+  kty %in%
+    implemented_key_types &&
+    zucrypt_provides(pending_key_types[[kty]], utils::packageVersion("zucrypt"))
 }
 
 # RSA (Stage 8). The JWK members hold the key; a zucrypt key object is
@@ -53,7 +59,60 @@ rsa_member_raw <- function(key, name) {
 }
 
 has_private <- function(key) {
-  key$kty == "RSA" && all(rsa_private_members %in% names(key$members))
+  if (key$kty == "RSA") {
+    all(rsa_private_members %in% names(key$members))
+  } else {
+    key$kty %in% c("EC", "OKP") && "d" %in% names(key$members)
+  }
+}
+
+# EC and X25519 (Stage 9): the zucrypt key from the JWK members, private
+# when asked and present.
+ec_crypt_key <- function(key, private) {
+  m <- function(name) b64url_decode(key$members[[name]], "EC key member")
+  if (key$kty == "OKP") {
+    return(
+      if (private) {
+        zucrypt::crypt_read_x25519_key(m("d"))
+      } else {
+        zucrypt::crypt_read_x25519_pubkey(m("x"))
+      }
+    )
+  }
+  zucrypt::crypt_ec_key(key$members$crv, m("x"), m("y"), if (private) m("d"))
+}
+
+# JWK members from a zucrypt EC or X25519 key.
+ec_members <- function(ck) {
+  data <- as.list(ck)$data
+  if (inherits(ck, "crypt_x25519")) {
+    out <- list(crv = "X25519", x = b64url_encode(data$x))
+    if (!is.null(data$d)) out$d <- b64url_encode(data$d)
+  } else {
+    out <- list(
+      crv = data$curve,
+      x = b64url_encode(data$x),
+      y = b64url_encode(data$y)
+    )
+    if (!is.null(data$secret)) out$d <- b64url_encode(data$secret)
+  }
+  out
+}
+
+# A jose_key's type, members and size, from any zucrypt key.
+crypt_key_members <- function(ck) {
+  if (inherits(ck, "crypt_rsa")) {
+    list(
+      kty = "RSA",
+      members = rsa_members(ck),
+      bits = as.integer(as.list(ck)$size)
+    )
+  } else if (inherits(ck, "crypt_x25519")) {
+    list(kty = "OKP", members = ec_members(ck), bits = 255L)
+  } else {
+    m <- ec_members(ck)
+    list(kty = "EC", members = m, bits = unname(ec_curves[[m$crv]]))
+  }
 }
 
 # The zucrypt key for `key`: the private key when asked and present,
@@ -141,9 +200,8 @@ jose_key_oct <- function(
 #' Generate a random key
 #'
 #' `jose_key_generate()` makes a new key from the operating system's
-#' cryptographic random source, through zucrypt: `oct` keys and `RSA` keys.
-#' `EC` and `OKP` keys raise `zujwt_unsupported_error`, naming the zucrypt
-#' version that will add them.
+#' cryptographic random source, through zucrypt: `oct`, `RSA`, `EC` (on
+#' P-256, P-384 or P-521) and `OKP` (X25519) keys. There is no Ed25519.
 #'
 #' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
 #' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
@@ -158,7 +216,8 @@ jose_key_oct <- function(
 #' @param size The key size in bits. For an `oct` key, a multiple of 8 and at
 #'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048
 #'   to 4096, and `NULL` is 2048.
-#' @param crv The curve of an `EC` or `OKP` key. Not used for `oct`.
+#' @param crv The curve: `"P-256"` (the default), `"P-384"` or `"P-521"`
+#'   for an `EC` key, `"X25519"` for an `OKP` key. Not used otherwise.
 #' @inheritParams jose_key_oct
 #' @returns A `jose_key`.
 #' @seealso [jose_key_oct()] to wrap a secret you already have,
@@ -189,6 +248,11 @@ jose_key_generate <- function(
   }
   if (kty == "RSA" && key_type_usable("RSA")) {
     return(generate_rsa(size, crv, alg, kid, use, key_ops, call))
+  }
+  # The curve is checked by generate_ec(); here only whether zucrypt has
+  # the key type at all.
+  if (kty %in% c("EC", "OKP") && key_type_usable(kty, "X25519")) {
+    return(generate_ec(kty, size, crv, alg, kid, use, key_ops, call))
   }
   if (kty != "oct") {
     abort_unsupported(kty, pending_key_types[[kty]], call = call)
@@ -276,6 +340,58 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
   )
 }
 
+generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
+  crv <- crv %||% if (kty == "EC") "P-256" else "X25519"
+  curves <- if (kty == "EC") names(ec_curves) else "X25519"
+  if (!is_string(crv) || !crv %in% curves) {
+    abort_zujwt(
+      "key",
+      sprintf(
+        "`crv` must be %s for an `%s` key.",
+        paste0('"', curves, '"', collapse = ", "),
+        kty
+      ),
+      call = call
+    )
+  }
+  if (!is.null(size)) {
+    abort_zujwt(
+      "key",
+      "The curve sets an EC key's size; omit `size`.",
+      call = call
+    )
+  }
+  probe <- list(kty = kty, members = list(crv = crv))
+  if (
+    !is.null(alg) &&
+      (!is_string(alg) ||
+        !curve_fits(probe, alg) ||
+        !kty %in% alg_key_types(alg))
+  ) {
+    abort_zujwt(
+      "key",
+      sprintf("`alg` does not fit a %s key.", crv),
+      call = call
+    )
+  }
+  ck <- if (kty == "OKP") {
+    zucrypt::crypt_x25519_keygen()
+  } else {
+    zucrypt::crypt_ec_keygen(crv)
+  }
+  parts <- crypt_key_members(ck)
+  new_jose_key(
+    kty = kty,
+    kid = kid,
+    alg = alg,
+    use = use,
+    key_ops = key_ops,
+    members = parts$members,
+    bits = parts$bits,
+    call = call
+  )
+}
+
 # The size an oct key for `alg` needs, in bits, and whether it is exact.
 oct_key_bits <- function(alg, call) {
   if (is.null(alg) || alg == "dir") {
@@ -328,8 +444,12 @@ new_jose_key <- function(
       )
     }
   }
-  needs <- unname(pending_key_types[kty])
-  supported <- key_type_usable(kty)
+  supported <- key_type_usable(kty, members$crv)
+  # An OKP curve other than X25519 (Ed25519, X448) waits on no zucrypt
+  # version: the bundled library has none of them.
+  needs <- if (!(kty == "OKP" && !identical(members$crv, "X25519"))) {
+    unname(pending_key_types[kty])
+  }
   structure(
     list(
       kty = kty,
@@ -357,9 +477,10 @@ new_jose_key <- function(
 #' `dp`, `dq` and `qi`; they are checked when read. A PEM string holding an
 #' RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.
 #'
-#' Keys of type `EC` and `OKP` are read and kept, so they can be listed,
-#' selected, written and thumbprinted, but using one before zujwt supports it
-#' raises `zujwt_unsupported_error`.
+#' `EC` keys on P-256, P-384 and P-521 and `OKP` keys on X25519 are checked
+#' when read: the point must be on its curve. PEM holding an EC or X25519 key
+#' is read too. Other `OKP` keys, such as Ed25519, are read and kept so that
+#' they can be listed, selected and thumbprinted, but cannot be used.
 #'
 #' @param x JWK text, a parsed JWK as a named list, a raw secret, or a
 #'   `jose_key`.
@@ -473,6 +594,8 @@ jwk_to_key <- function(jwk, call) {
 
   bits <- if (kty == "RSA" && key_type_usable("RSA")) {
     check_rsa_jwk(members, call)
+  } else if (kty %in% c("EC", "OKP") && key_type_usable(kty, members$crv)) {
+    check_ec_jwk(kty, members, call)
   }
 
   new_jose_key(
@@ -522,6 +645,40 @@ check_rsa_jwk <- function(members, call) {
   as.integer(as.list(ck)$size)
 }
 
+# An EC JWK needs a NIST curve, x and y; an X25519 one, x. Either may carry
+# d. The point (and d) must make a key. Returns the size in bits.
+check_ec_jwk <- function(kty, members, call) {
+  need <- if (kty == "EC") c("crv", "x", "y") else c("crv", "x")
+  if (
+    !all(need %in% names(members)) ||
+      (kty == "EC" && !members$crv %in% names(ec_curves))
+  ) {
+    abort_zujwt(
+      "key",
+      sprintf(
+        "An %s JWK needs %s on a supported curve.",
+        kty,
+        paste0("`", need, "`", collapse = ", ")
+      ),
+      call = call
+    )
+  }
+  key <- list(kty = kty, members = members)
+  ck <- tryCatch(
+    ec_crypt_key(key, "d" %in% names(members)),
+    zujwt_error = function(e) e,
+    zucrypt_error = function(e) e
+  )
+  if (inherits(ck, "error")) {
+    abort_zujwt(
+      "key",
+      "The JWK's point is not on its curve, or its members are not a key.",
+      call = call
+    )
+  }
+  if (kty == "OKP") 255L else unname(ec_curves[[members$crv]])
+}
+
 # A PEM key, through zucrypt: private first, then public.
 pem_to_key <- function(x, call) {
   if (!key_type_usable("RSA")) {
@@ -533,29 +690,27 @@ pem_to_key <- function(x, call) {
   if (inherits(ck, "error")) {
     abort_zujwt(
       "key",
-      "The PEM is not an unencrypted RSA key zujwt can read.",
+      "The PEM is not an unencrypted RSA, EC or X25519 key zujwt can read.",
       call = call
     )
   }
-  if (!inherits(ck, "crypt_rsa")) {
-    abort_zujwt("key", "Only RSA keys are read from PEM.", call = call)
-  }
+  parts <- crypt_key_members(ck)
   new_jose_key(
-    kty = "RSA",
-    members = rsa_members(ck),
-    bits = as.integer(as.list(ck)$size),
+    kty = parts$kty,
+    members = parts$members,
+    bits = parts$bits,
     call = call
   )
 }
 
-#' Write an RSA key as PEM
+#' Write a key as PEM
 #'
-#' `jose_pem()` writes an RSA key as PEM: the public key as
+#' `jose_pem()` writes an RSA, EC or X25519 key as PEM: the public key as
 #' SubjectPublicKeyInfo (`PUBLIC KEY`), or with `private = TRUE` the private
 #' key as PKCS#8 (`PRIVATE KEY`), byte for byte as the openssl package
 #' writes them.
 #'
-#' @param key An RSA `jose_key`.
+#' @param key An RSA, EC or X25519 `jose_key`.
 #' @param private Whether to write the private key.
 #' @returns A single string.
 #' @seealso [as_jose_key()], which reads PEM.
@@ -569,8 +724,12 @@ jose_pem <- function(key, private = FALSE) {
   if (!isTRUE(private) && !isFALSE(private)) {
     abort_zujwt("key", "`private` must be TRUE or FALSE.", call = call)
   }
-  if (key$kty != "RSA" || !key$supported) {
-    abort_zujwt("key", "Only RSA keys are written as PEM.", call = call)
+  if (key$kty == "oct" || !key$supported) {
+    abort_zujwt(
+      "key",
+      "Only RSA, EC and X25519 keys are written as PEM.",
+      call = call
+    )
   }
   if (private && !has_private(key)) {
     abort_zujwt(
@@ -579,7 +738,11 @@ jose_pem <- function(key, private = FALSE) {
       call = call
     )
   }
-  ck <- rsa_crypt_key(key, private)
+  ck <- if (key$kty == "RSA") {
+    rsa_crypt_key(key, private)
+  } else {
+    ec_crypt_key(key, private)
+  }
   zucrypt::crypt_write_pem(ck)
 }
 
@@ -718,7 +881,11 @@ format.jose_key <- function(x, ...) {
   if (!x$supported) {
     lines <- c(
       lines,
-      sprintf("  ! not usable yet: needs zucrypt (>= %s)", x$needs %||% "?")
+      if (is.null(x$needs)) {
+        sprintf("  ! not usable: zujwt has no %s", x$members$crv %||% x$kty)
+      } else {
+        sprintf("  ! not usable yet: needs zucrypt (>= %s)", x$needs)
+      }
     )
   }
   lines

@@ -47,20 +47,21 @@ test_that("RFC 7520 §3.5 and §3.6 symmetric keys read", {
   expect_length(enc$k, 32L)
 })
 
-test_that("EC and OKP keys read but are marked not usable yet", {
+test_that("RSA, EC and X25519 keys are usable, and Ed25519 keys are kept", {
   rsa <- as_jose_key(rfc7520_key(3))
-  expect_identical(rsa$kty, "RSA")
   expect_true(rsa$supported)
-  expect_null(rsa$needs)
-
   ec <- as_jose_key(rfc7520_key(1))
   expect_identical(ec$members$crv, "P-521")
-  expect_false(ec$supported)
-  expect_identical(ec$needs, "0.5.0")
+  expect_true(ec$supported)
+  expect_null(ec$needs)
 
-  okp <- as_jose_key('{"kty":"OKP","crv":"X25519","x":"AAAA"}')
-  expect_identical(okp$needs, "0.5.0")
-  expect_snapshot(print(ec))
+  ed <- as_jose_key(paste0(
+    '{"kty":"OKP","crv":"Ed25519","kid":"ed",',
+    '"x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}'
+  ))
+  expect_false(ed$supported)
+  expect_null(ed$needs)
+  expect_snapshot(print(ed))
 })
 
 test_that("as_jose_key() accepts a parsed list, a raw secret or a key", {
@@ -216,13 +217,11 @@ test_that("jose_key_generate() refuses sizes and algorithms that do not fit", {
   expect_error(jose_key_generate("DSA"), class = "zujwt_key_error")
 })
 
-test_that("EC and OKP generation names the zucrypt it needs", {
-  needs <- c(EC = "0.5.0", OKP = "0.5.0")
-  for (kty in names(needs)) {
-    err <- expect_error(
-      jose_key_generate(kty),
-      class = "zujwt_unsupported_error"
-    )
-    expect_identical(err$needs, needs[[kty]])
-  }
+test_that("EC and OKP keys are generated on the curves zujwt has", {
+  expect_identical(jose_key_generate("EC")$members$crv, "P-256")
+  expect_identical(jose_key_generate("OKP")$members$crv, "X25519")
+  expect_error(
+    jose_key_generate("OKP", crv = "Ed25519"),
+    class = "zujwt_key_error"
+  )
 })

@@ -357,3 +357,115 @@ pbes2_token <- function(
     sep = "."
   )
 }
+
+# RFC 7515 A.3 (ES256) and A.4 (ES512): keys and compact tokens. The
+# signatures are randomised, so these verify; they do not reproduce.
+rfc7515_a3 <- function() {
+  list(
+    key = paste0(
+      '{"kty":"EC","crv":"P-256","x":"f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPH',
+      'vRVEU","y":"x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0","d":"jpsQnnGQ',
+      'mL-YBIffH1136cspYG6-0iY7X1fCE9-E9LI"}'
+    ),
+    token = paste0(
+      "eyJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQog",
+      "Imh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ.DtEhU3ljbEg8L38VWAfUAqO",
+      "yKAM6-Xx-F4GawxaepmXFCgfTjDxw5djxLa8ISlSApmWQxfKTUJqPP3-Kg6NU1Q"
+    )
+  )
+}
+
+rfc7515_a4 <- function() {
+  list(
+    key = paste0(
+      '{"kty":"EC","crv":"P-521","x":"AekpBQ8ST8a8VcfVOTNl353vSrDCLLJXmPk06w',
+      'TjxrrjcBpXp5EOnYG_NjFZ6OvLFV1jSfS9tsz4qUxcWceqwQGk","y":"ADSmRA43Z1DSN',
+      'x_RvcLI87cdL07l6jQyyBXMoxVg_l2Th-x3S1WDhjDly79ajL4Kkd0AZMaZmh9ubmf63e3',
+      'kyMj2","d":"AY5pb7A0UFiB3RELSD64fTLOSV_jazdF7fLYyuTw8lOfRhWg6Y6rUrPAxe',
+      'rEzgdRhajnu0ferB0d53vM9mE15j2C"}'
+    ),
+    token = paste0(
+      "eyJhbGciOiJFUzUxMiJ9.UGF5bG9hZA.AdwMgeerwtHoh-l192l60hp9wAHZFVJbLfD_Ux",
+      "Mi70cwnZOYaRI1bKPWROc-mZZqwqT2SI-KGDKB34XO0aw_7XdtAG8GaSwFKdCAPZgoXD2YB",
+      "JZCPEX3xKpRwcdOO8KpEHwJjyqOgzDO7iKvU8vcnwNrmxYbSW9ERBXukOXolLzeO_Jn"
+    )
+  )
+}
+
+# RFC 7518 Appendix C: Alice's ephemeral key, Bob's key, the ECDH output Z
+# and the Concat KDF's derived key, for ECDH-ES with A128GCM.
+rfc7518_c <- function() {
+  list(
+    alice = paste0(
+      '{"kty":"EC","crv":"P-256","x":"gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHK',
+      'W5SV0","y":"SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps","d":"0_NxaRPU',
+      'MQoAJt50Gz8YiTr8gRTwyEaCumd-MToTmIo"}'
+    ),
+    bob = paste0(
+      '{"kty":"EC","crv":"P-256","x":"weNJy2HscCSM6AEDTDg04biOvhFhyyWvOHQfeF',
+      '_PxMQ","y":"e8lnCO-AlStT-NJVX-crhB7QRYhiix03illJOVAOyck","d":"VEmDZpDX',
+      'XK8p8N0Cndsxs924q6nS1RXFASRl6BfUqdw"}'
+    ),
+    z = as.raw(c(
+      158,
+      86,
+      217,
+      29,
+      129,
+      113,
+      53,
+      211,
+      114,
+      131,
+      66,
+      131,
+      191,
+      132,
+      38,
+      156,
+      251,
+      49,
+      110,
+      163,
+      218,
+      128,
+      106,
+      72,
+      246,
+      218,
+      167,
+      121,
+      140,
+      254,
+      144,
+      196
+    )),
+    derived = "VqqN6vgjbSBcIijNcacQGg"
+  )
+}
+
+# RFC 8037 A.6: ECDH-ES with X25519. Bob's private key is RFC 7748's b.
+rfc8037_a6 <- function() {
+  list(
+    bob = paste0(
+      '{"kty":"OKP","crv":"X25519","kid":"Bob","x":"3p7bfXt9wbTTW2HC7OQ1Nz-DQ',
+      '8hbeGdNrfx-FG-IK08","d":"XasIfmJKikt54X-Lg4AO5m87sSkmGLb9HC-LJ_-I4Os"}'
+    ),
+    ephemeral = '{"kty":"OKP","crv":"X25519","d":"dwdtCnMYpX08FsFyUbJmRd9ML4frwJkqsXf7pR25LCo","x":"hSDwCYkwp1R0i33ctD73Wg2_Og0mOBr066SpjqqbTmo"}',
+    z = hex("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742")
+  )
+}
+
+# A compact ECDH-ES JWE header with the given `epk`, and placeholder parts:
+# enough to reach the ephemeral key checks, never to decrypt.
+ecdh_token <- function(epk, alg = "ECDH-ES") {
+  header <- list(alg = alg, enc = "A128GCM", epk = epk)
+  paste(
+    b64_json(header),
+    "",
+    "AAAAAAAAAAAAAAAA",
+    "AAAA",
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    sep = "."
+  )
+}

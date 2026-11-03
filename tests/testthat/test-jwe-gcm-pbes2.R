@@ -366,7 +366,7 @@ test_that("zujwt_info() reports GCM, GCMKW and PBES2 as available", {
     "PBES2-HS512+A256KW"
   )
   expect_true(all(info$available[info$algorithm %in% algs]))
-  expect_false(any(info$available[info$algorithm %in% c("ES256", "ECDH-ES")]))
+  expect_true(all(info$available))
 })
 
 test_that("a dir key may name its content encryption, and only that one", {

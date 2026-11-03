@@ -55,8 +55,11 @@ and the header gains \code{b64: false} and \verb{crit: ["b64"]}.
 
 The algorithms are \code{HS256}, \code{HS384} and \code{HS512} with an \code{oct} key, and
 \code{RS256}, \code{RS384}, \code{RS512}, \code{PS256}, \code{PS384} and \code{PS512} with a private
-RSA key of at least 2048 bits. \verb{RS*} signatures are deterministic; \verb{PS*}
-ones are randomised, with a salt as long as the digest.
+RSA key of at least 2048 bits, and \code{ES256}, \code{ES384} and \code{ES512} with a
+private EC key on P-256, P-384 and P-521 respectively. \verb{RS*} signatures
+are deterministic; \verb{PS*} and \verb{ES*} ones are randomised. An \verb{ES*}
+signature is \code{r} followed by \code{s}, each of fixed length, as RFC 7518
+section 3.4 specifies.
 }
 \examples{
 key <- jose_key_oct(as.raw(1:32), kid = "k1")

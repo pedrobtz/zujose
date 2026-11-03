@@ -381,8 +381,8 @@ test_that("jose_sign() refuses inconsistent requests", {
     jose_sign("x", jose_key_oct(as.raw(1:32), alg = "HS512"), "HS256"),
     class = "zujwt_policy_error"
   )
-  # ES256 needs zucrypt's curves, which zujwt uses from Stage 9.
-  expect_error(jose_sign("x", key, "ES256"), class = "zujwt_unsupported_error")
+  # ES256 needs a P-256 key, not a symmetric one.
+  expect_error(jose_sign("x", key, "ES256"), class = "zujwt_policy_error")
 })
 
 test_that("the key's kid goes into the protected header unless one is given", {
@@ -419,7 +419,8 @@ test_that("zujwt_info() reports what this installation can do", {
   expect_true(all(info$available[
     info$algorithm %in% c("HS256", "HS384", "HS512")
   ]))
-  expect_false(info$available[info$algorithm == "ES256"])
+  # Every algorithm zujwt knows is available with the zucrypt it requires.
+  expect_true(all(info$available))
   expect_identical(info$zucrypt[info$algorithm == "ES256"], "0.5.0")
   expect_false("none" %in% info$algorithm)
 })

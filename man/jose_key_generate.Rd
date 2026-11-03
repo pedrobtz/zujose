@@ -21,7 +21,8 @@ jose_key_generate(
 least 128, and \code{NULL} takes the size \code{alg} needs; for an \code{RSA} key, 2048
 to 4096, and \code{NULL} is 2048.}
 
-\item{crv}{The curve of an \code{EC} or \code{OKP} key. Not used for \code{oct}.}
+\item{crv}{The curve: \code{"P-256"} (the default), \code{"P-384"} or \code{"P-521"}
+for an \code{EC} key, \code{"X25519"} for an \code{OKP} key. Not used otherwise.}
 
 \item{alg}{The one algorithm the key is meant for, such as \code{"HS256"}, or
 \code{NULL}. When set, a token whose \code{alg} differs is refused.}
@@ -39,9 +40,8 @@ A \code{jose_key}.
 }
 \description{
 \code{jose_key_generate()} makes a new key from the operating system's
-cryptographic random source, through zucrypt: \code{oct} keys and \code{RSA} keys.
-\code{EC} and \code{OKP} keys raise \code{zujwt_unsupported_error}, naming the zucrypt
-version that will add them.
+cryptographic random source, through zucrypt: \code{oct}, \code{RSA}, \code{EC} (on
+P-256, P-384 or P-521) and \code{OKP} (X25519) keys. There is no Ed25519.
 }
 \details{
 Without \code{size}, an \code{oct} key is as long as \code{alg} needs: the hash size for

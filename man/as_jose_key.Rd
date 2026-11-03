@@ -25,9 +25,10 @@ already parsed. A raw vector is taken as an \code{oct} secret, as by
 \code{dp}, \code{dq} and \code{qi}; they are checked when read. A PEM string holding an
 RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.
 
-Keys of type \code{EC} and \code{OKP} are read and kept, so they can be listed,
-selected, written and thumbprinted, but using one before zujwt supports it
-raises \code{zujwt_unsupported_error}.
+\code{EC} keys on P-256, P-384 and P-521 and \code{OKP} keys on X25519 are checked
+when read: the point must be on its curve. PEM holding an EC or X25519 key
+is read too. Other \code{OKP} keys, such as Ed25519, are read and kept so that
+they can be listed, selected and thumbprinted, but cannot be used.
 }
 \examples{
 key <- as_jose_key(

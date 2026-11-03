@@ -102,6 +102,11 @@ test_that("no fitting key in a set is a key error", {
 })
 
 test_that("keys zujwt cannot use yet raise zujwt_unsupported_error", {
+  # With a zucrypt that lacks the curve functions, EC keys are read and kept
+  # but not usable.
+  local_mocked_bindings(zucrypt_provides = function(version, installed) {
+    version != "0.5.0"
+  })
   set <- as_jose_keyset(rfc7520_jwks())
   err <- expect_error(
     resolve_keys(

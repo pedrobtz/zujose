@@ -45,7 +45,7 @@ test_that("malformed and unknown entries are ignored, per RFC 7517 §5", {
     '{"kty":"AKP","pub":"AAAA"},',
     '{"no":"kty"},',
     '{"kty":"RSA","n":"AAAA","e":"AQAB","kid":"bad-rsa"},',
-    '{"kty":"EC","crv":"P-256","x":"AAAA","y":"AAAA","kid":"later"}',
+    '{"kty":"OKP","crv":"Ed25519","x":"AAAA","kid":"later"}',
     "]}"
   ))
   expect_identical(
