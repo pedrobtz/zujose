@@ -48,6 +48,7 @@ jose_parse <- function(token, limits, call = NULL) {
   if (!is.character(token) || length(token) != 1L || is.na(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
+  check_utf8_token(token, call)
   if (nchar(token, type = "bytes") > limits$token) {
     abort_zujose(
       "parse",
@@ -78,6 +79,14 @@ jose_parse <- function(token, limits, call = NULL) {
         call = call
       )
     )
+  }
+}
+
+# A token is UTF-8 text (a compact one is ASCII). Anything else is refused
+# before a regular expression sees it: base R would warn, quoting the bytes.
+check_utf8_token <- function(token, call) {
+  if (!validUTF8(token)) {
+    abort_zujose("parse", "The token is not valid UTF-8 text.", call = call)
   }
 }
 

@@ -294,3 +294,23 @@ test_that("too many signatures or recipients fail before any decoding", {
     class = "zujose_parse_error"
   )
 })
+
+test_that("a token that is not valid UTF-8 is refused without warnings", {
+  # Base R warns, quoting the bytes, when a regular expression meets them;
+  # the token is refused before that (#71).
+  token <- rawToChar(as.raw(c(0xff, 0x2e, 0x61, 0x2e, 0x62)))
+  Encoding(token) <- "UTF-8"
+  key <- jwk_oct(as.raw(1:32))
+  calls <- list(
+    function() jwt_decode(token, key, "HS256"),
+    function() jws_verify(token, key, "HS256"),
+    function() jwe_decrypt(token, key, "A128KW", "A128GCM"),
+    function() jose_peek(token)
+  )
+  for (f in calls) {
+    expect_no_warning(
+      expect_error(f(), class = "zujose_parse_error")
+    )
+  }
+  expect_snapshot(jose_peek(token), error = TRUE)
+})

@@ -1,12 +1,3 @@
-# printing a key never shows its secret
-
-    Code
-      print(key)
-    Output
-      <jwk> oct, 256 bits
-        kid "k1"
-        private: yes (not shown)
-
 # a refused oct size has a message
 
     Code
@@ -22,6 +13,15 @@
     Condition
       Error in `jwk_generate()`:
       ! An HS256 key must be at least 256 bits.
+
+# printing a key never shows its secret
+
+    Code
+      print(key)
+    Output
+      <jwk> oct, 256 bits
+        kid "k1"
+        private: yes (not shown)
 
 # RSA, EC and X25519 keys are usable, and Ed25519 keys are kept
 
