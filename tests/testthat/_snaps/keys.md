@@ -7,15 +7,6 @@
         kid "k1"
         private: yes (not shown)
 
-# RSA, EC and X25519 keys are usable, and Ed25519 keys are kept
-
-    Code
-      print(ed)
-    Output
-      <jwk> OKP
-        kid "ed"
-        ! not usable: zujose has no Ed25519
-
 # a refused oct size has a message
 
     Code
@@ -31,4 +22,13 @@
     Condition
       Error in `jwk_generate()`:
       ! An HS256 key must be at least 256 bits.
+
+# RSA, EC and X25519 keys are usable, and Ed25519 keys are kept
+
+    Code
+      print(ed)
+    Output
+      <jwk> OKP
+        kid "ed"
+        ! not usable: zujose has no Ed25519
 
