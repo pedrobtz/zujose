@@ -17,8 +17,9 @@ jose_key_generate(
 \arguments{
 \item{kty}{The key type: \code{"oct"}, \code{"RSA"}, \code{"EC"} or \code{"OKP"}.}
 
-\item{size}{The key size in bits, a multiple of 8 and at least 128. For
-an \code{oct} key, \code{NULL} takes the size \code{alg} needs.}
+\item{size}{The key size in bits. For an \code{oct} key, a multiple of 8 and at
+least 128, and \code{NULL} takes the size \code{alg} needs; for an \code{RSA} key, 2048
+to 4096, and \code{NULL} is 2048.}
 
 \item{crv}{The curve of an \code{EC} or \code{OKP} key. Not used for \code{oct}.}
 
@@ -38,9 +39,9 @@ A \code{jose_key}.
 }
 \description{
 \code{jose_key_generate()} makes a new key from the operating system's
-cryptographic random source, through zucrypt. Only \code{oct} keys can be
-generated in this version. \code{RSA}, \code{EC} and \code{OKP} keys raise
-\code{zujwt_unsupported_error}, naming the zucrypt version that will add them.
+cryptographic random source, through zucrypt: \code{oct} keys and \code{RSA} keys.
+\code{EC} and \code{OKP} keys raise \code{zujwt_unsupported_error}, naming the zucrypt
+version that will add them.
 }
 \details{
 Without \code{size}, an \code{oct} key is as long as \code{alg} needs: the hash size for
@@ -48,6 +49,9 @@ Without \code{size}, an \code{oct} key is as long as \code{alg} needs: the hash 
 \code{A*KW} and \code{A*GCMKW}, and 256 bits otherwise. A \code{dir} key must match the
 content encryption: 256 bits for \code{A128CBC-HS256}, 384 for
 \code{A192CBC-HS384} and 512 for \code{A256CBC-HS512}.
+
+An \code{RSA} key's \code{size} is its modulus, 2048 bits by default and at most
+4096, with public exponent 65537. Generating one takes a moment.
 }
 \examples{
 key <- jose_key_generate("oct", alg = "HS256")

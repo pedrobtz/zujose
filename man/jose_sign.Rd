@@ -22,8 +22,8 @@ UTF-8 text.}
 \item{key}{A \code{jose_key}, or a list of \code{\link[=jose_signer]{jose_signer()}} objects for several
 signatures.}
 
-\item{alg}{The signature algorithm, such as \code{"HS256"}. \code{NULL} takes the
-key's own \code{alg}.}
+\item{alg}{The signature algorithm, such as \code{"HS256"} or \code{"RS256"}.
+\code{NULL} takes the key's own \code{alg}.}
 
 \item{header}{Further protected header members, as a named list.}
 
@@ -52,6 +52,11 @@ The protected header holds \code{alg}, the key's \code{kid} unless \code{header}
 \code{unprotected} sets one, and the members of \code{header}. With
 \code{b64 = FALSE}, the payload is signed and carried unencoded (RFC 7797),
 and the header gains \code{b64: false} and \verb{crit: ["b64"]}.
+
+The algorithms are \code{HS256}, \code{HS384} and \code{HS512} with an \code{oct} key, and
+\code{RS256}, \code{RS384}, \code{RS512}, \code{PS256}, \code{PS384} and \code{PS512} with a private
+RSA key of at least 2048 bits. \verb{RS*} signatures are deterministic; \verb{PS*}
+ones are randomised, with a salt as long as the digest.
 }
 \examples{
 key <- jose_key_oct(as.raw(1:32), kid = "k1")

@@ -93,10 +93,11 @@ test_that("RFC 7520 §4.8: the HS256 signature verifies with require = 'any'", {
     jose_verify(rfc7520_token(71), set, algorithms = "HS256"),
     class = "zujwt_policy_error"
   )
-  # Allowing RS256 cannot help until zujwt supports it.
+  # Allowing RS256 too is not enough: with require = "all", the ES512
+  # signature is not allowed either.
   expect_error(
     jose_verify(rfc7520_token(71), set, algorithms = c("HS256", "RS256")),
-    class = "zujwt_unsupported_error"
+    class = "zujwt_policy_error"
   )
 })
 
@@ -380,7 +381,8 @@ test_that("jose_sign() refuses inconsistent requests", {
     jose_sign("x", jose_key_oct(as.raw(1:32), alg = "HS512"), "HS256"),
     class = "zujwt_policy_error"
   )
-  expect_error(jose_sign("x", key, "RS256"), class = "zujwt_unsupported_error")
+  # ES256 needs zucrypt's curves, which zujwt uses from Stage 9.
+  expect_error(jose_sign("x", key, "ES256"), class = "zujwt_unsupported_error")
 })
 
 test_that("the key's kid goes into the protected header unless one is given", {
@@ -417,8 +419,8 @@ test_that("zujwt_info() reports what this installation can do", {
   expect_true(all(info$available[
     info$algorithm %in% c("HS256", "HS384", "HS512")
   ]))
-  expect_false(info$available[info$algorithm == "RS256"])
-  expect_identical(info$zucrypt[info$algorithm == "RS256"], "0.4.0")
+  expect_false(info$available[info$algorithm == "ES256"])
+  expect_identical(info$zucrypt[info$algorithm == "ES256"], "0.5.0")
   expect_false("none" %in% info$algorithm)
 })
 

@@ -26,6 +26,7 @@ Imports:
     zuutf (>= 0.1.0)
 Suggests: 
     jose,
+    openssl,
     testthat (>= 3.0.0)
 Remotes: 
     pedrobtz/zucrypt,

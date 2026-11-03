@@ -57,7 +57,10 @@ encryption. If the random source fails, the error is zucrypt's
 \code{zucrypt_entropy_error}, and nothing is returned.
 
 Key management is \code{dir}, \code{A128KW}, \code{A192KW}, \code{A256KW}, \code{A128GCMKW},
-\code{A192GCMKW}, \code{A256GCMKW} or one of the \verb{PBES2-*} algorithms; content
+\code{A192GCMKW}, \code{A256GCMKW}, one of the \verb{PBES2-*} algorithms, or
+\code{RSA-OAEP} or \code{RSA-OAEP-256} to an RSA public key of at least 2048 bits.
+\code{RSA1_5} is refused: it is accepted by \code{\link[=jose_decrypt]{jose_decrypt()}} only, when
+\code{algorithms} names it, and it never encrypts. Content
 encryption is \code{A128CBC-HS256}, \code{A192CBC-HS384}, \code{A256CBC-HS512},
 \code{A128GCM}, \code{A192GCM} or \code{A256GCM}. \code{A*GCMKW} writes the key wrapping \code{iv}
 and \code{tag} into the header, and \verb{PBES2-*} writes a random 16-byte \code{p2s};

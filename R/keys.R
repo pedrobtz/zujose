@@ -26,8 +26,66 @@ key_operations <- c(
 # Members that hold secrets (RFC 7518 §6.2.2, §6.3.2, §6.4; RFC 8037 §2).
 private_members <- c("d", "p", "q", "dp", "dq", "qi", "oth", "k")
 
-# Key types zujwt reads but cannot use yet, and the zucrypt that adds them.
+# The zucrypt release each asymmetric key type needs. A type is usable when
+# this version of zujwt implements it and the installed zucrypt provides it
+# (zucrypt_provides(), algorithms.R); until then it is read and kept, but
+# not used.
 pending_key_types <- c(RSA = "0.4.0", EC = "0.5.0", OKP = "0.5.0")
+implemented_key_types <- c("oct", "RSA")
+
+key_type_usable <- function(kty) {
+  kty == "oct" ||
+    (kty %in%
+      implemented_key_types &&
+      zucrypt_provides(
+        pending_key_types[[kty]],
+        utils::packageVersion("zucrypt")
+      ))
+}
+
+# RSA (Stage 8). The JWK members hold the key; a zucrypt key object is
+# built from them for each operation, so that a jose_key stays an ordinary
+# R object that survives saveRDS().
+rsa_private_members <- c("d", "p", "q", "dp", "dq", "qi")
+
+rsa_member_raw <- function(key, name) {
+  b64url_decode(key$members[[name]], "RSA key member")
+}
+
+has_private <- function(key) {
+  key$kty == "RSA" && all(rsa_private_members %in% names(key$members))
+}
+
+# The zucrypt key for `key`: the private key when asked and present,
+# otherwise the public one.
+rsa_crypt_key <- function(key, private) {
+  parts <- lapply(c("n", "e"), function(n) rsa_member_raw(key, n))
+  if (private) {
+    parts <- c(
+      parts,
+      lapply(rsa_private_members, function(n) rsa_member_raw(key, n))
+    )
+  }
+  do.call(zucrypt::crypt_rsa_key, parts)
+}
+
+# JWK members (Base64url strings) from a zucrypt RSA key.
+rsa_members <- function(ck) {
+  data <- as.list(ck)$data
+  names <- intersect(c("n", "e", rsa_private_members), names(data))
+  stats::setNames(lapply(data[names], b64url_encode), names)
+}
+
+# RFC 7518 §3.3: at least 2048 bits, for any use.
+check_rsa_size <- function(key, call) {
+  if ((key$bits %||% 0) < 2048) {
+    abort_zujwt(
+      "key",
+      "An RSA key must be at least 2048 bits (RFC 7518 section 3.3).",
+      call = call
+    )
+  }
+}
 
 #' Make a symmetric key
 #'
@@ -83,9 +141,9 @@ jose_key_oct <- function(
 #' Generate a random key
 #'
 #' `jose_key_generate()` makes a new key from the operating system's
-#' cryptographic random source, through zucrypt. Only `oct` keys can be
-#' generated in this version. `RSA`, `EC` and `OKP` keys raise
-#' `zujwt_unsupported_error`, naming the zucrypt version that will add them.
+#' cryptographic random source, through zucrypt: `oct` keys and `RSA` keys.
+#' `EC` and `OKP` keys raise `zujwt_unsupported_error`, naming the zucrypt
+#' version that will add them.
 #'
 #' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
 #' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
@@ -93,9 +151,13 @@ jose_key_oct <- function(
 #' content encryption: 256 bits for `A128CBC-HS256`, 384 for
 #' `A192CBC-HS384` and 512 for `A256CBC-HS512`.
 #'
+#' An `RSA` key's `size` is its modulus, 2048 bits by default and at most
+#' 4096, with public exponent 65537. Generating one takes a moment.
+#'
 #' @param kty The key type: `"oct"`, `"RSA"`, `"EC"` or `"OKP"`.
-#' @param size The key size in bits, a multiple of 8 and at least 128. For
-#'   an `oct` key, `NULL` takes the size `alg` needs.
+#' @param size The key size in bits. For an `oct` key, a multiple of 8 and at
+#'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048
+#'   to 4096, and `NULL` is 2048.
 #' @param crv The curve of an `EC` or `OKP` key. Not used for `oct`.
 #' @inheritParams jose_key_oct
 #' @returns A `jose_key`.
@@ -124,6 +186,9 @@ jose_key_generate <- function(
       "`kty` must be \"oct\", \"RSA\", \"EC\" or \"OKP\".",
       call = call
     )
+  }
+  if (kty == "RSA" && key_type_usable("RSA")) {
+    return(generate_rsa(size, crv, alg, kid, use, key_ops, call))
   }
   if (kty != "oct") {
     abort_unsupported(kty, pending_key_types[[kty]], call = call)
@@ -173,6 +238,44 @@ jose_key_generate <- function(
   )
 }
 
+generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
+  if (!is.null(crv)) {
+    abort_zujwt("key", "An `RSA` key has no `crv`.", call = call)
+  }
+  if (!is.null(alg) && (!is_string(alg) || !"RSA" %in% alg_key_types(alg))) {
+    abort_zujwt(
+      "key",
+      "`alg` must be an RSA algorithm such as \"RS256\" or \"RSA-OAEP\".",
+      call = call
+    )
+  }
+  size <- size %||% 2048
+  ok <- is.numeric(size) &&
+    length(size) == 1L &&
+    is.finite(size) &&
+    size == trunc(size) &&
+    size >= 2048 &&
+    size <= 4096
+  if (!ok) {
+    abort_zujwt(
+      "key",
+      "`size` must be a whole number of bits from 2048 to 4096.",
+      call = call
+    )
+  }
+  ck <- zucrypt::crypt_rsa_keygen(size)
+  new_jose_key(
+    kty = "RSA",
+    kid = kid,
+    alg = alg,
+    use = use,
+    key_ops = key_ops,
+    members = rsa_members(ck),
+    bits = as.integer(size),
+    call = call
+  )
+}
+
 # The size an oct key for `alg` needs, in bits, and whether it is exact.
 oct_key_bits <- function(alg, call) {
   if (is.null(alg) || alg == "dir") {
@@ -199,6 +302,7 @@ new_jose_key <- function(
   use = NULL,
   key_ops = NULL,
   members = empty_object(),
+  bits = NULL,
   call = NULL
 ) {
   for (name in c("kid", "alg", "use")) {
@@ -225,6 +329,7 @@ new_jose_key <- function(
     }
   }
   needs <- unname(pending_key_types[kty])
+  supported <- key_type_usable(kty)
   structure(
     list(
       kty = kty,
@@ -234,8 +339,9 @@ new_jose_key <- function(
       key_ops = key_ops,
       k = k,
       members = members,
-      supported = kty == "oct",
-      needs = if (kty != "oct") needs
+      bits = bits,
+      supported = supported,
+      needs = if (!supported) needs
     ),
     class = "jose_key"
   )
@@ -247,9 +353,13 @@ new_jose_key <- function(
 #' already parsed. A raw vector is taken as an `oct` secret, as by
 #' [jose_key_oct()].
 #'
-#' Keys of type `RSA`, `EC` and `OKP` are read and kept, so they can be
-#' listed, selected, written and thumbprinted, but using one before zujwt
-#' supports it raises `zujwt_unsupported_error`.
+#' `RSA` keys need `n` and `e`, and for a private key all of `d`, `p`, `q`,
+#' `dp`, `dq` and `qi`; they are checked when read. A PEM string holding an
+#' RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.
+#'
+#' Keys of type `EC` and `OKP` are read and kept, so they can be listed,
+#' selected, written and thumbprinted, but using one before zujwt supports it
+#' raises `zujwt_unsupported_error`.
 #'
 #' @param x JWK text, a parsed JWK as a named list, a raw secret, or a
 #'   `jose_key`.
@@ -282,7 +392,7 @@ as_jose_key.character <- function(x, ...) {
     abort_zujwt("key", "A JWK must be a single string.", call = call)
   }
   if (grepl("^[[:space:]]*-----BEGIN", x)) {
-    abort_unsupported("PEM", pending_key_types[["RSA"]], call = call)
+    return(pem_to_key(x, call))
   }
   jwk_to_key(json_key_object(x, "JWK", call), call)
 }
@@ -361,6 +471,10 @@ jwk_to_key <- function(jwk, call) {
     }
   }
 
+  bits <- if (kty == "RSA" && key_type_usable("RSA")) {
+    check_rsa_jwk(members, call)
+  }
+
   new_jose_key(
     kty = kty,
     k = k,
@@ -369,8 +483,104 @@ jwk_to_key <- function(jwk, call) {
     use = member(jwk, "use"),
     key_ops = key_ops,
     members = members,
+    bits = bits,
     call = call
   )
+}
+
+# An RSA JWK's members must make a key: n and e, and for a private key all
+# of the CRT parameters, consistent with each other. Returns the modulus
+# size in bits.
+check_rsa_jwk <- function(members, call) {
+  if (!all(c("n", "e") %in% names(members))) {
+    abort_zujwt("key", "An RSA JWK needs `n` and `e`.", call = call)
+  }
+  given <- rsa_private_members %in% names(members)
+  if (any(given) && !all(given)) {
+    abort_zujwt(
+      "key",
+      paste0(
+        "A private RSA JWK needs all of `d`, `p`, `q`, `dp`, `dq` and ",
+        "`qi`; zujwt does not reconstruct the primes."
+      ),
+      call = call
+    )
+  }
+  key <- list(kty = "RSA", members = members)
+  ck <- tryCatch(
+    rsa_crypt_key(key, all(given)),
+    zujwt_error = function(e) e,
+    zucrypt_error = function(e) e
+  )
+  if (inherits(ck, "error")) {
+    abort_zujwt(
+      "key",
+      "The RSA JWK's members do not make a valid key.",
+      call = call
+    )
+  }
+  as.integer(as.list(ck)$size)
+}
+
+# A PEM key, through zucrypt: private first, then public.
+pem_to_key <- function(x, call) {
+  if (!key_type_usable("RSA")) {
+    abort_unsupported("PEM", pending_key_types[["RSA"]], call = call)
+  }
+  ck <- tryCatch(zucrypt::crypt_read_key(x), zucrypt_error = function(e) {
+    tryCatch(zucrypt::crypt_read_pubkey(x), zucrypt_error = function(e) e)
+  })
+  if (inherits(ck, "error")) {
+    abort_zujwt(
+      "key",
+      "The PEM is not an unencrypted RSA key zujwt can read.",
+      call = call
+    )
+  }
+  if (!inherits(ck, "crypt_rsa")) {
+    abort_zujwt("key", "Only RSA keys are read from PEM.", call = call)
+  }
+  new_jose_key(
+    kty = "RSA",
+    members = rsa_members(ck),
+    bits = as.integer(as.list(ck)$size),
+    call = call
+  )
+}
+
+#' Write an RSA key as PEM
+#'
+#' `jose_pem()` writes an RSA key as PEM: the public key as
+#' SubjectPublicKeyInfo (`PUBLIC KEY`), or with `private = TRUE` the private
+#' key as PKCS#8 (`PRIVATE KEY`), byte for byte as the openssl package
+#' writes them.
+#'
+#' @param key An RSA `jose_key`.
+#' @param private Whether to write the private key.
+#' @returns A single string.
+#' @seealso [as_jose_key()], which reads PEM.
+#' @export
+#' @examples
+#' key <- jose_key_generate("RSA")
+#' cat(jose_pem(key))
+jose_pem <- function(key, private = FALSE) {
+  call <- sys.call()
+  key <- check_key(key, call)
+  if (!isTRUE(private) && !isFALSE(private)) {
+    abort_zujwt("key", "`private` must be TRUE or FALSE.", call = call)
+  }
+  if (key$kty != "RSA" || !key$supported) {
+    abort_zujwt("key", "Only RSA keys are written as PEM.", call = call)
+  }
+  if (private && !has_private(key)) {
+    abort_zujwt(
+      "key",
+      "This is a public key; it has no private part.",
+      call = call
+    )
+  }
+  ck <- rsa_crypt_key(key, private)
+  zucrypt::crypt_write_pem(ck)
 }
 
 #' Set a key's identifier
@@ -482,7 +692,13 @@ check_key <- function(key, call) {
 
 #' @export
 format.jose_key <- function(x, ...) {
-  bits <- if (!is.null(x$k)) sprintf(", %d bits", 8L * length(x$k)) else ""
+  bits <- if (!is.null(x$k)) {
+    sprintf(", %d bits", 8L * length(x$k))
+  } else if (!is.null(x$bits)) {
+    sprintf(", %d bits", x$bits)
+  } else {
+    ""
+  }
   fields <- c(
     if (!is.null(x$kid)) sprintf("kid %s", encodeString(x$kid, quote = '"')),
     if (!is.null(x$alg)) sprintf("alg %s", x$alg),

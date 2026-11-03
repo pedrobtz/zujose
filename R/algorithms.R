@@ -72,7 +72,16 @@ implemented_algorithms <- c(
   "A256GCMKW",
   "PBES2-HS256+A128KW",
   "PBES2-HS384+A192KW",
-  "PBES2-HS512+A256KW"
+  "PBES2-HS512+A256KW",
+  "RS256",
+  "RS384",
+  "RS512",
+  "PS256",
+  "PS384",
+  "PS512",
+  "RSA-OAEP",
+  "RSA-OAEP-256",
+  "RSA1_5"
 )
 
 # The zucrypt functions each release adds that zujwt uses. An algorithm is
@@ -80,7 +89,8 @@ implemented_algorithms <- c(
 # already exports those functions: a development zucrypt (0.1.0.9000) can
 # carry a later release's functions before it is numbered.
 zucrypt_functions <- list(
-  "0.3.0" = c("crypt_aes_gcm_encrypt", "crypt_aes_gcm_decrypt", "crypt_pbkdf2")
+  "0.3.0" = c("crypt_aes_gcm_encrypt", "crypt_aes_gcm_decrypt", "crypt_pbkdf2"),
+  "0.4.0" = c("crypt_rsa_key", "crypt_signature_create", "crypt_rsa_encrypt")
 )
 
 zucrypt_provides <- function(version, installed) {
