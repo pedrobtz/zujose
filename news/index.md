@@ -75,6 +75,14 @@
   encryption key and IV from the operating system’s random source, which
   cannot be supplied by the caller.
 
+- JWE gains `A128GCM`, `A192GCM` and `A256GCM` content encryption, and
+  `A128GCMKW`, `A192GCMKW`, `A256GCMKW` and the three `PBES2-*` key
+  management algorithms, over zucrypt’s AES-GCM and PBKDF2. A PBES2
+  token whose `p2c` exceeds `jose_limits()$p2c`, or whose `p2s` is
+  shorter than 8 bytes, is refused before any key is derived. A `dir`
+  key whose `alg` names the content encryption, as in RFC 7520 section
+  5.6, is accepted.
+
 - [`jose_key_generate()`](https://pedrobtz.github.io/zujwt/reference/jose_key_generate.md)
   makes a random `oct` key, sized for its `alg`. `RSA`, `EC` and `OKP`
   generation names the zucrypt version it needs.
@@ -82,7 +90,10 @@
 - `jose_jwt_encode(jti = TRUE)` adds a random 128-bit `jti`.
 
 - zujwt now needs the development version of zucrypt, for
-  `crypt_rand_bytes()`.
+  `crypt_rand_bytes()`, `crypt_aes_gcm_encrypt()` and `crypt_pbkdf2()`.
+  [`zujwt_info()`](https://pedrobtz.github.io/zujwt/reference/zujwt_info.md)
+  reports an algorithm available when the installed zucrypt exports what
+  it needs, so a development zucrypt counts.
 
 - [`jose_jwt_decode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_decode.md)
   accepts a JWT sent as a JWE only with

@@ -35,8 +35,8 @@ jose_encrypt(
 
 - alg:
 
-  The key management algorithm, such as `"A256KW"` or `"dir"`. `NULL`
-  takes the key's own `alg`.
+  The key management algorithm, such as `"A256KW"`, `"A256GCMKW"`,
+  `"PBES2-HS256+A128KW"` or `"dir"`. `NULL` takes the key's own `alg`.
 
 - enc:
 
@@ -45,7 +45,8 @@ jose_encrypt(
 
 - header:
 
-  Further protected header members, as a named list.
+  Further protected header members, as a named list. For `PBES2-*`,
+  `p2c` sets the iteration count.
 
 - unprotected:
 
@@ -74,6 +75,20 @@ through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
 encryption. If the random source fails, the error is zucrypt's
 `zucrypt_entropy_error`, and nothing is returned.
 
+Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
+`A192GCMKW`, `A256GCMKW` or one of the `PBES2-*` algorithms; content
+encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
+`A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping
+`iv` and `tag` into the header, and `PBES2-*` writes a random 16-byte
+`p2s`; none of the three can be given.
+
+For `PBES2-*` the key is the password, as an `oct` key:
+`jose_key_oct(charToRaw(enc2utf8(password)))`. The iteration count is
+`p2c` in `header`, a whole number of at least 1000, and defaults to 600
+000. A recipient decrypting with
+[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
+
 ## See also
 
 [`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md).
@@ -84,7 +99,7 @@ encryption. If the random source fails, the error is zucrypt's
 key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
 token <- jose_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.8hkwGREUtesKQ9NpmgO-KTIqRSD2xXp2txs9JIpylVAof8wE-qZn3Q.rI78wkJ3TSZlCvKK5vnZ9Q.BPWwhlCRB9dvJbz6-MPixA.35ng3UheDYLWb5cXmrl6qg"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.IucSHxIJEasQUfQg3au_vZ6pRLEMNPkeuEyx9Y5OsvVoyZV3FJu12g.KDbUy8BPZAfoDzkWWmQ8qQ.hwMqRLnCSZlH4YDM5W6uAg.QritZiJysO9VLC3DFKrj1w"
 jose_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jose_decrypted> A128KW with A128CBC-HS256, key "kek"
@@ -93,4 +108,12 @@ jose_decrypt(token, key, algorithms = "A128KW",
 #>   enc: "A128CBC-HS256"
 #>   kid: "kek"
 #> Plaintext: 6 bytes
+
+# AES-GCM content encryption, under a password.
+password <- jose_key_oct(charToRaw("correct horse battery staple"))
+token <- jose_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
+                      enc = "A256GCM", header = list(p2c = 10000))
+jose_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
+             encryptions = "A256GCM")$plaintext
+#> [1] 73 65 63 72 65 74
 ```

@@ -30,14 +30,16 @@ stays.
 
 ## Current state
 
-Scaffolded 2026-11-02 with `create-pkg.sh`. Stages 0–6 are done
+Scaffolded 2026-11-02 with `create-pkg.sh`. Stages 0–7 are done
 (2026-11-03): codec, `oct` keys and key sets, JWS with `HS*`, JWT, and
-JWE with `dir`, `A*KW` and `A*CBC-HS*`, with generated keys, CEKs and
-IVs. The roadmap in `.agents/roadmap.md` takes it to v0.1.0. The
+JWE with `dir`, `A*KW`, `A*GCMKW` and `PBES2-*` key management and
+`A*CBC-HS*` and `A*GCM` content encryption, with generated keys, CEKs
+and IVs. The roadmap in `.agents/roadmap.md` takes it to v0.1.0. The
 design’s release gate (§11.2) holds the CRAN submission until `zuutf`
 and `zucrypt` (\>= 0.5.0) are on CRAN. Randomness comes from `zucrypt`’s
-development version (`Remotes: pedrobtz/zucrypt`). Stage 7 waits on
-`zucrypt` Stage 14 (GCM, PBKDF2).
+development version (`Remotes: pedrobtz/zucrypt`), as do AES-GCM and
+PBKDF2 (zucrypt Stage 14a). Stage 8 waits on `zucrypt` Stage 15 (RSA), a
+candidate stage.
 
 ## Stage tracking
 
@@ -156,11 +158,15 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   vector. `rfc7515_key()` is the RFC 7515 A.1 HMAC key;
   `expect_same_json()` compares JSON serializations whatever their
   member order. `decode_at_1000()` signs a claims set and decodes it at
-  a fixed time, for the claim-check tests. `encrypt_fixed()` encrypts
-  with a fixed CEK and IV, as the RFC vectors do; `hex()` reads hex
-  text; `rfc7516_a3()`, `rfc7516_a4()`, `rfc7518_cbc()` and
-  `rfc3394_vectors()` hold the JWE vectors. The RFC 7518 Appendix B
-  fixture is regenerated with `tools/rfc7518-cbc-vectors.R`.
+  a fixed time, for the claim-check tests. `rfc7520_text()` reads the §5
+  plaintexts and password, and `rfc7520_factor()` the generated factors
+  (CEKs, IVs, salts, encrypted keys); `tools/rfc7520-fixtures.R`
+  extracts both. `pbes2_token()` builds a PBES2 header for the
+  `p2c`/`p2s` checks. `encrypt_fixed()` encrypts with a fixed CEK and
+  IV, as the RFC vectors do; `hex()` reads hex text; `rfc7516_a3()`,
+  `rfc7516_a4()`, `rfc7518_cbc()` and `rfc3394_vectors()` hold the JWE
+  vectors. The RFC 7518 Appendix B fixture is regenerated with
+  `tools/rfc7518-cbc-vectors.R`.
 - **Keep the suite inside the CRAN time budget.** No suite yet.
 
 ## Definition of done

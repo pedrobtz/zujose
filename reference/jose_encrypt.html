@@ -72,8 +72,9 @@ several recipients.</p></dd>
 
 
 <dt id="arg-alg">alg<a class="anchor" aria-label="anchor" href="#arg-alg"></a></dt>
-<dd><p>The key management algorithm, such as <code>"A256KW"</code> or <code>"dir"</code>.
-<code>NULL</code> takes the key's own <code>alg</code>.</p></dd>
+<dd><p>The key management algorithm, such as <code>"A256KW"</code>,
+<code>"A256GCMKW"</code>, <code>"PBES2-HS256+A128KW"</code> or <code>"dir"</code>. <code>NULL</code> takes the key's
+own <code>alg</code>.</p></dd>
 
 
 <dt id="arg-enc">enc<a class="anchor" aria-label="anchor" href="#arg-enc"></a></dt>
@@ -82,7 +83,8 @@ RFC 7518 requires every implementation to support.</p></dd>
 
 
 <dt id="arg-header">header<a class="anchor" aria-label="anchor" href="#arg-header"></a></dt>
-<dd><p>Further protected header members, as a named list.</p></dd>
+<dd><p>Further protected header members, as a named list. For
+<code>PBES2-*</code>, <code>p2c</code> sets the iteration count.</p></dd>
 
 
 <dt id="arg-unprotected">unprotected<a class="anchor" aria-label="anchor" href="#arg-unprotected"></a></dt>
@@ -111,6 +113,17 @@ vector, drawn from the operating system's cryptographic random source
 through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
 encryption. If the random source fails, the error is zucrypt's
 <code>zucrypt_entropy_error</code>, and nothing is returned.</p>
+<p>Key management is <code>dir</code>, <code>A128KW</code>, <code>A192KW</code>, <code>A256KW</code>, <code>A128GCMKW</code>,
+<code>A192GCMKW</code>, <code>A256GCMKW</code> or one of the <code>PBES2-*</code> algorithms; content
+encryption is <code>A128CBC-HS256</code>, <code>A192CBC-HS384</code>, <code>A256CBC-HS512</code>,
+<code>A128GCM</code>, <code>A192GCM</code> or <code>A256GCM</code>. <code>A*GCMKW</code> writes the key wrapping <code>iv</code>
+and <code>tag</code> into the header, and <code>PBES2-*</code> writes a random 16-byte <code>p2s</code>;
+none of the three can be given.</p>
+<p>For <code>PBES2-*</code> the key is the password, as an <code>oct</code> key:
+<code>jose_key_oct(charToRaw(enc2utf8(password)))</code>. The iteration count is
+<code>p2c</code> in <code>header</code>, a whole number of at least 1000, and defaults to
+600 000. A recipient decrypting with <code><a href="jose_decrypt.html">jose_decrypt()</a></code> accepts at most
+<code>jose_limits()$p2c</code> iterations, by default also 600 000.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -122,7 +135,7 @@ encryption. If the random source fails, the error is zucrypt's
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.8hkwGREUtesKQ9NpmgO-KTIqRSD2xXp2txs9JIpylVAof8wE-qZn3Q.rI78wkJ3TSZlCvKK5vnZ9Q.BPWwhlCRB9dvJbz6-MPixA.35ng3UheDYLWb5cXmrl6qg"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.IucSHxIJEasQUfQg3au_vZ6pRLEMNPkeuEyx9Y5OsvVoyZV3FJu12g.KDbUy8BPZAfoDzkWWmQ8qQ.hwMqRLnCSZlH4YDM5W6uAg.QritZiJysO9VLC3DFKrj1w"</span>
 <span class="r-in"><span><span class="fu"><a href="jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"A128KW"</span>,</span></span>
 <span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A128CBC-HS256"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_decrypted&gt; A128KW with A128CBC-HS256, key "kek"</span>
@@ -131,6 +144,14 @@ encryption. If the random source fails, the error is zucrypt's
 <span class="r-out co"><span class="r-pr">#&gt;</span>   enc: "A128CBC-HS256"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   kid: "kek"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plaintext: 6 bytes</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># AES-GCM content encryption, under a password.</span></span></span>
+<span class="r-in"><span><span class="va">password</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_oct.html">jose_key_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">password</span>, alg <span class="op">=</span> <span class="st">"PBES2-HS256+A128KW"</span>,</span></span>
+<span class="r-in"><span>                      enc <span class="op">=</span> <span class="st">"A256GCM"</span>, header <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>p2c <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">password</span>, algorithms <span class="op">=</span> <span class="st">"PBES2-HS256+A128KW"</span>,</span></span>
+<span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A256GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 73 65 63 72 65 74</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
