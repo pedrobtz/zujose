@@ -44,6 +44,11 @@ the `kid`, `alg` and `enc` that decrypted it.
 
 ## Details
 
+`RSA1_5` is decrypted only when `algorithms` names it. It is exposed to
+Bleichenbacher-style attacks (RFC 8725 section 3.2); a padding failure
+is replaced by a random content key, as RFC 7516 section 11.5 asks, so
+that it fails exactly as a wrong key does. Prefer `RSA-OAEP-256`.
+
 Every failure after the header checks (a wrong key, a bad tag, bad
 padding, a failed key unwrap, a wrong length) raises the same
 `zujwt_decrypt_error` with the same message, so that the error cannot

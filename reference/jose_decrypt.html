@@ -86,7 +86,11 @@ returning one.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Every failure after the header checks (a wrong key, a bad tag, bad
+    <p><code>RSA1_5</code> is decrypted only when <code>algorithms</code> names it. It is exposed to
+Bleichenbacher-style attacks (RFC 8725 section 3.2); a padding failure is
+replaced by a random content key, as RFC 7516 section 11.5 asks, so that
+it fails exactly as a wrong key does. Prefer <code>RSA-OAEP-256</code>.</p>
+<p>Every failure after the header checks (a wrong key, a bad tag, bad
 padding, a failed key unwrap, a wrong length) raises the same
 <code>zujwt_decrypt_error</code> with the same message, so that the error cannot
 tell an attacker which step failed (RFC 7516 section 11.5).</p>

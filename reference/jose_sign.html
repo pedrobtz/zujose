@@ -72,8 +72,8 @@ signatures.</p></dd>
 
 
 <dt id="arg-alg">alg<a class="anchor" aria-label="anchor" href="#arg-alg"></a></dt>
-<dd><p>The signature algorithm, such as <code>"HS256"</code>. <code>NULL</code> takes the
-key's own <code>alg</code>.</p></dd>
+<dd><p>The signature algorithm, such as <code>"HS256"</code> or <code>"RS256"</code>.
+<code>NULL</code> takes the key's own <code>alg</code>.</p></dd>
 
 
 <dt id="arg-header">header<a class="anchor" aria-label="anchor" href="#arg-header"></a></dt>
@@ -110,6 +110,10 @@ verifier then supplies it to <code><a href="jose_verify.html">jose_verify()</a><
 <code>unprotected</code> sets one, and the members of <code>header</code>. With
 <code>b64 = FALSE</code>, the payload is signed and carried unencoded (RFC 7797),
 and the header gains <code>b64: false</code> and <code>crit: ["b64"]</code>.</p>
+<p>The algorithms are <code>HS256</code>, <code>HS384</code> and <code>HS512</code> with an <code>oct</code> key, and
+<code>RS256</code>, <code>RS384</code>, <code>RS512</code>, <code>PS256</code>, <code>PS384</code> and <code>PS512</code> with a private
+RSA key of at least 2048 bits. <code>RS*</code> signatures are deterministic; <code>PS*</code>
+ones are randomised, with a salt as long as the digest.</p>
     </div>
 
     <div class="section level2">

@@ -76,7 +76,11 @@ encryption. If the random source fails, the error is zucrypt's
 `zucrypt_entropy_error`, and nothing is returned.
 
 Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
-`A192GCMKW`, `A256GCMKW` or one of the `PBES2-*` algorithms; content
+`A192GCMKW`, `A256GCMKW`, one of the `PBES2-*` algorithms, or `RSA-OAEP`
+or `RSA-OAEP-256` to an RSA public key of at least 2048 bits. `RSA1_5`
+is refused: it is accepted by
+[`jose_decrypt()`](https://pedrobtz.github.io/zujwt/reference/jose_decrypt.md)
+only, when `algorithms` names it, and it never encrypts. Content
 encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
 `A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping
 `iv` and `tag` into the header, and `PBES2-*` writes a random 16-byte
@@ -99,7 +103,7 @@ accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
 token <- jose_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.IucSHxIJEasQUfQg3au_vZ6pRLEMNPkeuEyx9Y5OsvVoyZV3FJu12g.KDbUy8BPZAfoDzkWWmQ8qQ.hwMqRLnCSZlH4YDM5W6uAg.QritZiJysO9VLC3DFKrj1w"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.pRcAHZbUslBl05VofBHOEeTDw-1QHiYWaqnYdk-5bYLgMTAjC1BDeg.A38WSc3EyCJwJTsFtZiTow.sLBInhBQDFb52XE6L6W_cw.V6mzRiienOvMH6hNXPtBXg"
 jose_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jose_decrypted> A128KW with A128CBC-HS256, key "kek"

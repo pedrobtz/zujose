@@ -1,10 +1,9 @@
 # Generate a random key
 
 `jose_key_generate()` makes a new key from the operating system's
-cryptographic random source, through zucrypt. Only `oct` keys can be
-generated in this version. `RSA`, `EC` and `OKP` keys raise
-`zujwt_unsupported_error`, naming the zucrypt version that will add
-them.
+cryptographic random source, through zucrypt: `oct` keys and `RSA` keys.
+`EC` and `OKP` keys raise `zujwt_unsupported_error`, naming the zucrypt
+version that will add them.
 
 ## Usage
 
@@ -28,8 +27,9 @@ jose_key_generate(
 
 - size:
 
-  The key size in bits, a multiple of 8 and at least 128. For an `oct`
-  key, `NULL` takes the size `alg` needs.
+  The key size in bits. For an `oct` key, a multiple of 8 and at least
+  128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048 to
+  4096, and `NULL` is 2048.
 
 - crv:
 
@@ -67,6 +67,9 @@ for `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key must match
 the content encryption: 256 bits for `A128CBC-HS256`, 384 for
 `A192CBC-HS384` and 512 for `A256CBC-HS512`.
 
+An `RSA` key's `size` is its modulus, 2048 bits by default and at most
+4096, with public exponent 65537. Generating one takes a moment.
+
 ## See also
 
 [`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
@@ -86,7 +89,7 @@ key
 # A key encryption key, named by its thumbprint.
 jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
 #> <jose_key> oct, 256 bits
-#>   kid "9IAjSXV1FnNibet59TwEz4JEL06ZxWuwvC-18CgwA9M"
+#>   kid "JPmeeFqwVBjU4_k3dsqBs0sqXc6qPwOMQGsypZpRk5E"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```

@@ -67,9 +67,12 @@ already parsed. A raw vector is taken as an <code>oct</code> secret, as by
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Keys of type <code>RSA</code>, <code>EC</code> and <code>OKP</code> are read and kept, so they can be
-listed, selected, written and thumbprinted, but using one before zujwt
-supports it raises <code>zujwt_unsupported_error</code>.</p>
+    <p><code>RSA</code> keys need <code>n</code> and <code>e</code>, and for a private key all of <code>d</code>, <code>p</code>, <code>q</code>,
+<code>dp</code>, <code>dq</code> and <code>qi</code>; they are checked when read. A PEM string holding an
+RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.</p>
+<p>Keys of type <code>EC</code> and <code>OKP</code> are read and kept, so they can be listed,
+selected, written and thumbprinted, but using one before zujwt supports it
+raises <code>zujwt_unsupported_error</code>.</p>
     </div>
 
     <div class="section level2">

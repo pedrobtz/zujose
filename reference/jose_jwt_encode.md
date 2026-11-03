@@ -32,8 +32,8 @@ jose_jwt_encode(
 
 - alg:
 
-  The signature algorithm, such as `"HS256"`. `NULL` takes the key's own
-  `alg`.
+  The signature algorithm, such as `"HS256"` or `"RS256"`. `NULL` takes
+  the key's own `alg`.
 
 - header:
 
@@ -81,6 +81,6 @@ jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 #> <jose_claims> verified HS256, key "k1"
 #>   sub: "u1"
 #>   aud: "api"
-#>   exp: 2026-11-03 06:07:24 UTC
-#>   iat: 2026-11-03 05:07:24 UTC
+#>   exp: 2026-11-03 11:19:02 UTC
+#>   iat: 2026-11-03 10:19:02 UTC
 ```

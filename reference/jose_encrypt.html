@@ -114,7 +114,10 @@ through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
 encryption. If the random source fails, the error is zucrypt's
 <code>zucrypt_entropy_error</code>, and nothing is returned.</p>
 <p>Key management is <code>dir</code>, <code>A128KW</code>, <code>A192KW</code>, <code>A256KW</code>, <code>A128GCMKW</code>,
-<code>A192GCMKW</code>, <code>A256GCMKW</code> or one of the <code>PBES2-*</code> algorithms; content
+<code>A192GCMKW</code>, <code>A256GCMKW</code>, one of the <code>PBES2-*</code> algorithms, or
+<code>RSA-OAEP</code> or <code>RSA-OAEP-256</code> to an RSA public key of at least 2048 bits.
+<code>RSA1_5</code> is refused: it is accepted by <code><a href="jose_decrypt.html">jose_decrypt()</a></code> only, when
+<code>algorithms</code> names it, and it never encrypts. Content
 encryption is <code>A128CBC-HS256</code>, <code>A192CBC-HS384</code>, <code>A256CBC-HS512</code>,
 <code>A128GCM</code>, <code>A192GCM</code> or <code>A256GCM</code>. <code>A*GCMKW</code> writes the key wrapping <code>iv</code>
 and <code>tag</code> into the header, and <code>PBES2-*</code> writes a random 16-byte <code>p2s</code>;
@@ -135,7 +138,7 @@ none of the three can be given.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.IucSHxIJEasQUfQg3au_vZ6pRLEMNPkeuEyx9Y5OsvVoyZV3FJu12g.KDbUy8BPZAfoDzkWWmQ8qQ.hwMqRLnCSZlH4YDM5W6uAg.QritZiJysO9VLC3DFKrj1w"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.pRcAHZbUslBl05VofBHOEeTDw-1QHiYWaqnYdk-5bYLgMTAjC1BDeg.A38WSc3EyCJwJTsFtZiTow.sLBInhBQDFb52XE6L6W_cw.V6mzRiienOvMH6hNXPtBXg"</span>
 <span class="r-in"><span><span class="fu"><a href="jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"A128KW"</span>,</span></span>
 <span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A128CBC-HS256"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_decrypted&gt; A128KW with A128CBC-HS256, key "kek"</span>

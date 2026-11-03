@@ -18,8 +18,8 @@ jose_signer(key, alg = NULL, header = NULL, unprotected = NULL)
 
 - alg:
 
-  The signature algorithm, such as `"HS256"`. `NULL` takes the key's own
-  `alg`.
+  The signature algorithm, such as `"HS256"` or `"RS256"`. `NULL` takes
+  the key's own `alg`.
 
 - header:
 

@@ -26,9 +26,13 @@ A `jose_key`.
 
 ## Details
 
-Keys of type `RSA`, `EC` and `OKP` are read and kept, so they can be
-listed, selected, written and thumbprinted, but using one before zujwt
-supports it raises `zujwt_unsupported_error`.
+`RSA` keys need `n` and `e`, and for a private key all of `d`, `p`, `q`,
+`dp`, `dq` and `qi`; they are checked when read. A PEM string holding an
+RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.
+
+Keys of type `EC` and `OKP` are read and kept, so they can be listed,
+selected, written and thumbprinted, but using one before zujwt supports
+it raises `zujwt_unsupported_error`.
 
 ## Examples
 

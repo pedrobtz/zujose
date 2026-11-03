@@ -34,8 +34,8 @@ jose_sign(
 
 - alg:
 
-  The signature algorithm, such as `"HS256"`. `NULL` takes the key's own
-  `alg`.
+  The signature algorithm, such as `"HS256"` or `"RS256"`. `NULL` takes
+  the key's own `alg`.
 
 - header:
 
@@ -72,6 +72,11 @@ The protected header holds `alg`, the key's `kid` unless `header` or
 `unprotected` sets one, and the members of `header`. With `b64 = FALSE`,
 the payload is signed and carried unencoded (RFC 7797), and the header
 gains `b64: false` and `crit: ["b64"]`.
+
+The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
+`RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
+RSA key of at least 2048 bits. `RS*` signatures are deterministic; `PS*`
+ones are randomised, with a salt as long as the digest.
 
 ## Examples
 
