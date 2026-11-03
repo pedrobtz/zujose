@@ -52,7 +52,7 @@ jws_sign <- function(
   detached = FALSE
 ) {
   call <- sys.call()
-  format <- match.arg(format)
+  format <- arg_choice(format, "format", call)
   bytes <- as_payload_bytes(payload, call)
   check_flag(b64, "b64", call)
   check_flag(detached, "detached", call)
@@ -274,7 +274,7 @@ jws_verify <- function(
 ) {
   call <- sys.call()
   check_algorithms(algorithms, "signature", call = call)
-  require <- match.arg(require)
+  require <- arg_choice(require, "require", call)
   verify_jws(token, key, algorithms, payload, require, limits, call)
 }
 
@@ -531,6 +531,27 @@ as_payload_bytes <- function(x, call) {
     return(charToRaw(enc2utf8(x)))
   }
   abort_zujose("argument", "`payload` must be a raw vector or a single string.")
+}
+
+# match.arg() for a user argument, raising zujose_argument_error: the
+# default vector means its first element; anything else must be one choice.
+arg_choice <- function(x, name, call) {
+  choices <- eval(formals(sys.function(sys.parent()))[[name]])
+  if (identical(x, choices)) {
+    return(choices[[1]])
+  }
+  if (!is_string(x) || !x %in% choices) {
+    abort_zujose(
+      "argument",
+      sprintf(
+        "`%s` must be one of %s.",
+        name,
+        paste0("\"", choices, "\"", collapse = ", ")
+      ),
+      call = call
+    )
+  }
+  x
 }
 
 check_flag <- function(x, name, call) {

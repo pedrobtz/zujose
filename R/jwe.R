@@ -79,7 +79,7 @@ jwe_encrypt <- function(
   format = c("compact", "flattened", "general")
 ) {
   call <- sys.call()
-  format <- match.arg(format)
+  format <- arg_choice(format, "format", call)
   encrypt_jwe(
     plaintext,
     key,
