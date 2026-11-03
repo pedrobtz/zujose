@@ -67,7 +67,7 @@
 <li>
 <strong>Claims are checked in the same call.</strong> <code><a href="reference/jwt_decode.html">jwt_decode()</a></code> verifies the signature and then <code>exp</code>, <code>nbf</code>, <code>aud</code>, <code>iss</code> and whatever else you ask for. There is no second step to forget.</li>
 <li>
-<strong>Keys come only from you.</strong> A key in a token’s header is never used, and zujose never fetches anything.</li>
+<strong>Keys come only from you.</strong> A key a token names for itself, as <code>jwk</code>, <code>jku</code>, <code>x5c</code> or <code>x5u</code> in its header, is never used, and zujose never fetches anything.</li>
 <li>
 <strong>Every algorithm of RFC 7518 but <code>none</code></strong>: HMAC, RSA, RSA-PSS and ECDSA signatures; AES key wrap, AES-GCM key wrap, PBES2, RSA-OAEP and ECDH-ES (including X25519) key management; AES-CBC-HMAC and AES-GCM content encryption. <code>RSA1_5</code> is accepted for decryption only.</li>
 <li>
@@ -102,14 +102,14 @@
 <span>  expires_in <span class="op">=</span> <span class="fl">3600</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">jwt</span></span>
-<span><span class="co">#&gt; [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcyMDMzNywiaWF0IjoxNzkzNzE2NzM3fQ.clyCMihuhOcj-V6rpCYuKviH5qpBPOEN5zLUFSpq97Y"</span></span></code></pre></div>
-<p>Checking it names the algorithm and the audience. The result is the claims, with the times as <code>POSIXct</code>:</p>
+<span><span class="co">#&gt; [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcyMjM2MiwiaWF0IjoxNzkzNzE4NzYyfQ.PMjRsBHiZRKEaay3BqEdThCQnP-6c34Xoud6ZnfaVcA"</span></span></code></pre></div>
+<p>To check it, name the algorithm and the audience you accept. The result is the claims, with the times as <code>POSIXct</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
 <span><span class="va">claims</span><span class="op">$</span><span class="va">sub</span></span>
 <span><span class="co">#&gt; [1] "user-17"</span></span>
 <span><span class="va">claims</span><span class="op">$</span><span class="va">exp</span></span>
-<span><span class="co">#&gt; [1] "2026-11-03 15:38:57 UTC"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "2026-11-03 16:12:42 UTC"</span></span></code></pre></div>
 <p>A token meant for another service is refused:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span></span>
