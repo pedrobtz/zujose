@@ -109,6 +109,21 @@ local_no_decoding <- function(what = NULL, env = parent.frame()) {
   )
 }
 
+# Policy runs before cryptography (CLAUDE.md): a refusal that must come
+# from the allow-list, `crit` or the limits fails the test if any
+# signature check, key unwrap, key derivation or content decryption starts.
+local_no_crypto <- function(env = parent.frame()) {
+  reached <- function(...) stop("crypto reached")
+  local_mocked_bindings(
+    jws_verify_bytes = reached,
+    recover_cek = reached,
+    content_decrypt = reached,
+    pbes2_kek = reached,
+    ecdh_secret = reached,
+    .env = env
+  )
+}
+
 # RFC 7515 A.1: the HMAC key, also used by RFC 7797 §4.
 rfc7515_key <- function() {
   as_jwk(paste0(

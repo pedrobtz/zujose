@@ -204,6 +204,7 @@ test_that("tampering is a signature error", {
 # The RFC 8725 attacks (design §10) ---------------------------------------
 
 test_that("alg none is refused in every form", {
+  local_no_crypto()
   key <- jwk_oct(as.raw(1:32))
   token <- paste0(
     b64_json(list(alg = "none")),
@@ -223,6 +224,7 @@ test_that("alg none is refused in every form", {
 })
 
 test_that("an HS256 token signed with an RSA public key's bytes is refused", {
+  local_no_crypto()
   rsa <- as_jwk(rfc7520_key(3))
   secret <- charToRaw(jwk_json(rsa))
   forged <- jws_sign("{}", jwk_oct(secret), alg = "HS256")
@@ -238,6 +240,7 @@ test_that("an HS256 token signed with an RSA public key's bytes is refused", {
 })
 
 test_that("an algorithm swapped within the family is refused", {
+  local_no_crypto()
   key <- jwk_oct(as.raw(1:64), alg = "HS256")
   token <- jws_sign("x", jwk_oct(as.raw(1:64)), alg = "HS512")
   expect_error(
@@ -251,6 +254,7 @@ test_that("an algorithm swapped within the family is refused", {
 })
 
 test_that("kid injection selects nothing", {
+  local_no_crypto()
   set <- jwk_set(jwk_oct(as.raw(1:32), kid = "real"))
   for (kid in c("../../dev/null", "' OR 1=1 --", "real ", "Real", "")) {
     token <- jws_sign(
@@ -268,6 +272,7 @@ test_that("kid injection selects nothing", {
 })
 
 test_that("unknown crit and repeated header members are refused", {
+  local_no_crypto()
   key <- jwk_oct(as.raw(1:32))
   crit <- compact_jws(list(alg = "HS256", crit = list("exp"), exp = 1))
   expect_error(
@@ -438,4 +443,26 @@ test_that("printing a verified JWS shows the header, not the payload", {
     key,
     "HS256"
   )))
+})
+
+test_that("the algorithm allow-list is checked before any signature check", {
+  # The key fits the token's algorithm, so only the allow-list can refuse
+  # it, and it must do so before the signature is computed (#36).
+  key <- jwk_oct(as.raw(1:64))
+  token <- jws_sign("x", key, alg = "HS512")
+  jwt <- jwt_encode(list(sub = "u"), key, alg = "HS512", expires_in = 60)
+  local_no_crypto()
+  expect_error(
+    jws_verify(token, key, algorithms = "HS256"),
+    class = "zujose_policy_error"
+  )
+  expect_error(
+    jwt_decode(jwt, key, algorithms = "HS256"),
+    class = "zujose_policy_error"
+  )
+  general <- jws_sign("x", list(jws_signer(key, "HS512")), format = "general")
+  expect_error(
+    jws_verify(general, key, algorithms = "HS384"),
+    class = "zujose_policy_error"
+  )
 })

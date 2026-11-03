@@ -48,6 +48,7 @@ test_that("a PyJWT token signed with the wrong secret is refused", {
 })
 
 test_that("a PyJWT token is refused under an algorithm it was not given", {
+  local_no_crypto()
   tokens <- oracle_tokens()
   tokens <- tokens[tokens$key != "hmac-wrong", ]
   for (i in seq_len(nrow(tokens))) {
