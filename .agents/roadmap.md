@@ -56,7 +56,7 @@ padding in R until a primitive exists.
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujose/issues/10) | [#25](https://github.com/pedrobtz/zujose/pull/25) | 2026-11-03 |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujose/issues/11) | [#26](https://github.com/pedrobtz/zujose/pull/26) | 2026-11-03 |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujose/issues/12) | [#31](https://github.com/pedrobtz/zujose/pull/31) | 2026-11-03 |
-| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | | 2026-11-03 |
+| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | [#32](https://github.com/pedrobtz/zujose/pull/32) | 2026-11-03 |
 | 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujose/issues/14) | | |
 
 ## Stage 0 — Package identity
