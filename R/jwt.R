@@ -46,7 +46,10 @@ jwt_encode <- function(
           !all(nzchar(names(claims))) ||
           anyDuplicated(names(claims))))
   ) {
-    stop("`claims` must be a named list without repeated names.", call. = FALSE)
+    abort_zujose(
+      "argument",
+      "`claims` must be a named list without repeated names."
+    )
   }
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)
@@ -193,7 +196,7 @@ jwt_decode <- function(
   }
 
   if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
-    stop("`decrypt` must be made by jwe_decryption().", call. = FALSE)
+    abort_zujose("argument", "`decrypt` must be made by jwe_decryption().")
   }
 
   if (compact_parts(token) == 5L) {
@@ -301,7 +304,7 @@ jwt_decoder <- function(
 ) {
   check_algorithms(algorithms, "signature", call = sys.call())
   if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
-    stop("`decrypt` must be made by jwe_decryption().", call. = FALSE)
+    abort_zujose("argument", "`decrypt` must be made by jwe_decryption().")
   }
   check_decode_args(
     audience,
@@ -592,7 +595,7 @@ check_decode_args <- function(
   leeway,
   now
 ) {
-  bad <- function(what) stop(what, call. = FALSE)
+  bad <- function(what) abort_zujose("argument", what)
   if (
     !is.null(audience) &&
       (!is.character(audience) || length(audience) == 0L || anyNA(audience))
@@ -654,9 +657,9 @@ as_numeric_date <- function(x, name) {
     x <- floor(as.numeric(x))
   }
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
-    stop(
-      sprintf("`%s` must be a time or a number of seconds.", name),
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      sprintf("`%s` must be a time or a number of seconds.", name)
     )
   }
   x
@@ -667,9 +670,9 @@ as_seconds <- function(x, name) {
     x <- as.numeric(x, units = "secs")
   }
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
-    stop(
-      sprintf("`%s` must be a number of seconds or a difftime.", name),
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      sprintf("`%s` must be a number of seconds or a difftime.", name)
     )
   }
   round(x)

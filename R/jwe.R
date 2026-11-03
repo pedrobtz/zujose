@@ -111,7 +111,7 @@ jwe_encrypt <- function(
 jwe_recipient <- function(key, alg = NULL, header = NULL) {
   key <- check_key(key, sys.call())
   if (!is.null(alg) && !is_string(alg)) {
-    stop("`alg` must be a single string.", call. = FALSE)
+    abort_zujose("argument", "`alg` must be a single string.")
   }
   structure(
     list(key = key, alg = alg, header = check_header_arg(header, "header")),
@@ -150,9 +150,9 @@ encrypt_jwe <- function(
       all(vapply(key, inherits, logical(1), "jwe_recipient"))
   ) {
     if (!is.null(alg)) {
-      stop(
-        "With several recipients, give `alg` to each jwe_recipient().",
-        call. = FALSE
+      abort_zujose(
+        "argument",
+        "With several recipients, give `alg` to each jwe_recipient()."
       )
     }
     key
@@ -165,7 +165,7 @@ encrypt_jwe <- function(
   }
   general <- format == "general"
   if (length(recipients) > 1L && !general) {
-    stop("Several recipients need `format = \"general\"`.", call. = FALSE)
+    abort_zujose("argument", "Several recipients need `format = \"general\"`.")
   }
   if (
     format == "compact" &&
@@ -173,16 +173,16 @@ encrypt_jwe <- function(
         !is.null(aad) ||
         length(recipients[[1]]$header) > 0L)
   ) {
-    stop(
-      "The compact serialization has no unprotected header and no `aad`.",
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      "The compact serialization has no unprotected header and no `aad`."
     )
   }
   for (name in c("alg", "enc", "zip")) {
     if (name %in% names(header)) {
-      stop(
-        sprintf("Set `%s` through its argument, not `header`.", name),
-        call. = FALSE
+      abort_zujose(
+        "argument",
+        sprintf("Set `%s` through its argument, not `header`.", name)
       )
     }
   }
@@ -192,9 +192,9 @@ encrypt_jwe <- function(
     unlist(lapply(recipients, function(r) names(r$header)))
   )
   for (name in intersect(c("iv", "tag", "p2s", "epk"), given)) {
-    stop(
-      sprintf("`%s` is generated for each message; it cannot be given.", name),
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      sprintf("`%s` is generated for each message; it cannot be given.", name)
     )
   }
 
@@ -241,9 +241,9 @@ encrypt_jwe <- function(
     ""
   )
   if (any(algs %in% c("dir", "ECDH-ES")) && length(recipients) > 1L) {
-    stop(
-      "`dir` and `ECDH-ES` encrypt to exactly one recipient.",
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      "`dir` and `ECDH-ES` encrypt to exactly one recipient."
     )
   }
   # ECDH-ES's PartyUInfo and PartyVInfo (RFC 7518 §4.6.1.2), from whichever
@@ -256,7 +256,10 @@ encrypt_jwe <- function(
       return(raw())
     }
     if (!is_string(value)) {
-      stop(sprintf("`%s` must be a Base64url string.", name), call. = FALSE)
+      abort_zujose(
+        "argument",
+        sprintf("`%s` must be a Base64url string.", name)
+      )
     }
     b64url_decode(value, name, call)
   }
@@ -264,7 +267,7 @@ encrypt_jwe <- function(
     p2c <- recipients[[i]]$header$p2c %||% header$p2c %||% unprotected$p2c
     if (!is_pbes2(algs[[i]])) {
       if (!is.null(p2c)) {
-        stop("`p2c` applies only to PBES2 key management.", call. = FALSE)
+        abort_zujose("argument", "`p2c` applies only to PBES2 key management.")
       }
       return(NULL)
     }
@@ -658,9 +661,9 @@ check_p2c <- function(p2c) {
     p2c >= 1000 &&
     p2c <= 4294967295
   if (!ok) {
-    stop(
-      "`p2c` must be a whole number of PBKDF2 iterations, at least 1000.",
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      "`p2c` must be a whole number of PBKDF2 iterations, at least 1000."
     )
   }
   p2c

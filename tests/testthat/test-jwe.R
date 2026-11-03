@@ -208,7 +208,10 @@ test_that("dir with an encrypted key is a decryption failure", {
 test_that("algorithms and encryptions have no default and are checked", {
   v <- rfc7516_a3()
   expect_error(jwe_decrypt(v$token, v$key), "algorithms")
-  expect_error(jwe_decrypt(v$token, v$key, "A128KW"), "encryptions")
+  expect_error(
+    jwe_decrypt(v$token, v$key, "A128KW"),
+    "encryptions"
+  )
   for (bad in list("none", "HS256", "A128GCM", character(), NA_character_)) {
     expect_error(
       jwe_decrypt(v$token, v$key, bad, "A128CBC-HS256"),
@@ -348,23 +351,26 @@ test_that("encryption refuses inconsistent requests", {
   expect_error(encrypt_fixed("x", key, "HS256"), class = "zujose_policy_error")
   expect_error(encrypt_fixed("x", key, "A256KW"), class = "zujose_key_error")
   expect_error(encrypt_fixed("x", key, "dir"), class = "zujose_key_error")
-  expect_error(encrypt_fixed("x", two), "general")
+  expect_error(encrypt_fixed("x", two), class = "zujose_argument_error")
   expect_error(
     encrypt_fixed("x", two, "A128KW", format = "general"),
-    "recipient"
+    class = "zujose_argument_error"
   )
-  expect_error(encrypt_fixed("x", key, "A128KW", aad = "a"), "compact")
+  expect_error(
+    encrypt_fixed("x", key, "A128KW", aad = "a"),
+    class = "zujose_argument_error"
+  )
   expect_error(
     encrypt_fixed("x", key, "A128KW", unprotected = list(a = 1)),
-    "compact"
+    class = "zujose_argument_error"
   )
   expect_error(
     encrypt_fixed("x", key, "A128KW", header = list(zip = "DEF")),
-    "zip"
+    class = "zujose_argument_error"
   )
   expect_error(
     encrypt_fixed("x", key, "A128KW", header = list(enc = "x")),
-    "enc"
+    class = "zujose_argument_error"
   )
   expect_error(
     encrypt_fixed(
@@ -375,7 +381,7 @@ test_that("encryption refuses inconsistent requests", {
       ),
       format = "general"
     ),
-    "dir"
+    class = "zujose_argument_error"
   )
   expect_error(encrypt_fixed("x", "key", "A128KW"), class = "zujose_key_error")
 })

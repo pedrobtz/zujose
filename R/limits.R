@@ -49,9 +49,9 @@ jose_limits <- function(
       value >= 1 &&
       (is.infinite(value) || value == trunc(value))
     if (!ok) {
-      stop(
-        sprintf("`%s` must be a whole number of at least 1, or Inf.", name),
-        call. = FALSE
+      abort_zujose(
+        "argument",
+        sprintf("`%s` must be a whole number of at least 1, or Inf.", name)
       )
     }
   }
@@ -72,6 +72,10 @@ print.jose_limits <- function(x, ...) {
 
 check_limits <- function(limits, call = NULL) {
   if (!inherits(limits, "jose_limits")) {
-    stop("`limits` must be made by jose_limits().", call. = FALSE)
+    abort_zujose(
+      "argument",
+      "`limits` must be made by jose_limits().",
+      call = call
+    )
   }
 }

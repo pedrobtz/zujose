@@ -330,25 +330,25 @@ test_that("generated parameters cannot be supplied, and p2c is checked", {
       "PBES2-HS256+A128KW",
       header = list(p2s = "AAAAAAAAAAA")
     ),
-    "p2s"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwe_encrypt("x", kek, "A128GCMKW", header = list(iv = "AAAAAAAAAAAAAAAA")),
-    "iv"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwe_encrypt("x", kek, "A128GCMKW", header = list(tag = "AAAA")),
-    "tag"
+    class = "zujose_argument_error"
   )
   for (bad in list(999, 1000.5, "1000", NA)) {
     expect_error(
       jwe_encrypt("x", key, "PBES2-HS256+A128KW", header = list(p2c = bad)),
-      "p2c"
+      class = "zujose_argument_error"
     )
   }
   expect_error(
     jwe_encrypt("x", kek, "A128KW", header = list(p2c = 1000)),
-    "p2c"
+    class = "zujose_argument_error"
   )
 })
 

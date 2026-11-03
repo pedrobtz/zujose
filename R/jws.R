@@ -65,9 +65,9 @@ jws_sign <- function(
       all(vapply(key, inherits, logical(1), "jws_signer"))
   ) {
     if (!is.null(alg) || !is.null(header) || !is.null(unprotected)) {
-      stop(
-        "With several signers, give `alg` and headers to each jws_signer().",
-        call. = FALSE
+      abort_zujose(
+        "argument",
+        "With several signers, give `alg` and headers to each jws_signer()."
       )
     }
     key
@@ -79,15 +79,15 @@ jws_sign <- function(
     )
   }
   if (length(signers) > 1L && format != "general") {
-    stop("Several signatures need `format = \"general\"`.", call. = FALSE)
+    abort_zujose("argument", "Several signatures need `format = \"general\"`.")
   }
   if (
     format == "compact" &&
       any(vapply(signers, function(s) length(s$unprotected) > 0L, logical(1)))
   ) {
-    stop(
-      "The compact serialization has no unprotected header.",
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      "The compact serialization has no unprotected header."
     )
   }
 
@@ -95,7 +95,7 @@ jws_sign <- function(
     b64url_encode(bytes)
   } else {
     if (!isTRUE(zuutf::utf_valid(bytes))) {
-      stop("An unencoded payload must be valid UTF-8.", call. = FALSE)
+      abort_zujose("argument", "An unencoded payload must be valid UTF-8.")
     }
     text <- rawToChar(bytes)
     Encoding(text) <- "UTF-8"
@@ -107,9 +107,9 @@ jws_sign <- function(
       !detached &&
       grepl(".", payload_text, fixed = TRUE)
   ) {
-    stop(
-      "An unencoded payload containing \".\" must be detached in the compact serialization.",
-      call. = FALSE
+    abort_zujose(
+      "argument",
+      "An unencoded payload containing \".\" must be detached in the compact serialization."
     )
   }
   signed_payload <- if (b64) charToRaw(payload_text) else bytes
@@ -178,7 +178,7 @@ jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
   call <- sys.call()
   key <- check_key(key, call)
   if (!is.null(alg) && !is_string(alg)) {
-    stop("`alg` must be a single string.", call. = FALSE)
+    abort_zujose("argument", "`alg` must be a single string.")
   }
   structure(
     list(
@@ -211,7 +211,7 @@ protected_header <- function(signer, b64, call) {
   }
   header <- signer$header
   if ("alg" %in% names(header) && !identical(header$alg, alg)) {
-    stop("`header$alg` disagrees with `alg`.", call. = FALSE)
+    abort_zujose("argument", "`header$alg` disagrees with `alg`.")
   }
   header <- header[setdiff(names(header), "alg")]
   kid <- if (
@@ -513,12 +513,16 @@ as_payload_bytes <- function(x, call) {
   if (is_string(x)) {
     return(charToRaw(enc2utf8(x)))
   }
-  stop("`payload` must be a raw vector or a single string.", call. = FALSE)
+  abort_zujose("argument", "`payload` must be a raw vector or a single string.")
 }
 
 check_flag <- function(x, name, call) {
   if (!isTRUE(x) && !isFALSE(x)) {
-    stop(sprintf("`%s` must be TRUE or FALSE.", name), call. = FALSE)
+    abort_zujose(
+      "argument",
+      sprintf("`%s` must be TRUE or FALSE.", name),
+      call = call
+    )
   }
 }
 
@@ -530,7 +534,7 @@ check_header_arg <- function(x, name) {
     !is.list(x) ||
       (length(x) > 0L && (is.null(names(x)) || any(!nzchar(names(x)))))
   ) {
-    stop(sprintf("`%s` must be a named list.", name), call. = FALSE)
+    abort_zujose("argument", sprintf("`%s` must be a named list.", name))
   }
   if (length(x) == 0L) empty_object() else x
 }

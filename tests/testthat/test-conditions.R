@@ -70,5 +70,33 @@ test_that("claim errors have a leaf class under zujose_claim_error", {
     class = "zujose_claim_error"
   )
   expect_identical(class(err)[[1]], "zujose_claim_error")
-  expect_error(abort_claim("late", "No.", claim = "x"), "leaf")
+  expect_error(
+    abort_claim("late", "No.", claim = "x"),
+    "leaf"
+  )
+})
+
+test_that("argument errors are zujose errors", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  err <- expect_error(
+    jws_sign("x", key, format = "compact", unprotected = list(a = 1)),
+    class = "zujose_argument_error"
+  )
+  expect_s3_class(err, "zujose_error")
+  expect_error(
+    jws_verify(jws_sign("x", key), key, "HS256", limits = list()),
+    class = "zujose_error"
+  )
+})
+
+test_that("argument errors say which argument is wrong", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  expect_snapshot(error = TRUE, {
+    jws_sign("x", key, format = "compact", unprotected = list(a = 1))
+    jwe_encrypt("x", kek, "A128KW", header = list(epk = list()))
+    jwt_decode(jwt_encode(list(), key), key, "HS256", leeway = "a")
+    jose_limits(token = 0)
+    jwk_thumbprint(key, uri = NA)
+  })
 })
