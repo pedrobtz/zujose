@@ -484,3 +484,13 @@ ecdh_token <- function(epk, alg = "ECDH-ES") {
     sep = "."
   )
 }
+
+# JWEs whose protected header is not canonical JSON, made by jwcrypto
+# (tools/make-jwe-noncanonical.py): the AAD guard of #35.
+noncanonical_jwe <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "jwe-noncanonical.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}

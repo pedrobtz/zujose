@@ -457,3 +457,27 @@ test_that("algorithms and encryptions are checked before any decryption", {
     class = "zujose_policy_error"
   )
 })
+
+test_that("the AAD is the protected header as received, not re-serialized", {
+  # jwcrypto's headers here have members out of order, spaces, a newline,
+  # escapes and raw UTF-8, so re-serializing them gives other bytes and a
+  # decoder that rebuilt the AAD from the parsed header would fail (#35).
+  rows <- noncanonical_jwe()
+  expect_gte(nrow(rows), 3L)
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    received <- strsplit(row$token, ".", fixed = TRUE)[[1]][[1]]
+    parsed <- jose_peek(row$token)$headers[[1]]
+    expect_false(
+      identical(b64url_encode(charToRaw(zujson::json_write(parsed))), received),
+      info = row$id
+    )
+    out <- jwe_decrypt(
+      row$token,
+      jwk_oct(hex(row$key)),
+      algorithms = row$alg,
+      encryptions = row$enc
+    )
+    expect_identical(out$plaintext, hex(row$plaintext), info = row$id)
+  }
+})
