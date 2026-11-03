@@ -30,8 +30,9 @@ practices.
 - **Claims are checked in the same call.** `jwt_decode()` verifies the
   signature and then `exp`, `nbf`, `aud`, `iss` and whatever else you
   ask for. There is no second step to forget.
-- **Keys come only from you.** A key in a token’s header is never used,
-  and zujose never fetches anything.
+- **Keys come only from you.** A key a token names for itself, as `jwk`,
+  `jku`, `x5c` or `x5u` in its header, is never used, and zujose never
+  fetches anything.
 - **Every algorithm of RFC 7518 but `none`**: HMAC, RSA, RSA-PSS and
   ECDSA signatures; AES key wrap, AES-GCM key wrap, PBES2, RSA-OAEP and
   ECDH-ES (including X25519) key management; AES-CBC-HMAC and AES-GCM
@@ -77,18 +78,18 @@ jwt <- jwt_encode(
   expires_in = 3600
 )
 jwt
-#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcyMDMzNywiaWF0IjoxNzkzNzE2NzM3fQ.clyCMihuhOcj-V6rpCYuKviH5qpBPOEN5zLUFSpq97Y"
+#> [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcyMjM2MiwiaWF0IjoxNzkzNzE4NzYyfQ.PMjRsBHiZRKEaay3BqEdThCQnP-6c34Xoud6ZnfaVcA"
 ```
 
-Checking it names the algorithm and the audience. The result is the
-claims, with the times as `POSIXct`:
+To check it, name the algorithm and the audience you accept. The result
+is the claims, with the times as `POSIXct`:
 
 ``` r
 claims <- jwt_decode(jwt, key, algorithms = "HS256", audience = "orders-api")
 claims$sub
 #> [1] "user-17"
 claims$exp
-#> [1] "2026-11-03 15:38:57 UTC"
+#> [1] "2026-11-03 16:12:42 UTC"
 ```
 
 A token meant for another service is refused:
