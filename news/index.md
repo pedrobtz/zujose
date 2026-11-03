@@ -2,6 +2,12 @@
 
 ## zujose 0.0.0.9000
 
+- [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md)
+  refuses `b64` and `crit` in `header` or `unprotected`; the `b64`
+  argument sets them. A caller’s `b64: false` header with an encoded
+  payload gave a token that verified as the wrong bytes
+  ([\#72](https://github.com/pedrobtz/zujose/issues/72)).
+
 - [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
   counts `limits$keys` across all of a token’s recipients, not per
   recipient, so a JWE with many PBES2 or RSA recipients cannot multiply
