@@ -56,7 +56,7 @@ padding in R until a primitive exists.
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujose/issues/10) | [#25](https://github.com/pedrobtz/zujose/pull/25) | 2026-11-03 |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujose/issues/11) | [#26](https://github.com/pedrobtz/zujose/pull/26) | 2026-11-03 |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujose/issues/12) | [#31](https://github.com/pedrobtz/zujose/pull/31) | 2026-11-03 |
-| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | | |
+| 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | | 2026-11-03 |
 | 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujose/issues/14) | | |
 
 ## Stage 0 — Package identity
@@ -522,6 +522,14 @@ branch's code, and everything it finds is fixed.
 - A full-profile run is green on the pull request and on the merge commit.
 
 **Design.** §10 (skips by capability), §14.
+
+**Notes, 2026-11-03.** The full run on the Stage 10 merge (`962ef7e`)
+failed only on the Windows legs: git checked the PEM fixtures out with
+CRLF line endings, so the byte-for-byte PEM round trip failed.
+`.gitattributes` now keeps `tests/testthat/fixtures/` byte-exact. The
+zero-skip leg needs no workflow of its own: the suite has no capability
+skips, and `test-jws.R` asserts that `zujose_info()` reports every
+algorithm available, so an older `zucrypt` fails the ordinary check.
 
 ## Stage 12 — v0.1.0 readiness
 
