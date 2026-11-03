@@ -170,8 +170,11 @@ That inner JWT is verified with the same <code>key</code> and <code>algorithms</
 claims are checked. Deeper nesting is refused.</p>
 <p>A JWT sent as a JWE is accepted only when <code>decrypt</code> says how to decrypt
 it, so a check meant for signed tokens never silently accepts encrypted
-ones. The JWE either carries a signed JWT (<code>cty: "JWT"</code>), verified as
-above, or the claims themselves.</p>
+ones. The JWE carries a signed JWT (<code>cty: "JWT"</code>), verified as above,
+or, when its key management is symmetric (<code>dir</code>, <code>A*KW</code>, <code>A*GCMKW</code> or
+<code>PBES2-*</code>), the claims themselves. With RSA or ECDH key management anyone
+holding the recipient's public key can encrypt a token, so the claims must
+be signed: an encrypted-only JWT is refused with <code>zujose_policy_error</code>.</p>
 <p>Each failed check raises a subclass of <code>zujose_claim_error</code> carrying the
 claim name: <code>zujose_expired_error</code>, <code>zujose_not_yet_valid_error</code>,
 <code>zujose_audience_error</code>, <code>zujose_issuer_error</code>, <code>zujose_subject_error</code> or

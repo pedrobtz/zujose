@@ -2,6 +2,14 @@
 
 ## zujose 0.0.0.9000
 
+- [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
+  refuses an encrypted-only JWT whose key management is public-key
+  (`RSA-OAEP*`, `RSA1_5`, `ECDH-ES*`), because anyone holding the
+  recipient’s public key could have made it. Its claims must come inside
+  a signed JWT (`cty: "JWT"`). Encrypted-only JWTs with symmetric key
+  management are still accepted
+  ([\#34](https://github.com/pedrobtz/zujose/issues/34)).
+
 - Functions are named after the object they work on:
   [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md),
   [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)

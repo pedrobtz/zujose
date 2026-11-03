@@ -129,8 +129,12 @@ claims are checked. Deeper nesting is refused.
 
 A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
 it, so a check meant for signed tokens never silently accepts encrypted
-ones. The JWE either carries a signed JWT (`cty: "JWT"`), verified as
-above, or the claims themselves.
+ones. The JWE carries a signed JWT (`cty: "JWT"`), verified as above,
+or, when its key management is symmetric (`dir`, `A*KW`, `A*GCMKW` or
+`PBES2-*`), the claims themselves. With RSA or ECDH key management
+anyone holding the recipient's public key can encrypt a token, so the
+claims must be signed: an encrypted-only JWT is refused with
+`zujose_policy_error`.
 
 Each failed check raises a subclass of `zujose_claim_error` carrying the
 claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
