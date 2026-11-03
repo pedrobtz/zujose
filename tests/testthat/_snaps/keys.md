@@ -16,3 +16,19 @@
         kid "ed"
         ! not usable: zujose has no Ed25519
 
+# a refused oct size has a message
+
+    Code
+      jose_key_generate("oct", size = 120)
+    Condition
+      Error in `jose_key_generate()`:
+      ! `size` must be a whole number of bytes, in bits, of at least 128.
+
+---
+
+    Code
+      jose_key_generate("oct", size = 128, alg = "HS256")
+    Condition
+      Error in `jose_key_generate()`:
+      ! An HS256 key must be at least 256 bits.
+

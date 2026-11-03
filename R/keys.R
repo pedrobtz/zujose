@@ -279,14 +279,14 @@ jose_key_generate <- function(
       call = call
     )
   }
-  if (size < need$bits || (need$exact && size != need$bits)) {
+  if (size < need$min || (need$exact && size != need$bits)) {
     abort_zujose(
       "key",
       sprintf(
         "An %s key must be %s %d bits.",
         alg,
         if (need$exact) "exactly" else "at least",
-        need$bits
+        need$min
       ),
       call = call
     )
@@ -393,15 +393,19 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
 }
 
 # The size an oct key for `alg` needs, in bits, and whether it is exact.
+# The default size of an `oct` key for `alg`, the least it may be, and
+# whether it must be exactly that.
 oct_key_bits <- function(alg, call) {
   if (is.null(alg) || alg == "dir") {
-    return(list(bits = 256, exact = FALSE))
+    return(list(bits = 256, min = 128, exact = FALSE))
   }
   if (alg %in% names(hmac_min_bytes)) {
-    return(list(bits = 8 * hmac_min_bytes[[alg]], exact = FALSE))
+    bits <- 8 * hmac_min_bytes[[alg]]
+    return(list(bits = bits, min = bits, exact = FALSE))
   }
   if (grepl("^A(128|192|256)(GCM)?KW$", alg)) {
-    return(list(bits = as.numeric(substr(alg, 2L, 4L)), exact = TRUE))
+    bits <- as.numeric(substr(alg, 2L, 4L))
+    return(list(bits = bits, min = bits, exact = TRUE))
   }
   abort_zujose(
     "key",
