@@ -187,6 +187,7 @@ jwt_decode <- function(
   if (!is_string(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
+  check_utf8_token(token, call)
   if (grepl("^[[:space:]]*\\{", token)) {
     abort_zujose(
       "parse",

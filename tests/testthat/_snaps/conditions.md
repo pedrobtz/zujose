@@ -1,11 +1,3 @@
-# a bad format or require is an argument error
-
-    Code
-      jws_sign("x", key, format = "bogus")
-    Condition
-      Error in `jws_sign()`:
-      ! `format` must be one of "compact", "flattened", "general".
-
 # unsupported algorithms name the zucrypt version they need
 
     Code
@@ -40,4 +32,12 @@
     Condition
       Error in `jwk_thumbprint()`:
       ! `uri` must be TRUE or FALSE.
+
+# a bad format or require is an argument error
+
+    Code
+      jws_sign("x", key, format = "bogus")
+    Condition
+      Error in `jws_sign()`:
+      ! `format` must be one of "compact", "flattened", "general".
 
