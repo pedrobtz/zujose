@@ -466,3 +466,33 @@ test_that("the algorithm allow-list is checked before any signature check", {
     class = "zujose_policy_error"
   )
 })
+
+test_that("jwk, x5c, jku and x5u in a header are never used as keys", {
+  # The attacker signs with their own key and names it in the header in
+  # each of the four ways RFC 7515 allows; verifying with the caller's key
+  # must fail (#43).
+  attacker <- jwk_generate("RSA")
+  caller <- jwk_public(jwk_generate("RSA"))
+  named <- list(
+    jwk = zujson::json_parse_raw(
+      charToRaw(jwk_json(attacker)),
+      simplify = "none"
+    ),
+    x5c = list("MIIBszCCAVmgAwIBAgIU"),
+    jku = "https://attacker.example/jwks.json",
+    x5u = "https://attacker.example/cert.pem"
+  )
+  for (member in names(named)) {
+    token <- jws_sign(
+      "x",
+      attacker,
+      alg = "RS256",
+      header = stats::setNames(list(named[[member]]), member)
+    )
+    expect_error(
+      jws_verify(token, caller, algorithms = "RS256"),
+      class = "zujose_signature_error",
+      info = member
+    )
+  }
+})
