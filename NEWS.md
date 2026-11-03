@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `jwe_decrypt()` counts `limits$keys` across all of a token's recipients,
+  not per recipient, so a JWE with many PBES2 or RSA recipients cannot
+  multiply the key-derivation work (#37).
+
 * `jws_verify()` and `jwt_decode()` skip a key in a set that is too weak
   for the token's algorithm, such as a legacy 1024-bit RSA key in a
   provider's JWKS, instead of failing on it. A set with only weak keys is

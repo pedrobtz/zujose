@@ -1,3 +1,10 @@
+# unsupported algorithms name the zucrypt version they need
+
+    Code
+      conditionMessage(err)
+    Output
+      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.4.0)."
+
 # argument errors say which argument is wrong
 
     Code
@@ -25,11 +32,4 @@
     Condition
       Error in `jwk_thumbprint()`:
       ! `uri` must be TRUE or FALSE.
-
-# unsupported algorithms name the zucrypt version they need
-
-    Code
-      conditionMessage(err)
-    Output
-      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.4.0)."
 

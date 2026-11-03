@@ -597,6 +597,15 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
   if (length(attempts) == 0L) {
     stop(first_error)
   }
+  # `limits$keys` bounds the keys tried per token, not per recipient, so a
+  # token with many PBES2 or RSA recipients cannot multiply the work (#37).
+  if (length(attempts) > limits$keys) {
+    abort_zujose(
+      "key",
+      "More keys fit the token's recipients than `limits$keys` allows.",
+      call = call
+    )
+  }
 
   for (attempt in attempts) {
     header <- headers[[attempt$i]]
