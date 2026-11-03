@@ -80,6 +80,13 @@ the protected and unprotected headers.</p></li>
 a detached payload.</p></li>
 <li><p><code>claims</code>: the payload parsed as a list when it is a JSON object, as in
 a JWT; otherwise <code>NULL</code>.</p></li>
+</ul><p>A JWS also has, one element per signature:</p><ul><li><p><code>signatures</code>: each signature, as a raw vector.</p></li>
+<li><p><code>signing_input</code>: the bytes each signature covers, as a raw vector;
+<code>NULL</code> for a detached payload.</p></li>
+</ul><p>A JWE also has:</p><ul><li><p><code>encrypted_keys</code>: one encrypted key per recipient, as a raw vector,
+empty for <code>dir</code> and <code>ECDH-ES</code>.</p></li>
+<li><p><code>iv</code>, <code>ciphertext</code> and <code>tag</code>: raw vectors.</p></li>
+<li><p><code>aad</code>: the additional authenticated data as a raw vector, or <code>NULL</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -105,6 +112,7 @@ and <code>b64</code> (RFC 7515, RFC 7797). A malformed token raises
 <span class="r-out co"><span class="r-pr">#&gt;</span> Claims:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sub: "u1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   exp: 1300819380</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Signature: 9 bytes</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

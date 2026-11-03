@@ -44,6 +44,22 @@ A list of class `jose_unverified` with:
 - `claims`: the payload parsed as a list when it is a JSON object, as in
   a JWT; otherwise `NULL`.
 
+A JWS also has, one element per signature:
+
+- `signatures`: each signature, as a raw vector.
+
+- `signing_input`: the bytes each signature covers, as a raw vector;
+  `NULL` for a detached payload.
+
+A JWE also has:
+
+- `encrypted_keys`: one encrypted key per recipient, as a raw vector,
+  empty for `dir` and `ECDH-ES`.
+
+- `iv`, `ciphertext` and `tag`: raw vectors.
+
+- `aad`: the additional authenticated data as a raw vector, or `NULL`.
+
 ## Details
 
 The token must still be well formed: strict unpadded Base64url, headers
@@ -68,4 +84,5 @@ jose_peek(token)
 #> Claims:
 #>   sub: "u1"
 #>   exp: 1300819380
+#> Signature: 9 bytes
 ```

@@ -146,10 +146,13 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   corpus. Use it as an oracle rather than inventing cases by hand. Here
   the corpus is the RFC test vectors, RFC 7520 (the JOSE cookbook)
   first, committed under `tests/testthat/fixtures/` with a manifest
-  (design §10). CRAN’s `jose` is the oracle for JWS and JWT under
-  `skip_if_not_installed()`. JWE has no R oracle; a development-only job
-  checks it against a Python or JavaScript JOSE library, never at check
-  time. The RFC 7520 fixtures are regenerated with
+  (design §10). PyJWT is the oracle for JWS and JWT, through fixtures
+  under `fixtures/oracle/` that `tools/make-oracle-fixtures.py` writes
+  offline (`--check` re-verifies them). Fixtures that need another
+  implementation are made the same way, with Python packages; `Suggests`
+  holds only `testthat`. JWE has no oracle at check time; a
+  development-only job checks it against a Python or JavaScript JOSE
+  library. The RFC 7520 fixtures are regenerated with
   `tools/rfc7520-fixtures.R`; never edit them by hand.
 - **Helpers live in `tests/testthat/helper-*.R`.** `helper-jose.R` reads
   the RFC 7520 fixtures (`rfc7520_manifest()`, `rfc7520_token()`),
@@ -161,9 +164,11 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   vector. `rfc7515_key()` is the RFC 7515 A.1 HMAC key;
   `expect_same_json()` compares JSON serializations whatever their
   member order. `decode_at_1000()` signs a claims set and decodes it at
-  a fixed time, for the claim-check tests. `rfc7520_text()` reads the §5
-  plaintexts and password, and `rfc7520_factor()` the generated factors
-  (CEKs, IVs, salts, encrypted keys); `tools/rfc7520-fixtures.R`
+  a fixed time, for the claim-check tests. `oracle_pem()`,
+  `oracle_key()` and `oracle_tokens()` read the PyJWT fixtures, and
+  `oracle_now()` is a time before their `exp`. `rfc7520_text()` reads
+  the §5 plaintexts and password, and `rfc7520_factor()` the generated
+  factors (CEKs, IVs, salts, encrypted keys); `tools/rfc7520-fixtures.R`
   extracts both. `pbes2_token()` builds a PBES2 header for the
   `p2c`/`p2s` checks. `encrypt_fixed()` encrypts with a fixed CEK and
   IV, as the RFC vectors do; `hex()` reads hex text; `rfc7516_a3()`,

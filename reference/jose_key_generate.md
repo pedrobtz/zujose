@@ -89,7 +89,7 @@ key
 # A key encryption key, named by its thumbprint.
 jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
 #> <jose_key> oct, 256 bits
-#>   kid "K0oAQFE4ywPgCBbdEizsXHfxQA4cxJitc5maoc_Kxck"
+#>   kid "3aXScjQNqmR2zS7aAY7tCEuELzdGjufwOwILMyCNGLE"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```
