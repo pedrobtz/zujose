@@ -8,6 +8,39 @@
 \description{
 Signs, verifies, encrypts and decrypts JSON Object Signing and Encryption ('JOSE') objects: JSON Web Signatures (RFC 7515) \doi{10.17487/RFC7515}, JSON Web Encryption (RFC 7516) \doi{10.17487/RFC7516}, JSON Web Keys (RFC 7517) \doi{10.17487/RFC7517} and JSON Web Tokens (RFC 7519) \doi{10.17487/RFC7519}, in the compact and JSON serializations. The caller names the algorithms it accepts, and tokens are checked against the current best practices of RFC 8725 \doi{10.17487/RFC8725}. Written in R over 'zucrypt', so no system cryptography library is needed.
 }
+\details{
+Start with the Get started article, at
+\url{https://pedrobtz.github.io/zujose/articles/zujose.html}. The main
+functions are:
+\itemize{
+\item JWT: \code{\link[=jose_jwt_encode]{jose_jwt_encode()}}, \code{\link[=jose_jwt_decode]{jose_jwt_decode()}}, \code{\link[=jose_jwt_decoder]{jose_jwt_decoder()}}.
+\item JWS: \code{\link[=jose_sign]{jose_sign()}}, \code{\link[=jose_verify]{jose_verify()}}.
+\item JWE: \code{\link[=jose_encrypt]{jose_encrypt()}}, \code{\link[=jose_decrypt]{jose_decrypt()}}.
+\item Keys: \code{\link[=jose_key_oct]{jose_key_oct()}}, \code{\link[=jose_key_generate]{jose_key_generate()}}, \code{\link[=as_jose_key]{as_jose_key()}},
+\code{\link[=jose_keyset]{jose_keyset()}}, \code{\link[=as_jose_keyset]{as_jose_keyset()}}, \code{\link[=jose_jwk]{jose_jwk()}}, \code{\link[=jose_pem]{jose_pem()}}.
+\item Inspection: \code{\link[=jose_peek]{jose_peek()}}, \code{\link[=zujose_info]{zujose_info()}}.
+}
+
+zujose never fetches anything: keys come only from the caller, as a
+key, a key set, or a function that returns one (a resolver).
+}
+\section{Secrets in memory}{
+
+zujose is pure R, and so are its keys: an \code{oct} secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in memory
+after the key is gone, and may reach a saved workspace or a core dump.
+zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (\code{.RData}) and load them from a secret store when they
+are needed.
+}
+
+\examples{
+key <- jose_key_generate("oct", alg = "HS256")
+jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = 3600)
+jose_jwt_decode(jwt, key, algorithms = "HS256")$sub
+}
 \seealso{
 Useful links:
 \itemize{

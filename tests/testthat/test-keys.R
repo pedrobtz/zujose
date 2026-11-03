@@ -203,6 +203,9 @@ test_that("jose_key_generate() refuses sizes and algorithms that do not fit", {
     jose_key_generate("oct", size = 256, alg = "A128KW"),
     class = "zujose_key_error"
   )
+  # Without `alg`, or for `dir`, 256 bits is the default, not the minimum.
+  expect_length(jose_key_generate("oct", size = 128)$k, 16L)
+  expect_length(jose_key_generate("oct", size = 192, alg = "dir")$k, 24L)
   # Not an oct algorithm at all.
   for (alg in c("RS256", "ES256", "A128CBC-HS256", "PBES2-HS256+A128KW")) {
     expect_error(
@@ -223,5 +226,16 @@ test_that("EC and OKP keys are generated on the curves zujose has", {
   expect_error(
     jose_key_generate("OKP", crv = "Ed25519"),
     class = "zujose_key_error"
+  )
+})
+
+test_that("a refused oct size has a message", {
+  expect_snapshot(
+    jose_key_generate("oct", size = 120),
+    error = TRUE
+  )
+  expect_snapshot(
+    jose_key_generate("oct", size = 128, alg = "HS256"),
+    error = TRUE
   )
 })

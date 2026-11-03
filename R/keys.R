@@ -153,9 +153,17 @@ check_rsa_size <- function(key, call) {
 #' algorithms.
 #'
 #' The secret is a raw vector, never a string: a key is bytes, and a
-#' password is not a key. Secrets live in ordinary R memory, which R can
-#' copy and cannot reliably wipe; keep long-lived secrets out of saved
-#' workspaces.
+#' password is not a key.
+#'
+#' @section Secrets in memory:
+#' zujose is pure R, and so are its keys: an `oct` secret, and the private
+#' members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+#' vectors freely and has no way to wipe one, so a secret may stay in memory
+#' after the key is gone, and may reach a saved workspace or a core dump.
+#' zujose never prints secret members and never puts them in an error
+#' message, but it cannot do more than that. Keep long-lived secrets out of
+#' saved workspaces (`.RData`) and load them from a secret store when they
+#' are needed.
 #'
 #' @param secret The key, as a raw vector of at least one byte.
 #' @param alg The one algorithm the key is meant for, such as `"HS256"`, or
@@ -205,9 +213,10 @@ jose_key_oct <- function(
 #'
 #' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
 #' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
-#' `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key must match the
-#' content encryption: 256 bits for `A128CBC-HS256`, 384 for
-#' `A192CBC-HS384` and 512 for `A256CBC-HS512`.
+#' `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key is the content
+#' encryption key itself, so give its `size`: 256 bits for `A128CBC-HS256`,
+#' 384 for `A192CBC-HS384`, 512 for `A256CBC-HS512`, and 128, 192 or 256
+#' for `A128GCM`, `A192GCM` and `A256GCM`.
 #'
 #' An `RSA` key's `size` is its modulus, 2048 bits by default and at most
 #' 4096, with public exponent 65537. Generating one takes a moment.
@@ -220,6 +229,7 @@ jose_key_oct <- function(
 #'   for an `EC` key, `"X25519"` for an `OKP` key. Not used otherwise.
 #' @inheritParams jose_key_oct
 #' @returns A `jose_key`.
+#' @inheritSection jose_key_oct Secrets in memory
 #' @seealso [jose_key_oct()] to wrap a secret you already have,
 #'   [jose_with_kid()] to name the new key by its thumbprint.
 #' @export
@@ -279,14 +289,14 @@ jose_key_generate <- function(
       call = call
     )
   }
-  if (size < need$bits || (need$exact && size != need$bits)) {
+  if (size < need$min || (need$exact && size != need$bits)) {
     abort_zujose(
       "key",
       sprintf(
         "An %s key must be %s %d bits.",
         alg,
         if (need$exact) "exactly" else "at least",
-        need$bits
+        need$min
       ),
       call = call
     )
@@ -393,15 +403,19 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
 }
 
 # The size an oct key for `alg` needs, in bits, and whether it is exact.
+# The default size of an `oct` key for `alg`, the least it may be, and
+# whether it must be exactly that.
 oct_key_bits <- function(alg, call) {
   if (is.null(alg) || alg == "dir") {
-    return(list(bits = 256, exact = FALSE))
+    return(list(bits = 256, min = 128, exact = FALSE))
   }
   if (alg %in% names(hmac_min_bytes)) {
-    return(list(bits = 8 * hmac_min_bytes[[alg]], exact = FALSE))
+    bits <- 8 * hmac_min_bytes[[alg]]
+    return(list(bits = bits, min = bits, exact = FALSE))
   }
   if (grepl("^A(128|192|256)(GCM)?KW$", alg)) {
-    return(list(bits = as.numeric(substr(alg, 2L, 4L)), exact = TRUE))
+    bits <- as.numeric(substr(alg, 2L, 4L))
+    return(list(bits = bits, min = bits, exact = TRUE))
   }
   abort_zujose(
     "key",
@@ -482,6 +496,7 @@ new_jose_key <- function(
 #' is read too. Other `OKP` keys, such as Ed25519, are read and kept so that
 #' they can be listed, selected and thumbprinted, but cannot be used.
 #'
+#' @inheritSection jose_key_oct Secrets in memory
 #' @param x JWK text, a parsed JWK as a named list, a raw secret, or a
 #'   `jose_key`.
 #' @param ... Not used.
@@ -707,9 +722,9 @@ pem_to_key <- function(x, call) {
 #'
 #' `jose_pem()` writes an RSA, EC or X25519 key as PEM: the public key as
 #' SubjectPublicKeyInfo (`PUBLIC KEY`), or with `private = TRUE` the private
-#' key as PKCS#8 (`PRIVATE KEY`), byte for byte as the openssl package
-#' writes them.
+#' key as PKCS#8 (`PRIVATE KEY`), byte for byte as OpenSSL writes them.
 #'
+#' @inheritSection jose_key_oct Secrets in memory
 #' @param key An RSA, EC or X25519 `jose_key`.
 #' @param private Whether to write the private key.
 #' @returns A single string.

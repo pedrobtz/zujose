@@ -7,8 +7,9 @@
 #' `as_jose_keyset()` reads a JWK Set from its JSON text or from a parsed
 #' list. Following RFC 7517 section 5, a member of `keys` that is not a
 #' well-formed JWK is ignored rather than failing the whole set, as is a key
-#' of a type zujose does not know. Keys of a known type that zujose cannot use
-#' yet (`RSA`, `EC`, `OKP`) are kept.
+#' of a type zujose does not know. A key of a known type that zujose cannot
+#' use, such as an Ed25519 `OKP` key, is kept: it can be listed, selected
+#' and thumbprinted, and using it raises `zujose_unsupported_error`.
 #'
 #' @param ... `jose_key` and `jose_keyset` objects, combined in order.
 #' @param x JWK Set text, a parsed JWK Set, or a `jose_keyset`.

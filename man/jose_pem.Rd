@@ -17,9 +17,20 @@ A single string.
 \description{
 \code{jose_pem()} writes an RSA, EC or X25519 key as PEM: the public key as
 SubjectPublicKeyInfo (\verb{PUBLIC KEY}), or with \code{private = TRUE} the private
-key as PKCS#8 (\verb{PRIVATE KEY}), byte for byte as the openssl package
-writes them.
+key as PKCS#8 (\verb{PRIVATE KEY}), byte for byte as OpenSSL writes them.
 }
+\section{Secrets in memory}{
+
+zujose is pure R, and so are its keys: an \code{oct} secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in memory
+after the key is gone, and may reach a saved workspace or a core dump.
+zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (\code{.RData}) and load them from a secret store when they
+are needed.
+}
+
 \examples{
 key <- jose_key_generate("RSA")
 cat(jose_pem(key))
