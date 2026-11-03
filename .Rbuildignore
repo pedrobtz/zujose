@@ -16,3 +16,4 @@
 ^\.worktrees$
 ^tools$
 ^README\.Rmd$
+^\.gitattributes$
