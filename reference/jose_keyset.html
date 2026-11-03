@@ -19,7 +19,13 @@ c() or jose_keyset()."></head><body>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/zujose.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="../articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -71,8 +77,9 @@ c() or jose_keyset()."></head><body>
     <p><code>as_jose_keyset()</code> reads a JWK Set from its JSON text or from a parsed
 list. Following RFC 7517 section 5, a member of <code>keys</code> that is not a
 well-formed JWK is ignored rather than failing the whole set, as is a key
-of a type zujose does not know. Keys of a known type that zujose cannot use
-yet (<code>RSA</code>, <code>EC</code>, <code>OKP</code>) are kept.</p>
+of a type zujose does not know. A key of a known type that zujose cannot
+use, such as an Ed25519 <code>OKP</code> key, is kept: it can be listed, selected
+and thumbprinted, and using it raises <code>zujose_unsupported_error</code>.</p>
     </div>
 
     <div class="section level2">

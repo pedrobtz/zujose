@@ -15,7 +15,13 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/zujose.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="../articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -34,7 +40,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.0.9000" id="zujose-0009000">zujose 0.0.0.9000<a class="anchor" aria-label="anchor" href="#zujose-0009000"></a></h2>
-<ul><li><p>The package, developed as <code>zujwt</code>, is renamed <code>zujose</code>, the name of its design: conditions are <code>zujose_*</code> and <code>zujwt_info()</code> is <code><a href="../reference/zujose_info.html">zujose_info()</a></code>.</p></li>
+<ul><li><p>Documentation: a README, and three articles on the package website: Get started, migrating from <code>jose</code>, and verifying tokens against a provider’s JWKS with a caching resolver. The key help pages explain how secrets are held in R memory.</p></li>
+<li><p><code>jose_key_generate("oct")</code> accepts 128-bit keys when no <code>alg</code> is given, or for <code>dir</code>, as documented; it required 256 bits (<a href="https://github.com/pedrobtz/zujose/issues/30" class="external-link">#30</a>).</p></li>
+<li><p>The package, developed as <code>zujwt</code>, is renamed <code>zujose</code>, the name of its design: conditions are <code>zujose_*</code> and <code>zujwt_info()</code> is <code><a href="../reference/zujose_info.html">zujose_info()</a></code>.</p></li>
 <li><p>Condition classes for every error the package will raise, all inheriting from <code>zujose_error</code> (<code><a href="../reference/zujose_error.html">?zujose_error</a></code>).</p></li>
 <li><p><code><a href="../reference/jose_peek.html">jose_peek()</a></code> reads a JWS or JWE in the compact, flattened or general JSON serialization, without verifying it, and returns every part decoded: its headers; for a JWS, its payload, claims, signatures and signing inputs; for a JWE, its encrypted keys, IV, ciphertext, tag and AAD.</p></li>
 <li><p><code><a href="../reference/jose_limits.html">jose_limits()</a></code> sets the resource limits every token is checked against before anything is decoded.</p></li>

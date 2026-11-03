@@ -1,8 +1,11 @@
 pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
-articles: {}
-last_built: 2026-11-03T11:20Z
+articles:
+  articles/jwks-resolver: jwks-resolver.html
+  articles/migrating-from-jose: migrating-from-jose.html
+  articles/zujose: zujose.html
+last_built: 2026-11-03T11:49Z
 urls:
   reference: https://pedrobtz.github.io/zujose/reference
   article: https://pedrobtz.github.io/zujose/articles

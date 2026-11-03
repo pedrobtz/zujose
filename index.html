@@ -31,7 +31,15 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/zujose.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul>
+</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -51,22 +59,95 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>The goal of zujose is to …</p>
+<p>R code that talks to OAuth 2.0 and OpenID Connect providers, or that issues tokens from a Shiny or Plumber app, has to sign, check and decrypt JSON Web Tokens. Getting that right is mostly about what a library refuses: a token that names its own algorithm, a key smuggled in its header, an expired claim that nobody looked at.</p>
+<p>zujose implements the JOSE standards, JWS, JWE, JWK and JWT (<a href="https://www.rfc-editor.org/rfc/rfc7515" class="external-link">RFC 7515</a> to <a href="https://www.rfc-editor.org/rfc/rfc7519" class="external-link">7519</a>), in both the compact and the JSON serializations, with the defaults of <a href="https://www.rfc-editor.org/rfc/rfc8725" class="external-link">RFC 8725</a>, the JWT best current practices.</p>
+<ul>
+<li>
+<strong>You name the algorithms.</strong> Every function that checks a token takes an <code>algorithms</code> argument with no default, and the key must agree with it. <code>none</code> does not exist.</li>
+<li>
+<strong>Claims are checked in the same call.</strong> <code><a href="reference/jose_jwt_decode.html">jose_jwt_decode()</a></code> verifies the signature and then <code>exp</code>, <code>nbf</code>, <code>aud</code>, <code>iss</code> and whatever else you ask for. There is no second step to forget.</li>
+<li>
+<strong>Keys come only from you.</strong> A key in a token’s header is never used, and zujose never fetches anything.</li>
+<li>
+<strong>Every algorithm of RFC 7518 but <code>none</code></strong>: HMAC, RSA, RSA-PSS and ECDSA signatures; AES key wrap, AES-GCM key wrap, PBES2, RSA-OAEP and ECDH-ES (including X25519) key management; AES-CBC-HMAC and AES-GCM content encryption. <code>RSA1_5</code> is accepted for decryption only.</li>
+<li>
+<strong>Pure R.</strong> zujose has no compiled code. The cryptography comes from <a href="https://github.com/pedrobtz/zucrypt" class="external-link">zucrypt</a>, so no system library is needed.</li>
+</ul>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of zujose from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>zujose is not on CRAN yet. Install the development version from GitHub, which also installs the development version of zucrypt it needs:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"pedrobtz/zujose"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>This is a basic example which shows you how to solve a common problem:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pedrobtz/zujose" class="external-link">zujose</a></span><span class="op">)</span></span>
-<span><span class="co">## basic example code</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pedrobtz/zujose" class="external-link">zujose</a></span><span class="op">)</span></span></code></pre></div>
+<p>An API that issues its own tokens needs a key. This one is a random 256-bit HMAC key, meant for <code>HS256</code> only:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span>, kid <span class="op">=</span> <span class="st">"api-2026"</span><span class="op">)</span></span>
+<span><span class="va">key</span></span>
+<span><span class="co">#&gt; &lt;jose_key&gt; oct, 256 bits</span></span>
+<span><span class="co">#&gt;   kid "api-2026"</span></span>
+<span><span class="co">#&gt;   alg HS256</span></span>
+<span><span class="co">#&gt;   private: yes (not shown)</span></span></code></pre></div>
+<p>Sign a set of claims as a JWT that expires in an hour:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span>,</span>
+<span>  <span class="va">key</span>,</span>
+<span>  expires_in <span class="op">=</span> <span class="fl">3600</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">jwt</span></span>
+<span><span class="co">#&gt; [1] "eyJhbGciOiJIUzI1NiIsImtpZCI6ImFwaS0yMDI2IiwidHlwIjoiSldUIn0.eyJzdWIiOiJ1c2VyLTE3IiwiYXVkIjoib3JkZXJzLWFwaSIsImV4cCI6MTc5MzcwODg0NiwiaWF0IjoxNzkzNzA1MjQ2fQ.T8qCVj7fHrCFEQySv7zBV2fiSzBciJJ-_Oi2whX048g"</span></span></code></pre></div>
+<p>Checking it names the algorithm and the audience. The result is the claims, with the times as <code>POSIXct</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"orders-api"</span><span class="op">)</span></span>
+<span><span class="va">claims</span><span class="op">$</span><span class="va">sub</span></span>
+<span><span class="co">#&gt; [1] "user-17"</span></span>
+<span><span class="va">claims</span><span class="op">$</span><span class="va">exp</span></span>
+<span><span class="co">#&gt; [1] "2026-11-03 12:27:26 UTC"</span></span></code></pre></div>
+<p>A token meant for another service is refused:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in `jose_jwt_decode()`:</span></span>
+<span><span class="co">#&gt; ! The token is not for this `audience`.</span></span></code></pre></div>
+<p>Each failure has a class of its own, so code can catch one cause without reading the message:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="reference/jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"billing-api"</span><span class="op">)</span>,</span>
+<span>  zujose_audience_error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="st">"403: wrong audience"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "403: wrong audience"</span></span></code></pre></div>
+<p>Encryption takes a key of its own, because a key fits only the algorithms it is for. This one wraps the content key of a JWE with AES key wrap, and the content is encrypted with AES-GCM:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">kek</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A256KW"</span><span class="op">)</span></span>
+<span><span class="va">jwe</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/jose_encrypt.html">jose_encrypt</a></span><span class="op">(</span><span class="st">"account 42: balance 100"</span>, <span class="va">kek</span>, enc <span class="op">=</span> <span class="st">"A256GCM"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="reference/jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">jwe</span>, <span class="va">kek</span>, <span class="st">"A256KW"</span>, <span class="st">"A256GCM"</span><span class="op">)</span><span class="op">$</span><span class="va">plaintext</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "account 42: balance 100"</span></span></code></pre></div>
+<p>Every function is prefixed <code>jose_</code>, the token or payload comes first and the key second, and a token is only ever read without being checked by <code><a href="reference/jose_peek.html">jose_peek()</a></code>, whose result says so when printed.</p>
+</div>
+<div class="section level2">
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<ul>
+<li>
+<a href="https://pedrobtz.github.io/zujose/articles/zujose.html">Get started</a>: keys and key sets, JWS, JWE, JWT and reading a token.</li>
+<li>
+<a href="https://pedrobtz.github.io/zujose/articles/migrating-from-jose.html">Migrating from jose</a>: the <code>jose</code> functions and their zujose counterparts.</li>
+<li>
+<a href="https://pedrobtz.github.io/zujose/articles/jwks-resolver.html">Verifying tokens against a JWKS</a>: a resolver that fetches and caches an OpenID provider’s keys with httr2.</li>
+<li>
+<a href="https://pedrobtz.github.io/zujose/reference/">Reference</a>: every function, and the conditions zujose raises (<code><a href="reference/zujose_error.html">?zujose_error</a></code>).</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="related-work">Related work<a class="anchor" aria-label="anchor" href="#related-work"></a>
+</h2>
+<p>zujose is checked against the <a href="https://www.rfc-editor.org/rfc/rfc7520" class="external-link">RFC 7520</a> cookbook and the vectors of RFCs 7515 to 7518, 7638, 7797 and 8037. Its JWS and JWT code is checked against tokens made by <a href="https://github.com/jpadilla/pyjwt" class="external-link">PyJWT</a>, and its JWE code against <a href="https://github.com/latchset/jwcrypto" class="external-link">jwcrypto</a> in both directions. The CRAN package <a href="https://cran.r-project.org/package=jose" class="external-link">jose</a> covers JWK, JWS and JWT on top of OpenSSL.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -103,6 +184,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 <li><a href="https://github.com/pedrobtz/zujose/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/pedrobtz/zujose/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://github.com/pedrobtz/zujose/actions/workflows/coverage.yaml" class="external-link"><img src="https://raw.githubusercontent.com/pedrobtz/zujose/main/.github/badges/coverage.svg" alt="coverage"></a></li>
 </ul>

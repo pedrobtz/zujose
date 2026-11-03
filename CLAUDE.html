@@ -15,7 +15,13 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="articles/zujose.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json"></form></li>
@@ -43,7 +49,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Scaffolded 2026-11-02 with <code>create-pkg.sh</code>. Stages 0–9 are done (2026-11-03): every algorithm of design §3. Codec; <code>oct</code>, RSA, EC and X25519 keys (JWK and PEM) and key sets; JWS with <code>HS*</code>, <code>RS*</code>, <code>PS*</code> and <code>ES*</code>; JWT; and JWE with <code>dir</code>, <code>A*KW</code>, <code>A*GCMKW</code>, <code>PBES2-*</code>, <code>RSA-OAEP</code>, <code>RSA-OAEP-256</code>, decrypt-only <code>RSA1_5</code> and <code>ECDH-ES</code> (with the Concat KDF in R) key management and <code>A*CBC-HS*</code> and <code>A*GCM</code> content encryption. Asymmetric keys stay JWK members; <code>rsa_crypt_key()</code> and <code>ec_crypt_key()</code> build the zucrypt key for each operation. Next is Stage 10, the documentation. The roadmap in <code>.agents/roadmap.md</code> takes it to v0.1.0. The design’s release gate (§11.2) holds the CRAN submission until <code>zuutf</code> and <code>zucrypt</code> (&gt;= 0.5.0) are on CRAN. Randomness comes from <code>zucrypt</code>’s development version (<code>Remotes: pedrobtz/zucrypt</code>), as do AES-GCM and PBKDF2 (zucrypt Stage 14a), RSA (15a) and the curves (16a).</p>
+<p>Scaffolded 2026-11-02 with <code>create-pkg.sh</code>. Stages 0–9 are done (2026-11-03): every algorithm of design §3. Codec; <code>oct</code>, RSA, EC and X25519 keys (JWK and PEM) and key sets; JWS with <code>HS*</code>, <code>RS*</code>, <code>PS*</code> and <code>ES*</code>; JWT; and JWE with <code>dir</code>, <code>A*KW</code>, <code>A*GCMKW</code>, <code>PBES2-*</code>, <code>RSA-OAEP</code>, <code>RSA-OAEP-256</code>, decrypt-only <code>RSA1_5</code> and <code>ECDH-ES</code> (with the Concat KDF in R) key management and <code>A*CBC-HS*</code> and <code>A*GCM</code> content encryption. Asymmetric keys stay JWK members; <code>rsa_crypt_key()</code> and <code>ec_crypt_key()</code> build the zucrypt key for each operation. Stage 10 added the README, the pkgdown articles (Get started, migrating from <code>jose</code>, the JWKS resolver) and the JWE oracle. Next is Stage 11, Full CI. The roadmap in <code>.agents/roadmap.md</code> takes it to v0.1.0. The design’s release gate (§11.2) holds the CRAN submission until <code>zuutf</code> and <code>zucrypt</code> (&gt;= 0.5.0) are on CRAN. Randomness comes from <code>zucrypt</code>’s development version (<code>Remotes: pedrobtz/zucrypt</code>), as do AES-GCM and PBKDF2 (zucrypt Stage 14a), RSA (15a) and the curves (16a).</p>
 </div>
 <div class="section level2">
 <h2 id="stage-tracking">Stage tracking<a class="anchor" aria-label="anchor" href="#stage-tracking"></a></h2>
@@ -148,7 +154,8 @@
 </ul></div>
 <div class="section level2">
 <h2 id="continuous-integration">Continuous integration<a class="anchor" aria-label="anchor" href="#continuous-integration"></a></h2>
-<p>Workflows come from <code>pedrobtz/r-actions</code>. Call those reusable workflows instead of writing bespoke ones, and pin a released tag rather than <code>main</code>. Pin a workflow that holds a write token, such as <code>coverage.yml</code>, to a commit, with the tag in a comment. The <code>R-CMD-check</code> workflow must call <code>r-cmd-check.yml</code>, because a hand-rolled one does not count as the pre-submission check. This package calls <code>r-cmd-check.yml@v1</code> and <code>coverage.yml@v1</code>. <code>pkgdown.yaml</code> is the usethis workflow, not an r-actions one.</p>
+<p>Workflows come from <code>pedrobtz/r-actions</code>. Call those reusable workflows instead of writing bespoke ones, and pin a released tag rather than <code>main</code>. Pin a workflow that holds a write token, such as <code>coverage.yml</code>, to a commit, with the tag in a comment. The <code>R-CMD-check</code> workflow must call <code>r-cmd-check.yml</code>, because a hand-rolled one does not count as the pre-submission check. This package calls <code>r-cmd-check.yml@v1</code> and <code>coverage.yml@v1</code>. <code>pkgdown.yaml</code> is the usethis workflow, not an r-actions one. <code>jwe-oracle.yaml</code> is bespoke, as r-actions has nothing like it: it runs <code>tools/jwe-oracle/</code>, where zujose and Python’s <code>jwcrypto</code> exchange JWE tokens for every <code>alg</code>/<code>enc</code> pair, on pull requests that touch the JWE code and by hand. It is development-only and never part of R CMD check.</p>
+<p>The articles live in <code>vignettes/articles/</code>, which <code>.Rbuildignore</code> keeps out of the tarball: they are pkgdown-only, need no <code>Suggests</code>, and are built against the installed package.</p>
 <p>Small edits get a small run. The shared workflows look at the files a pull request changes, compared with its merge base:</p>
 <ul><li>
 <strong>Markdown only</strong>, such as <code>README.md</code>, <code>NEWS.md</code> or <code>cran-comments.md</code>, skips every check. Only coverage and the pkgdown site run.</li>

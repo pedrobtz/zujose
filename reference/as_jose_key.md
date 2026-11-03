@@ -35,6 +35,17 @@ when read: the point must be on its curve. PEM holding an EC or X25519
 key is read too. Other `OKP` keys, such as Ed25519, are read and kept so
 that they can be listed, selected and thumbprinted, but cannot be used.
 
+## Secrets in memory
+
+zujose is pure R, and so are its keys: an `oct` secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in
+memory after the key is gone, and may reach a saved workspace or a core
+dump. zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (`.RData`) and load them from a secret store when they
+are needed.
+
 ## Examples
 
 ``` r

@@ -19,7 +19,13 @@ flattened JSON or general JSON serialization (RFC 7516)."></head><body>
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/zujose.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="../articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -142,7 +148,7 @@ none of the three can be given.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.jVugoCRzTJqldv2sw8QfCadxoFtFqtYxf80mUWP8SiPPLkKQi3DC1Q.a7PyErBsussytSLHJkYLSw.4Sw3q3b0ni3BfOJLVdAoJA.Y5rxAr4LMOM4pQT1QEO7Hw"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0._LYX6UNEl2srimeGVmO7Suzu3B7_ywVakPD14xnSZrFqpwdmgCtXxA.Vxs9IsrqDHknaFkxyQPtFQ.1h087z_fgcxBXwNpe6O4IA.6eGV_kU53eOtyBtzdU5rfQ"</span>
 <span class="r-in"><span><span class="fu"><a href="jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"A128KW"</span>,</span></span>
 <span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A128CBC-HS256"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_decrypted&gt; A128KW with A128CBC-HS256, key "kek"</span>

@@ -25,7 +25,13 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/zujose.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="../articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -54,6 +60,32 @@
 
 
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Start with the Get started article, at
+<a href="https://pedrobtz.github.io/zujose/articles/zujose.html">https://pedrobtz.github.io/zujose/articles/zujose.html</a>. The main
+functions are:</p><ul><li><p>JWT: <code><a href="jose_jwt_encode.html">jose_jwt_encode()</a></code>, <code><a href="jose_jwt_decode.html">jose_jwt_decode()</a></code>, <code><a href="jose_jwt_decoder.html">jose_jwt_decoder()</a></code>.</p></li>
+<li><p>JWS: <code><a href="jose_sign.html">jose_sign()</a></code>, <code><a href="jose_verify.html">jose_verify()</a></code>.</p></li>
+<li><p>JWE: <code><a href="jose_encrypt.html">jose_encrypt()</a></code>, <code><a href="jose_decrypt.html">jose_decrypt()</a></code>.</p></li>
+<li><p>Keys: <code><a href="jose_key_oct.html">jose_key_oct()</a></code>, <code><a href="jose_key_generate.html">jose_key_generate()</a></code>, <code><a href="as_jose_key.html">as_jose_key()</a></code>,
+<code><a href="jose_keyset.html">jose_keyset()</a></code>, <code><a href="jose_keyset.html">as_jose_keyset()</a></code>, <code><a href="jose_jwk.html">jose_jwk()</a></code>, <code><a href="jose_pem.html">jose_pem()</a></code>.</p></li>
+<li><p>Inspection: <code><a href="jose_peek.html">jose_peek()</a></code>, <code><a href="zujose_info.html">zujose_info()</a></code>.</p></li>
+</ul><p>zujose never fetches anything: keys come only from the caller, as a
+key, a key set, or a function that returns one (a resolver).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="secrets-in-memory">Secrets in memory<a class="anchor" aria-label="anchor" href="#secrets-in-memory"></a></h2>
+
+
+<p>zujose is pure R, and so are its keys: an <code>oct</code> secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in memory
+after the key is gone, and may reach a saved workspace or a core dump.
+zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (<code>.RData</code>) and load them from a secret store when they
+are needed.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Useful links:</p><ul><li><p><a href="https://github.com/pedrobtz/zujose" class="external-link">https://github.com/pedrobtz/zujose</a></p></li>
 <li><p><a href="https://pedrobtz.github.io/zujose/">https://pedrobtz.github.io/zujose/</a></p></li>
@@ -66,6 +98,14 @@
 <p>Authors:</p><ul><li><p>Pedro Baltazar <a href="mailto:pedrobtz@gmail.com">pedrobtz@gmail.com</a> [copyright holder]</p></li>
 </ul></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_jwt_encode.html">jose_jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-1"</span><span class="op">)</span>, <span class="va">key</span>, expires_in <span class="op">=</span> <span class="fl">3600</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="jose_jwt_decode.html">jose_jwt_decode</a></span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span><span class="op">$</span><span class="va">sub</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "user-1"</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

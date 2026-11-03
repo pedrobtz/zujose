@@ -2,6 +2,15 @@
 
 ## zujose 0.0.0.9000
 
+- Documentation: a README, and three articles on the package website:
+  Get started, migrating from `jose`, and verifying tokens against a
+  provider’s JWKS with a caching resolver. The key help pages explain
+  how secrets are held in R memory.
+
+- `jose_key_generate("oct")` accepts 128-bit keys when no `alg` is
+  given, or for `dir`, as documented; it required 256 bits
+  ([\#30](https://github.com/pedrobtz/zujose/issues/30)).
+
 - The package, developed as `zujwt`, is renamed `zujose`, the name of
   its design: conditions are `zujose_*` and `zujwt_info()` is
   [`zujose_info()`](https://pedrobtz.github.io/zujose/reference/zujose_info.md).

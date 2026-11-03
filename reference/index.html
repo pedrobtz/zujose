@@ -15,7 +15,13 @@
     </button>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
-      <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+      <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/zujose.html">Get started</a></li>
+<li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/migrating-from-jose.html">Migrating from jose</a></li>
+    <li><a class="dropdown-item" href="../articles/jwks-resolver.html">Verifying tokens against a JWKS</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -32,7 +38,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="json-web-tokens">JSON Web Tokens<a class="anchor" aria-label="anchor" href="#json-web-tokens"></a></h2>
 
 
 
@@ -43,38 +49,10 @@
 
       <dl><dt>
 
-          <code><a href="as_jose_key.html">as_jose_key()</a></code>
+          <code><a href="jose_jwt_encode.html">jose_jwt_encode()</a></code>
 
         </dt>
-        <dd>Read a JSON Web Key</dd>
-
-        <dt>
-
-          <code><a href="jose_decrypt.html">jose_decrypt()</a></code>
-
-        </dt>
-        <dd>Decrypt a JWE</dd>
-
-        <dt>
-
-          <code><a href="jose_decryption.html">jose_decryption()</a></code>
-
-        </dt>
-        <dd>Accept an encrypted JWT</dd>
-
-        <dt>
-
-          <code><a href="jose_encrypt.html">jose_encrypt()</a></code>
-
-        </dt>
-        <dd>Encrypt a payload as a JWE</dd>
-
-        <dt>
-
-          <code><a href="jose_jwk.html">jose_jwk()</a></code>
-
-        </dt>
-        <dd>Write a key or key set as JSON</dd>
+        <dd>Encode a JWT</dd>
 
         <dt>
 
@@ -89,71 +67,17 @@
 
         </dt>
         <dd>A reusable JWT check</dd>
+      </dl></div><div class="section level2">
+      <h2 id="signatures-jws-">Signatures (JWS)<a class="anchor" aria-label="anchor" href="#signatures-jws-"></a></h2>
 
-        <dt>
 
-          <code><a href="jose_jwt_encode.html">jose_jwt_encode()</a></code>
 
-        </dt>
-        <dd>Encode a JWT</dd>
+      <dl></dl></div><div class="section level2">
 
-        <dt>
 
-          <code><a href="jose_key_generate.html">jose_key_generate()</a></code>
 
-        </dt>
-        <dd>Generate a random key</dd>
 
-        <dt>
-
-          <code><a href="jose_key_oct.html">jose_key_oct()</a></code>
-
-        </dt>
-        <dd>Make a symmetric key</dd>
-
-        <dt>
-
-          <code><a href="jose_keyset.html">jose_keyset()</a></code> <code><a href="jose_keyset.html">as_jose_keyset()</a></code>
-
-        </dt>
-        <dd>Key sets</dd>
-
-        <dt>
-
-          <code><a href="jose_limits.html">jose_limits()</a></code>
-
-        </dt>
-        <dd>Resource limits for untrusted tokens</dd>
-
-        <dt>
-
-          <code><a href="jose_peek.html">jose_peek()</a></code>
-
-        </dt>
-        <dd>Look inside a token without verifying it</dd>
-
-        <dt>
-
-          <code><a href="jose_pem.html">jose_pem()</a></code>
-
-        </dt>
-        <dd>Write a key as PEM</dd>
-
-        <dt>
-
-          <code><a href="jose_public.html">jose_public()</a></code>
-
-        </dt>
-        <dd>The public part of a key or key set</dd>
-
-        <dt>
-
-          <code><a href="jose_recipient.html">jose_recipient()</a></code>
-
-        </dt>
-        <dd>One recipient of a multi-recipient JWE</dd>
-
-        <dt>
+      <dl><dt>
 
           <code><a href="jose_sign.html">jose_sign()</a></code>
 
@@ -169,17 +93,105 @@
 
         <dt>
 
-          <code><a href="jose_thumbprint.html">jose_thumbprint()</a></code>
-
-        </dt>
-        <dd>JWK thumbprint</dd>
-
-        <dt>
-
           <code><a href="jose_verify.html">jose_verify()</a></code>
 
         </dt>
         <dd>Verify a JWS</dd>
+      </dl></div><div class="section level2">
+      <h2 id="encryption-jwe-">Encryption (JWE)<a class="anchor" aria-label="anchor" href="#encryption-jwe-"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="jose_encrypt.html">jose_encrypt()</a></code>
+
+        </dt>
+        <dd>Encrypt a payload as a JWE</dd>
+
+        <dt>
+
+          <code><a href="jose_recipient.html">jose_recipient()</a></code>
+
+        </dt>
+        <dd>One recipient of a multi-recipient JWE</dd>
+
+        <dt>
+
+          <code><a href="jose_decrypt.html">jose_decrypt()</a></code>
+
+        </dt>
+        <dd>Decrypt a JWE</dd>
+
+        <dt>
+
+          <code><a href="jose_decryption.html">jose_decryption()</a></code>
+
+        </dt>
+        <dd>Accept an encrypted JWT</dd>
+      </dl></div><div class="section level2">
+      <h2 id="keys-and-key-sets">Keys and key sets<a class="anchor" aria-label="anchor" href="#keys-and-key-sets"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="jose_key_oct.html">jose_key_oct()</a></code>
+
+        </dt>
+        <dd>Make a symmetric key</dd>
+
+        <dt>
+
+          <code><a href="jose_key_generate.html">jose_key_generate()</a></code>
+
+        </dt>
+        <dd>Generate a random key</dd>
+
+        <dt>
+
+          <code><a href="as_jose_key.html">as_jose_key()</a></code>
+
+        </dt>
+        <dd>Read a JSON Web Key</dd>
+
+        <dt>
+
+          <code><a href="jose_keyset.html">jose_keyset()</a></code> <code><a href="jose_keyset.html">as_jose_keyset()</a></code>
+
+        </dt>
+        <dd>Key sets</dd>
+
+        <dt>
+
+          <code><a href="jose_public.html">jose_public()</a></code>
+
+        </dt>
+        <dd>The public part of a key or key set</dd>
+
+        <dt>
+
+          <code><a href="jose_jwk.html">jose_jwk()</a></code>
+
+        </dt>
+        <dd>Write a key or key set as JSON</dd>
+
+        <dt>
+
+          <code><a href="jose_pem.html">jose_pem()</a></code>
+
+        </dt>
+        <dd>Write a key as PEM</dd>
 
         <dt>
 
@@ -190,10 +202,33 @@
 
         <dt>
 
-          <code><a href="zujose_error.html">zujose_error</a></code>
+          <code><a href="jose_thumbprint.html">jose_thumbprint()</a></code>
 
         </dt>
-        <dd>Conditions raised by zujose</dd>
+        <dd>JWK thumbprint</dd>
+      </dl></div><div class="section level2">
+      <h2 id="inspection-limits-and-errors">Inspection, limits and errors<a class="anchor" aria-label="anchor" href="#inspection-limits-and-errors"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="jose_peek.html">jose_peek()</a></code>
+
+        </dt>
+        <dd>Look inside a token without verifying it</dd>
+
+        <dt>
+
+          <code><a href="jose_limits.html">jose_limits()</a></code>
+
+        </dt>
+        <dd>Resource limits for untrusted tokens</dd>
 
         <dt>
 
@@ -201,8 +236,16 @@
 
         </dt>
         <dd>Algorithms available in this installation</dd>
+
+        <dt>
+
+          <code><a href="zujose_error.html">zujose_error</a></code>
+
+        </dt>
+        <dd>Conditions raised by zujose</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

@@ -43,9 +43,18 @@ A `jose_key`.
 ## Details
 
 The secret is a raw vector, never a string: a key is bytes, and a
-password is not a key. Secrets live in ordinary R memory, which R can
-copy and cannot reliably wipe; keep long-lived secrets out of saved
-workspaces.
+password is not a key.
+
+## Secrets in memory
+
+zujose is pure R, and so are its keys: an `oct` secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in
+memory after the key is gone, and may reach a saved workspace or a core
+dump. zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (`.RData`) and load them from a secret store when they
+are needed.
 
 ## See also
 

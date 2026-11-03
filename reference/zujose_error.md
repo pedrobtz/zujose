@@ -31,3 +31,19 @@ Every decryption failure raises the same class with the same message, so
 that the error cannot tell an attacker which step failed (RFC 7516
 section 11.5). Messages never contain key material, decrypted bytes or
 token text.
+
+## Examples
+
+``` r
+key <- jose_key_generate("oct", alg = "HS256")
+jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = -120)
+
+# Catch one kind of failure by its class.
+tryCatch(
+  jose_jwt_decode(jwt, key, algorithms = "HS256"),
+  zujose_expired_error = function(e) {
+    paste("expired at", format(e$time, tz = "UTC"))
+  }
+)
+#> [1] "expired at 2026-11-03 11:47:30"
+```

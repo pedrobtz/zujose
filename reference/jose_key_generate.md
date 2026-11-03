@@ -63,12 +63,24 @@ A `jose_key`.
 
 Without `size`, an `oct` key is as long as `alg` needs: the hash size
 for `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size
-for `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key must match
-the content encryption: 256 bits for `A128CBC-HS256`, 384 for
-`A192CBC-HS384` and 512 for `A256CBC-HS512`.
+for `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key is the
+content encryption key itself, so give its `size`: 256 bits for
+`A128CBC-HS256`, 384 for `A192CBC-HS384`, 512 for `A256CBC-HS512`, and
+128, 192 or 256 for `A128GCM`, `A192GCM` and `A256GCM`.
 
 An `RSA` key's `size` is its modulus, 2048 bits by default and at most
 4096, with public exponent 65537. Generating one takes a moment.
+
+## Secrets in memory
+
+zujose is pure R, and so are its keys: an `oct` secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in
+memory after the key is gone, and may reach a saved workspace or a core
+dump. zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (`.RData`) and load them from a secret store when they
+are needed.
 
 ## See also
 
@@ -89,7 +101,7 @@ key
 # A key encryption key, named by its thumbprint.
 jose_with_kid(jose_key_generate("oct", alg = "A256KW"))
 #> <jose_key> oct, 256 bits
-#>   kid "3aXScjQNqmR2zS7aAY7tCEuELzdGjufwOwILMyCNGLE"
+#>   kid "kA37N8LNsWOevzcdY2gUmPZx0C94ArJgucP8CJg8L3Y"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```
