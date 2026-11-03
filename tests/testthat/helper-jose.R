@@ -374,7 +374,7 @@ pbes2_token <- function(
 }
 
 # RFC 7515 A.3 (ES256) and A.4 (ES512): keys and compact tokens. The
-# signatures are randomised, so these verify; they do not reproduce.
+# signatures are randomized, so these verify; they do not reproduce.
 rfc7515_a3 <- function() {
   list(
     key = paste0(
