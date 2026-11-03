@@ -26,10 +26,10 @@ a token that names its own algorithm, a key smuggled in its header, an
 expired claim that nobody looked at.
 
 zujose implements the JOSE standards, JWS, JWE, JWK and JWT
-([RFC 7515](https://www.rfc-editor.org/rfc/rfc7515) to
-[7519](https://www.rfc-editor.org/rfc/rfc7519)), in both the compact and
+([RFC 7515](https://www.rfc-editor.org/info/rfc7515/) to
+[7519](https://www.rfc-editor.org/info/rfc7519/)), in both the compact and
 the JSON serializations, with the defaults of
-[RFC 8725](https://www.rfc-editor.org/rfc/rfc8725), the JWT best current
+[RFC 8725](https://www.rfc-editor.org/info/rfc8725/), the JWT best current
 practices.
 
 * **You name the algorithms.** Every function that checks a token takes an
@@ -136,7 +136,7 @@ whose result says so when printed.
 
 ## Related work
 
-zujose is checked against the [RFC 7520](https://www.rfc-editor.org/rfc/rfc7520)
+zujose is checked against the [RFC 7520](https://www.rfc-editor.org/info/rfc7520/)
 cookbook and the vectors of RFCs 7515 to 7518, 7638, 7797 and 8037. Its
 JWS and JWT code is checked against tokens made by
 [PyJWT](https://github.com/jpadilla/pyjwt), and its JWE code against
