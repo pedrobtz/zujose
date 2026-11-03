@@ -281,14 +281,50 @@ test_that("an ephemeral key on another curve than the key is refused", {
   )
 })
 
-test_that("a low-order X25519 ephemeral key is one decrypt error", {
+test_that("a low-order X25519 ephemeral key is refused with the header", {
+  # The all-zero point is rejected when the header is parsed, before any key
+  # agreement, so it is a parse error, not a decryption failure.
   key <- jwk_generate("OKP")
   epk <- list(kty = "OKP", crv = "X25519", x = b64url_encode(raw(32)))
-  err <- tryCatch(
+  expect_error(
     jwe_decrypt(ecdh_token(epk), key, "ECDH-ES", "A128GCM"),
-    error = identity
+    class = "zujose_parse_error"
   )
-  expect_true(inherits(err, c("zujose_decrypt_error", "zujose_parse_error")))
+})
+
+test_that("an ECDH-ES failure after policy is the one decrypt error", {
+  # A wrong private key, a flipped tag, and an ECDH-ES token that carries an
+  # encrypted key all fail with the class and message every other JWE
+  # failure has, so none of them is an oracle (#41).
+  for (crv in c("P-256", "X25519")) {
+    kty <- if (crv == "X25519") "OKP" else "EC"
+    right <- jwk_generate(kty, crv = crv)
+    wrong <- jwk_generate(kty, crv = crv)
+    for (alg in c("ECDH-ES", "ECDH-ES+A128KW")) {
+      token <- jwe_encrypt("x", jwk_public(right), alg = alg)
+      parts <- strsplit(token, ".", fixed = TRUE)[[1]]
+      tag <- b64url_decode(parts[[5]], "tag")
+      tag[[1]] <- xor(tag[[1]], as.raw(1))
+      flipped <- paste(c(parts[1:4], b64url_encode(tag)), collapse = ".")
+      cases <- list(
+        list(token = token, key = wrong),
+        list(token = flipped, key = right)
+      )
+      if (alg == "ECDH-ES") {
+        keyed <- parts
+        keyed[[2]] <- b64url_encode(as.raw(1:16))
+        cases[[3]] <- list(token = paste(keyed, collapse = "."), key = right)
+      }
+      for (case in cases) {
+        err <- expect_error(
+          jwe_decrypt(case$token, case$key, alg, "A128CBC-HS256"),
+          class = "zujose_decrypt_error",
+          info = paste(crv, alg)
+        )
+        expect_identical(conditionMessage(err), "Decryption failed.")
+      }
+    }
+  }
 })
 
 # Keys ---------------------------------------------------------------------

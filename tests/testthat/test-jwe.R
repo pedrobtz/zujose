@@ -481,3 +481,66 @@ test_that("the AAD is the protected header as received, not re-serialized", {
     expect_identical(out$plaintext, hex(row$plaintext), info = row$id)
   }
 })
+
+test_that("every key management fails with one class and one message", {
+  # A distinct message per algorithm or step would be an oracle (RFC 7516
+  # section 11.5); each family is tested alone elsewhere, this compares
+  # them with each other (#41).
+  wrong_rsa <- jwk_generate("RSA")
+  wrong_ec <- jwk_generate("EC")
+  rsa <- jwk_generate("RSA")
+  ec <- jwk_generate("EC")
+  password <- jwk_oct(charToRaw("right"))
+  cases <- list(
+    A128KW = list(
+      jwe_encrypt("x", jwk_oct(as.raw(1:16)), "A128KW"),
+      jwk_oct(as.raw(2:17)),
+      "A128CBC-HS256"
+    ),
+    dir = list(
+      jwe_encrypt("x", jwk_oct(as.raw(1:16)), "dir", enc = "A128GCM"),
+      jwk_oct(as.raw(2:17)),
+      "A128GCM"
+    ),
+    A128GCMKW = list(
+      jwe_encrypt("x", jwk_oct(as.raw(1:16)), "A128GCMKW"),
+      jwk_oct(as.raw(2:17)),
+      "A128CBC-HS256"
+    ),
+    "PBES2-HS256+A128KW" = list(
+      jwe_encrypt(
+        "x",
+        password,
+        "PBES2-HS256+A128KW",
+        header = list(p2c = 1000L)
+      ),
+      jwk_oct(charToRaw("wrong")),
+      "A128CBC-HS256"
+    ),
+    "RSA-OAEP-256" = list(
+      jwe_encrypt("x", jwk_public(rsa), "RSA-OAEP-256"),
+      wrong_rsa,
+      "A128CBC-HS256"
+    ),
+    RSA1_5 = list(rfc7520_token(81), wrong_rsa, "A128CBC-HS256"),
+    "ECDH-ES" = list(
+      jwe_encrypt("x", jwk_public(ec), "ECDH-ES"),
+      wrong_ec,
+      "A128CBC-HS256"
+    )
+  )
+  messages <- vapply(
+    names(cases),
+    function(alg) {
+      case <- cases[[alg]]
+      err <- expect_error(
+        jwe_decrypt(case[[1]], case[[2]], alg, case[[3]]),
+        class = "zujose_decrypt_error",
+        info = alg
+      )
+      conditionMessage(err)
+    },
+    ""
+  )
+  expect_length(unique(messages), 1L)
+})
