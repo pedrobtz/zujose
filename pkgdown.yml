@@ -5,7 +5,7 @@ articles:
   articles/jwks-resolver: jwks-resolver.html
   articles/migrating-from-jose: migrating-from-jose.html
   articles/zujose: zujose.html
-last_built: 2026-11-03T13:57Z
+last_built: 2026-11-03T14:05Z
 urls:
   reference: https://pedrobtz.github.io/zujose/reference
   article: https://pedrobtz.github.io/zujose/articles
