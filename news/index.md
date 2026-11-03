@@ -2,6 +2,11 @@
 
 ## zujose 0.0.0.9000
 
+- Argument errors, such as a wrong type, an out-of-range limit or
+  `format = "compact"` with several recipients, now raise
+  `zujose_argument_error`, a `zujose_error`, instead of a plain error
+  ([\#40](https://github.com/pedrobtz/zujose/issues/40)).
+
 - [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
   refuses an encrypted-only JWT whose key management is public-key
   (`RSA-OAEP*`, `RSA1_5`, `ECDH-ES*`), because anyone holding the
