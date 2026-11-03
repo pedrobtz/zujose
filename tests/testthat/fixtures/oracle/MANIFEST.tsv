@@ -1,0 +1,12 @@
+file	source	generator
+rsa-2048.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+rsa-2048.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+rsa-1024.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+rsa-1024.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p256.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p256.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p384.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p384.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p521.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+ec-p521.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
+tokens.tsv	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py

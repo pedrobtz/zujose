@@ -28,3 +28,34 @@ rfc7520_jwks <- function() {
     "]}"
   )
 }
+
+# Keys and JWTs written by PyJWT and `cryptography`
+# (tools/make-oracle-fixtures.py): the oracle for JWS and JWT.
+oracle_pem <- function(name, public = FALSE) {
+  path <- test_path(
+    "fixtures",
+    "oracle",
+    paste0(name, if (public) ".pub.pem" else ".pem")
+  )
+  readChar(path, file.size(path), useBytes = TRUE)
+}
+
+oracle_tokens <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "tokens.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
+
+oracle_key <- function(name, public = TRUE) {
+  switch(
+    name,
+    hmac = jose_key_oct(as.raw(1:64)),
+    "hmac-wrong" = jose_key_oct(as.raw(64:1)),
+    as_jose_key(oracle_pem(name, public = public))
+  )
+}
+
+# Before the oracle tokens' `exp`, 2000000000.
+oracle_now <- function() as.POSIXct(1e9, origin = "1970-01-01", tz = "UTC")
