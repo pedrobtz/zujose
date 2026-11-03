@@ -102,12 +102,27 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
   usable
 }
 
+# Design §8.2: ES256 only with P-256, ES384 with P-384, ES512 with P-521;
+# ECDH-ES with a NIST curve or X25519.
+curve_fits <- function(key, alg) {
+  crv <- key$members$crv
+  if (grepl("^ES(256|384|512)$", alg)) {
+    want <- c(ES256 = "P-256", ES384 = "P-384", ES512 = "P-521")[[alg]]
+    return(identical(crv, want))
+  }
+  if (grepl("^ECDH-ES", alg)) {
+    return(isTRUE(crv %in% c(names(ec_curves), "X25519")))
+  }
+  TRUE
+}
+
 # A `dir` key is the content encryption key itself, so its `alg` may name
 # the content encryption instead, as RFC 7520 section 5.6's key does
 # ("alg": "A128GCM" for a `dir` token). `enc` is the token's.
 key_fits <- function(key, alg, operation, enc = NULL) {
   key$kty %in%
     alg_key_types(alg) &&
+    curve_fits(key, alg) &&
     (is.null(key$alg) ||
       identical(key$alg, alg) ||
       (alg == "dir" && !is.null(enc) && identical(key$alg, enc))) &&

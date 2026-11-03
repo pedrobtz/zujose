@@ -17,7 +17,11 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #'
 #' Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
 #' `A192GCMKW`, `A256GCMKW`, one of the `PBES2-*` algorithms, or
-#' `RSA-OAEP` or `RSA-OAEP-256` to an RSA public key of at least 2048 bits.
+#' `RSA-OAEP` or `RSA-OAEP-256` to an RSA public key of at least 2048 bits,
+#' or `ECDH-ES`, `ECDH-ES+A128KW`, `ECDH-ES+A192KW` or `ECDH-ES+A256KW` to
+#' an EC key on P-256, P-384 or P-521 or an X25519 key. ECDH-ES generates a
+#' fresh ephemeral key, written as `epk`, and takes `apu` and `apv` from
+#' `header`; in direct mode (`ECDH-ES`) it encrypts to one recipient.
 #' `RSA1_5` is refused: it is accepted by [jose_decrypt()] only, when
 #' `algorithms` names it, and it never encrypts. Content
 #' encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
@@ -187,7 +191,7 @@ encrypt_jwe <- function(
     names(unprotected),
     unlist(lapply(recipients, function(r) names(r$header)))
   )
-  for (name in intersect(c("iv", "tag", "p2s"), given)) {
+  for (name in intersect(c("iv", "tag", "p2s", "epk"), given)) {
     stop(
       sprintf("`%s` is generated for each message; it cannot be given.", name),
       call. = FALSE
@@ -217,7 +221,13 @@ encrypt_jwe <- function(
           call = call
         )
       }
-      operation <- if (alg == "dir") "encrypt" else "wrapKey"
+      operation <- if (alg == "dir") {
+        "encrypt"
+      } else if (is_ecdh(alg)) {
+        "deriveKey"
+      } else {
+        "wrapKey"
+      }
       if (!key_fits(r$key, alg, operation, enc)) {
         abort_zujwt(
           "policy",
@@ -230,8 +240,25 @@ encrypt_jwe <- function(
     },
     ""
   )
-  if ("dir" %in% algs && length(recipients) > 1L) {
-    stop("`dir` encrypts to exactly one recipient.", call. = FALSE)
+  if (any(algs %in% c("dir", "ECDH-ES")) && length(recipients) > 1L) {
+    stop(
+      "`dir` and `ECDH-ES` encrypt to exactly one recipient.",
+      call. = FALSE
+    )
+  }
+  # ECDH-ES's PartyUInfo and PartyVInfo (RFC 7518 §4.6.1.2), from whichever
+  # header gives them.
+  party <- function(i, name) {
+    value <- recipients[[i]]$header[[name]] %||%
+      header[[name]] %||%
+      unprotected[[name]]
+    if (is.null(value)) {
+      return(raw())
+    }
+    if (!is_string(value)) {
+      stop(sprintf("`%s` must be a Base64url string.", name), call. = FALSE)
+    }
+    b64url_decode(value, name, call)
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
     p2c <- recipients[[i]]$header$p2c %||% header$p2c %||% unprotected$p2c
@@ -255,8 +282,21 @@ encrypt_jwe <- function(
   # and `tag`, `p2s` and `p2c`), which must be in place before the
   # protected header becomes the content's associated data.
   wrapped <- lapply(seq_along(recipients), function(i) {
-    wrap_cek(algs[[i]], recipients[[i]]$key, cek, p2cs[[i]], fixed)
+    wrap_cek(
+      algs[[i]],
+      recipients[[i]]$key,
+      cek,
+      p2cs[[i]],
+      fixed,
+      enc = enc,
+      apu = party(i, "apu"),
+      apv = party(i, "apv")
+    )
   })
+  # ECDH-ES in direct mode derives the CEK rather than wrapping one.
+  if (algs[[1]] == "ECDH-ES") {
+    cek <- wrapped[[1]]$cek
+  }
   # A generated member joins a header only if no header holds it already,
   # as a `p2c` given in `header` does.
   fresh <- function(params, ...) {
@@ -521,15 +561,21 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
         found <- resolve_keys(
           key,
           header,
-          if (alg == "dir") "decrypt" else "unwrapKey",
+          if (alg == "dir") {
+            "decrypt"
+          } else if (is_ecdh(alg)) {
+            "deriveKey"
+          } else {
+            "unwrapKey"
+          },
           limits,
           call
         )
         # A key of the wrong size for this recipient is ruled out, as one of
         # the wrong type is; only when none is left is that an error.
-        sized <- Filter(function(k) kek_fits(alg, enc, k, TRUE), found)
+        sized <- Filter(function(k) kek_fits(alg, enc, k, TRUE, params), found)
         if (length(sized) == 0L) {
-          check_kek(alg, enc, found[[1]], call, decrypt = TRUE)
+          check_kek(alg, enc, found[[1]], call, decrypt = TRUE, params = params)
         }
         sized
       },
@@ -636,9 +682,33 @@ pbes2_kek <- function(alg, password, p2s, p2c) {
 # Encrypt the CEK for one recipient: the encrypted key, and the header
 # members the algorithm generates. `fixed` injects the key-wrap IV and the
 # salt, for the RFC vectors; callers never pass it.
-wrap_cek <- function(alg, key, cek, p2c = NULL, fixed = list()) {
+wrap_cek <- function(
+  alg,
+  key,
+  cek,
+  p2c = NULL,
+  fixed = list(),
+  enc = NULL,
+  apu = raw(),
+  apv = raw()
+) {
   if (alg == "dir") {
     list(encrypted_key = raw(), header = list())
+  } else if (is_ecdh(alg)) {
+    # A fresh ephemeral key on the recipient's curve (RFC 7518 §4.6);
+    # `fixed$epk` injects RFC 7518 Appendix C's.
+    eph <- fixed$epk %||%
+      jose_key_generate(key$kty, crv = key$members$crv)
+    z <- ecdh_secret(eph, key)
+    out <- list(header = list(epk = epk_jwk(eph)))
+    if (alg == "ECDH-ES") {
+      out$cek <- concat_kdf(z, 8L * cek_bytes(enc), enc, apu, apv)
+      out$encrypted_key <- raw()
+    } else {
+      kek <- concat_kdf(z, 8L * ecdh_kw[[alg]], alg, apu, apv)
+      out$encrypted_key <- aes_key_wrap(kek, cek)
+    }
+    out
   } else if (alg %in% names(kw_key_bytes)) {
     list(encrypted_key = aes_key_wrap(key$k, cek), header = list())
   } else if (is_rsa_kem(alg)) {
@@ -697,6 +767,9 @@ kek_params <- function(alg, header, limits, call) {
     }
     return(list(kw_iv = kw_iv, tag = tag))
   }
+  if (is_ecdh(alg)) {
+    return(ecdh_params(header, call))
+  }
   if (is_pbes2(alg)) {
     p2c <- header[["p2c"]]
     if (
@@ -744,6 +817,24 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
     key$k
   } else if (alg %in% names(kw_key_bytes)) {
     aes_key_unwrap(key$k, encrypted_key)
+  } else if (is_ecdh(alg)) {
+    z <- tryCatch(
+      ecdh_secret(key, params$epk),
+      zujwt_error = function(e) NULL,
+      zucrypt_error = function(e) NULL
+    )
+    if (is.null(z)) {
+      return(NULL)
+    }
+    if (alg == "ECDH-ES") {
+      if (length(encrypted_key) != 0L) {
+        return(NULL)
+      }
+      concat_kdf(z, 8L * cek_bytes(enc), enc, params$apu, params$apv)
+    } else {
+      kek <- concat_kdf(z, 8L * ecdh_kw[[alg]], alg, params$apu, params$apv)
+      aes_key_unwrap(kek, encrypted_key)
+    }
   } else if (alg == "RSA1_5") {
     # RFC 7516 section 11.5 and RFC 3218: a padding failure must not be
     # distinguishable from any later one, so it is replaced by a random CEK
@@ -801,7 +892,13 @@ is_rsa_kem <- function(alg) alg %in% names(rsa_kem)
 
 # Whether `key` can manage the CEK for `alg`. For RSA: at least 2048 bits,
 # and for decryption the private key.
-kek_fits <- function(alg, enc, key, decrypt = FALSE) {
+kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
+  if (is_ecdh(alg)) {
+    return(
+      (!decrypt || has_private(key)) &&
+        (is.null(params) || identical(key$members$crv, params$epk$members$crv))
+    )
+  }
   if (is_rsa_kem(alg)) {
     return((key$bits %||% 0) >= 2048 && (!decrypt || has_private(key)))
   }
@@ -809,7 +906,23 @@ kek_fits <- function(alg, enc, key, decrypt = FALSE) {
   if (is.na(need)) length(key$k) >= 1L else length(key$k) == need
 }
 
-check_kek <- function(alg, enc, key, call, decrypt = FALSE) {
+check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
+  if (is_ecdh(alg)) {
+    if (decrypt && !has_private(key)) {
+      abort_zujwt("key", "Key agreement needs the private key.", call = call)
+    }
+    if (
+      !is.null(params) &&
+        !identical(key$members$crv, params$epk$members$crv)
+    ) {
+      abort_zujwt(
+        "key",
+        "The token's ephemeral key is not on the key's curve.",
+        call = call
+      )
+    }
+    return(invisible())
+  }
   if (is_rsa_kem(alg)) {
     check_rsa_size(key, call)
     if (decrypt && !has_private(key)) {
@@ -846,4 +959,100 @@ print.jose_decrypted <- function(x, ...) {
   print_members(x$header)
   cat(sprintf("Plaintext: %d bytes\n", length(x$plaintext)))
   invisible(x)
+}
+
+# ECDH-ES (RFC 7518 §4.6) --------------------------------------------------
+
+# The key-wrap size of each ECDH-ES variant, NA for direct key agreement.
+ecdh_kw <- c(
+  "ECDH-ES" = NA_integer_,
+  "ECDH-ES+A128KW" = 16L,
+  "ECDH-ES+A192KW" = 24L,
+  "ECDH-ES+A256KW" = 32L
+)
+
+is_ecdh <- function(alg) alg %in% names(ecdh_kw)
+
+# The shared secret Z of a private and a public jose_key on one curve.
+ecdh_secret <- function(private, public) {
+  if (private$kty == "OKP") {
+    zucrypt::crypt_x25519_diffie_hellman(
+      ec_crypt_key(private, TRUE),
+      ec_crypt_key(public, FALSE)
+    )
+  } else {
+    zucrypt::crypt_ec_dh(
+      ec_crypt_key(private, TRUE),
+      ec_crypt_key(public, FALSE)
+    )
+  }
+}
+
+# The public JWK of an ephemeral key, as the header's `epk`.
+epk_jwk <- function(key) {
+  c(
+    list(kty = key$kty),
+    key$members[intersect(c("crv", "x", "y"), names(key$members))]
+  )
+}
+
+# The Concat KDF of NIST SP 800-56A, as RFC 7518 §4.6.2 specifies it:
+# SHA-256 rounds over counter || Z || OtherInfo, where OtherInfo is the
+# length-prefixed AlgorithmID, PartyUInfo and PartyVInfo, then keydatalen.
+concat_kdf <- function(z, bits, alg_id, apu, apv) {
+  be32 <- function(n) {
+    as.raw(c(
+      n %/% 16777216,
+      (n %/% 65536) %% 256,
+      (n %/% 256) %% 256,
+      n %% 256
+    ))
+  }
+  with_length <- function(x) c(be32(length(x)), x)
+  other <- c(
+    with_length(charToRaw(alg_id)),
+    with_length(apu),
+    with_length(apv),
+    be32(bits)
+  )
+  rounds <- ceiling(bits / 256)
+  out <- unlist(lapply(seq_len(rounds), function(i) {
+    zucrypt::crypt_hash(c(be32(i), z, other), "sha256")
+  }))
+  out[seq_len(bits %/% 8L)]
+}
+
+# The ECDH-ES header members, checked on the header alone: `epk` must be a
+# public key on a supported curve, and on it (the point is validated), and
+# `apu` and `apv` must be Base64url when present.
+ecdh_params <- function(header, call) {
+  epk <- header[["epk"]]
+  bad <- function() {
+    abort_zujwt(
+      "parse",
+      "The `epk` header is not a public key on a supported curve.",
+      call = call
+    )
+  }
+  if (!is.list(epk) || !is_string(epk$kty) || !epk$kty %in% c("EC", "OKP")) {
+    bad()
+  }
+  key <- tryCatch(
+    as_jose_key(epk[intersect(c("kty", "crv", "x", "y"), names(epk))]),
+    zujwt_error = function(e) NULL
+  )
+  if (is.null(key) || !key$supported) {
+    bad()
+  }
+  party <- function(name) {
+    value <- header[[name]]
+    if (is.null(value)) {
+      return(raw())
+    }
+    if (!is_string(value)) {
+      abort_zujwt("parse", sprintf("`%s` must be a string.", name), call = call)
+    }
+    b64url_decode(value, name, call)
+  }
+  list(epk = key, apu = party("apu"), apv = party("apv"))
 }

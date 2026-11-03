@@ -2,12 +2,12 @@
 % Please edit documentation in R/keys.R
 \name{jose_pem}
 \alias{jose_pem}
-\title{Write an RSA key as PEM}
+\title{Write a key as PEM}
 \usage{
 jose_pem(key, private = FALSE)
 }
 \arguments{
-\item{key}{An RSA \code{jose_key}.}
+\item{key}{An RSA, EC or X25519 \code{jose_key}.}
 
 \item{private}{Whether to write the private key.}
 }
@@ -15,7 +15,7 @@ jose_pem(key, private = FALSE)
 A single string.
 }
 \description{
-\code{jose_pem()} writes an RSA key as PEM: the public key as
+\code{jose_pem()} writes an RSA, EC or X25519 key as PEM: the public key as
 SubjectPublicKeyInfo (\verb{PUBLIC KEY}), or with \code{private = TRUE} the private
 key as PKCS#8 (\verb{PRIVATE KEY}), byte for byte as the openssl package
 writes them.

@@ -340,10 +340,10 @@ test_that("encryption refuses inconsistent requests", {
   key <- jose_key_oct(as.raw(1:16))
   two <- list(jose_recipient(key, "A128KW"), jose_recipient(key, "A128KW"))
   expect_error(encrypt_fixed("x", key), class = "zujwt_policy_error")
-  # ECDH-ES needs the curves, which zujwt uses from Stage 9.
+  # ECDH-ES needs an EC or X25519 key, not a symmetric one.
   expect_error(
     encrypt_fixed("x", key, "ECDH-ES"),
-    class = "zujwt_unsupported_error"
+    class = "zujwt_policy_error"
   )
   expect_error(encrypt_fixed("x", key, "HS256"), class = "zujwt_policy_error")
   expect_error(encrypt_fixed("x", key, "A256KW"), class = "zujwt_key_error")

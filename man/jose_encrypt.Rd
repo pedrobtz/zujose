@@ -58,7 +58,11 @@ encryption. If the random source fails, the error is zucrypt's
 
 Key management is \code{dir}, \code{A128KW}, \code{A192KW}, \code{A256KW}, \code{A128GCMKW},
 \code{A192GCMKW}, \code{A256GCMKW}, one of the \verb{PBES2-*} algorithms, or
-\code{RSA-OAEP} or \code{RSA-OAEP-256} to an RSA public key of at least 2048 bits.
+\code{RSA-OAEP} or \code{RSA-OAEP-256} to an RSA public key of at least 2048 bits,
+or \code{ECDH-ES}, \code{ECDH-ES+A128KW}, \code{ECDH-ES+A192KW} or \code{ECDH-ES+A256KW} to
+an EC key on P-256, P-384 or P-521 or an X25519 key. ECDH-ES generates a
+fresh ephemeral key, written as \code{epk}, and takes \code{apu} and \code{apv} from
+\code{header}; in direct mode (\code{ECDH-ES}) it encrypts to one recipient.
 \code{RSA1_5} is refused: it is accepted by \code{\link[=jose_decrypt]{jose_decrypt()}} only, when
 \code{algorithms} names it, and it never encrypts. Content
 encryption is \code{A128CBC-HS256}, \code{A192CBC-HS384}, \code{A256CBC-HS512},

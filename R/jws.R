@@ -13,8 +13,11 @@
 #'
 #' The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
 #' `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
-#' RSA key of at least 2048 bits. `RS*` signatures are deterministic; `PS*`
-#' ones are randomised, with a salt as long as the digest.
+#' RSA key of at least 2048 bits, and `ES256`, `ES384` and `ES512` with a
+#' private EC key on P-256, P-384 and P-521 respectively. `RS*` signatures
+#' are deterministic; `PS*` and `ES*` ones are randomised. An `ES*`
+#' signature is `r` followed by `s`, each of fixed length, as RFC 7518
+#' section 3.4 specifies.
 #'
 #' @param payload The payload: a raw vector, or a single string taken as
 #'   UTF-8 text.
@@ -394,6 +397,16 @@ rsa_sig_hash <- c(
   PS512 = "sha512"
 )
 
+# ES* (RFC 7518 §3.4): the digest, and the curve's coordinate size. The
+# signature is r || s, each left-padded to that size.
+ec_sig_hash <- c(ES256 = "sha256", ES384 = "sha384", ES512 = "sha512")
+ec_sig_bytes <- c(ES256 = 32L, ES384 = 48L, ES512 = 66L)
+
+pad_left <- function(x, n) {
+  x <- x[cumsum(x != as.raw(0)) > 0]
+  c(raw(n - length(x)), x)
+}
+
 digest_fun <- function(name) {
   switch(
     name,
@@ -421,7 +434,17 @@ jws_sign <- function(alg, key, input, call) {
       pss = startsWith(alg, "PS")
     ))
   }
-  abort_unsupported(alg, "0.5.0", call = call)
+  if (!has_private(key)) {
+    abort_zujwt("key", "Signing needs the private key.", call = call)
+  }
+  der <- zucrypt::crypt_signature_create(
+    input,
+    digest_fun(ec_sig_hash[[alg]]),
+    ec_crypt_key(key, TRUE)
+  )
+  rs <- zucrypt::crypt_ecdsa_parse(der)
+  n <- ec_sig_bytes[[alg]]
+  c(pad_left(rs$r, n), pad_left(rs$s, n))
 }
 
 jws_verify <- function(alg, key, input, signature, call) {
@@ -447,7 +470,23 @@ jws_verify <- function(alg, key, input, signature, call) {
       zucrypt_auth_error = function(e) FALSE
     ))
   }
-  abort_unsupported(alg, "0.5.0", call = call)
+  n <- ec_sig_bytes[[alg]]
+  if (length(signature) != 2L * n) {
+    return(FALSE)
+  }
+  der <- zucrypt::crypt_ecdsa_write(
+    signature[seq_len(n)],
+    signature[n + seq_len(n)]
+  )
+  tryCatch(
+    zucrypt::crypt_signature_verify(
+      input,
+      der,
+      digest_fun(ec_sig_hash[[alg]]),
+      ec_crypt_key(key, FALSE)
+    ),
+    zucrypt_auth_error = function(e) FALSE
+  )
 }
 
 # RFC 7518 §3.2: an HMAC key at least as long as the hash output.

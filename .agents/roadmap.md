@@ -32,7 +32,7 @@ development version.
 | 6 | `zucrypt` Stage 13a: `crypt_rand_bytes()`, merged on its `main` 2026-11-03 | [zucrypt#9](https://github.com/pedrobtz/zucrypt/issues/9), closed by [zucrypt#83](https://github.com/pedrobtz/zucrypt/pull/83) |
 | 7 | `zucrypt` Stage 14a: AES-GCM, PBKDF2, merged on its `main` 2026-11-03 | [zucrypt#10](https://github.com/pedrobtz/zucrypt/issues/10), [zucrypt#12](https://github.com/pedrobtz/zucrypt/issues/12), done in [zucrypt#84](https://github.com/pedrobtz/zucrypt/pull/84) |
 | 8 | `zucrypt` Stage 15a: RSA and key I/O, merged on its `main` 2026-11-03 | [zucrypt#80](https://github.com/pedrobtz/zucrypt/issues/80), done in [zucrypt#86](https://github.com/pedrobtz/zucrypt/pull/86) |
-| 9 | `zucrypt` Stage 16, v0.5.0 (candidate): EC, X25519 | [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81) |
+| 9 | `zucrypt` Stage 16a: EC, X25519, merged on its `main` 2026-11-03 | [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81), done in [zucrypt#87](https://github.com/pedrobtz/zucrypt/pull/87) |
 | 5 | Optional: AES key wrap as a `zucrypt` primitive (design D4) | [zucrypt#82](https://github.com/pedrobtz/zucrypt/issues/82) |
 | 1 | Optional: strict unpadded Base64url in `zuutf` (design §8.1) | [zuutf#55](https://github.com/pedrobtz/zuutf/issues/55) |
 
@@ -52,7 +52,7 @@ padding in R until a primitive exists.
 | 6 | [Generated keys and IVs](#stage-6--generated-keys-and-ivs) | quick | [#8](https://github.com/pedrobtz/zujwt/issues/8) | [#23](https://github.com/pedrobtz/zujwt/pull/23) | 2026-11-03 |
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujwt/issues/9) | [#24](https://github.com/pedrobtz/zujwt/pull/24) | 2026-11-03 |
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujwt/issues/10) | [#25](https://github.com/pedrobtz/zujwt/pull/25) | 2026-11-03 |
-| 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | | |
+| 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujwt/issues/11) | [#26](https://github.com/pedrobtz/zujwt/pull/26) | 2026-11-03 |
 | 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujwt/issues/12) | | |
 | 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujwt/issues/13) | | |
 | 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujwt/issues/14) | | |
@@ -429,6 +429,11 @@ and opt-in `RSA1_5` decryption.
 
 **Blocked on** `zucrypt` Stage 16 (v0.5.0, candidate),
 [zucrypt#81](https://github.com/pedrobtz/zucrypt/issues/81).
+zucrypt shipped it as Stage 16a in
+[zucrypt#87](https://github.com/pedrobtz/zucrypt/pull/87), on 2026-11-03.
+RFC 8037 A.6 gives keys and the shared value Z but no token; the test
+checks Z in both directions and round-trips a token to its key. EC keys,
+like RSA ones, are kept as JWK members.
 
 **Goal.** EC and `OKP` (X25519) JWKs, `ES*` signatures, `ECDH-ES` with and
 without key wrap.
