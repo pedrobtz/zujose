@@ -1050,7 +1050,11 @@ ecdh_params <- function(header, call) {
       return(raw())
     }
     if (!is_string(value)) {
-      abort_zujose("parse", sprintf("`%s` must be a string.", name), call = call)
+      abort_zujose(
+        "parse",
+        sprintf("`%s` must be a string.", name),
+        call = call
+      )
     }
     b64url_decode(value, name, call)
   }

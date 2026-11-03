@@ -30,10 +30,20 @@ algorithms.
 }
 \details{
 The secret is a raw vector, never a string: a key is bytes, and a
-password is not a key. Secrets live in ordinary R memory, which R can
-copy and cannot reliably wipe; keep long-lived secrets out of saved
-workspaces.
+password is not a key.
 }
+\section{Secrets in memory}{
+
+zujose is pure R, and so are its keys: an \code{oct} secret, and the private
+members of an RSA, EC or X25519 key, are ordinary R vectors. R copies
+vectors freely and has no way to wipe one, so a secret may stay in memory
+after the key is gone, and may reach a saved workspace or a core dump.
+zujose never prints secret members and never puts them in an error
+message, but it cannot do more than that. Keep long-lived secrets out of
+saved workspaces (\code{.RData}) and load them from a secret store when they
+are needed.
+}
+
 \examples{
 key <- jose_key_oct(as.raw(1:32), alg = "HS256", kid = "k1")
 key

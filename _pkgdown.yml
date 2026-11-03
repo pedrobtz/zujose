@@ -2,3 +2,44 @@ url: https://pedrobtz.github.io/zujose/
 template:
   bootstrap: 5
 
+reference:
+- title: JSON Web Tokens
+  contents:
+  - jose_jwt_encode
+  - jose_jwt_decode
+  - jose_jwt_decoder
+- title: Signatures (JWS)
+  contents:
+  - jose_sign
+  - jose_signer
+  - jose_verify
+- title: Encryption (JWE)
+  contents:
+  - jose_encrypt
+  - jose_recipient
+  - jose_decrypt
+  - jose_decryption
+- title: Keys and key sets
+  contents:
+  - jose_key_oct
+  - jose_key_generate
+  - as_jose_key
+  - jose_keyset
+  - jose_public
+  - jose_jwk
+  - jose_pem
+  - jose_with_kid
+  - jose_thumbprint
+- title: Inspection, limits and errors
+  contents:
+  - jose_peek
+  - jose_limits
+  - zujose_info
+  - zujose_error
+
+articles:
+- title: Guides
+  navbar: ~
+  contents:
+  - articles/migrating-from-jose
+  - articles/jwks-resolver

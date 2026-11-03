@@ -26,8 +26,9 @@ A \code{jose_keyset} holds several keys, as a JWK Set does (RFC 7517 section
 \code{as_jose_keyset()} reads a JWK Set from its JSON text or from a parsed
 list. Following RFC 7517 section 5, a member of \code{keys} that is not a
 well-formed JWK is ignored rather than failing the whole set, as is a key
-of a type zujose does not know. Keys of a known type that zujose cannot use
-yet (\code{RSA}, \code{EC}, \code{OKP}) are kept.
+of a type zujose does not know. A key of a known type that zujose cannot
+use, such as an Ed25519 \code{OKP} key, is kept: it can be listed, selected
+and thumbprinted, and using it raises \code{zujose_unsupported_error}.
 }
 \examples{
 set <- jose_keyset(

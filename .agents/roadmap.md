@@ -55,7 +55,7 @@ padding in R until a primitive exists.
 | 7 | [GCM and PBES2](#stage-7--gcm-and-pbes2) | quick | [#9](https://github.com/pedrobtz/zujose/issues/9) | [#24](https://github.com/pedrobtz/zujose/pull/24) | 2026-11-03 |
 | 8 | [RSA](#stage-8--rsa) | quick | [#10](https://github.com/pedrobtz/zujose/issues/10) | [#25](https://github.com/pedrobtz/zujose/pull/25) | 2026-11-03 |
 | 9 | [EC and X25519](#stage-9--ec-and-x25519) | quick | [#11](https://github.com/pedrobtz/zujose/issues/11) | [#26](https://github.com/pedrobtz/zujose/pull/26) | 2026-11-03 |
-| 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujose/issues/12) | | |
+| 10 | [Documentation](#stage-10--documentation) | quick | [#12](https://github.com/pedrobtz/zujose/issues/12) | | 2026-11-03 |
 | 11 | [Full CI](#stage-11--full-ci) | full | [#13](https://github.com/pedrobtz/zujose/issues/13) | | |
 | 12 | [v0.1.0 readiness](#stage-12--v010-readiness) | full | [#14](https://github.com/pedrobtz/zujose/issues/14) | | |
 
@@ -488,6 +488,14 @@ without key wrap.
 - `R CMD check` green on the quick profile.
 
 **Design.** §7, §10 (oracle), §12 D7.
+
+**Notes, 2026-11-03.** The three articles are pkgdown articles under
+`vignettes/articles/`, kept out of the tarball, so they add nothing to
+`Suggests`; the resolver recipe is an article of its own rather than a
+section of Get started. Examples use `oct` keys where an `oct` key shows
+the point, and RSA or EC keys where the function is about them
+(`jose_pem()`). The JWE oracle uses `jwcrypto`, and its first run found
+#30, fixed here.
 
 ## Stage 11 — Full CI
 

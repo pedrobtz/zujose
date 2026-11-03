@@ -29,6 +29,17 @@
 #' token text.
 #'
 #' @name zujose_error
+#' @examples
+#' key <- jose_key_generate("oct", alg = "HS256")
+#' jwt <- jose_jwt_encode(list(sub = "user-1"), key, expires_in = -120)
+#'
+#' # Catch one kind of failure by its class.
+#' tryCatch(
+#'   jose_jwt_decode(jwt, key, algorithms = "HS256"),
+#'   zujose_expired_error = function(e) {
+#'     paste("expired at", format(e$time, tz = "UTC"))
+#'   }
+#' )
 NULL
 
 zujose_kinds <- c("parse", "policy", "key", "signature", "decrypt", "claim")

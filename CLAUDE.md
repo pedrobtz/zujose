@@ -32,8 +32,9 @@ X25519 keys (JWK and PEM) and key sets; JWS with `HS*`, `RS*`, `PS*` and
 `RSA-OAEP-256`, decrypt-only `RSA1_5` and `ECDH-ES` (with the Concat KDF in
 R) key management and `A*CBC-HS*` and `A*GCM` content encryption.
 Asymmetric keys stay JWK members; `rsa_crypt_key()` and `ec_crypt_key()`
-build the zucrypt key for each operation. Next is Stage 10, the
-documentation. The
+build the zucrypt key for each operation. Stage 10 added the README, the
+pkgdown articles (Get started, migrating from `jose`, the JWKS resolver)
+and the JWE oracle. Next is Stage 11, Full CI. The
 roadmap in `.agents/roadmap.md` takes it to v0.1.0. The design's release
 gate (§11.2) holds the CRAN submission until `zuutf` and `zucrypt` (>= 0.5.0)
 are on CRAN. Randomness comes from `zucrypt`'s development version
@@ -214,7 +215,15 @@ workflow that holds a write token, such as `coverage.yml`, to a commit, with
 the tag in a comment. The `R-CMD-check` workflow must call `r-cmd-check.yml`,
 because a hand-rolled one does not count as the pre-submission check. This package
 calls `r-cmd-check.yml@v1` and `coverage.yml@v1`. `pkgdown.yaml` is the
-usethis workflow, not an r-actions one.
+usethis workflow, not an r-actions one. `jwe-oracle.yaml` is bespoke, as
+r-actions has nothing like it: it runs `tools/jwe-oracle/`, where zujose
+and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair, on
+pull requests that touch the JWE code and by hand. It is development-only
+and never part of R CMD check.
+
+The articles live in `vignettes/articles/`, which `.Rbuildignore` keeps
+out of the tarball: they are pkgdown-only, need no `Suggests`, and are
+built against the installed package.
 
 Small edits get a small run. The shared workflows look at the files a pull
 request changes, compared with its merge base:

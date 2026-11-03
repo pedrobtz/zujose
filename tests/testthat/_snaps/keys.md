@@ -1,12 +1,3 @@
-# printing a key never shows its secret
-
-    Code
-      print(key)
-    Output
-      <jose_key> oct, 256 bits
-        kid "k1"
-        private: yes (not shown)
-
 # RSA, EC and X25519 keys are usable, and Ed25519 keys are kept
 
     Code
@@ -31,4 +22,13 @@
     Condition
       Error in `jose_key_generate()`:
       ! An HS256 key must be at least 256 bits.
+
+# printing a key never shows its secret
+
+    Code
+      print(key)
+    Output
+      <jose_key> oct, 256 bits
+        kid "k1"
+        private: yes (not shown)
 
