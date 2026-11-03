@@ -1,0 +1,5 @@
+# RFC 7520 <https://www.rfc-editor.org/rfc/rfc7520.txt>, sha256 14798c3b2d72e35375d5fb86d280a1e8df6109a6ee6cbfc091a0c57a8cc076c6, extracted by tools/rfc7520-fixtures.R
+file	figure	section	what
+text-072.txt	72	5	plaintext
+text-095.txt	95	5.3.1	plaintext
+text-096.txt	96	5.3.1	password

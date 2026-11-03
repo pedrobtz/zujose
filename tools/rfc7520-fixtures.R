@@ -1,7 +1,10 @@
 # Extract the JWS and JWE serializations of RFC 7520 (the JOSE cookbook)
 # into tests/testthat/fixtures/rfc7520/, one file per figure, with a
-# MANIFEST.tsv recording each figure's number and section; and the six keys
-# of RFC 7520 §3 into key-NNN.json files, with KEYS.tsv.
+# MANIFEST.tsv recording each figure's number and section; the keys (the
+# six of RFC 7520 §3 and the JWK-format keys of §5) into key-NNN.json files,
+# with KEYS.tsv; the plaintexts and the password of §5 into text-NNN.txt
+# files, with TEXTS.tsv; and every base64url-encoded generated factor of §5
+# (CEKs, IVs, salts, encrypted keys) into FACTORS.tsv.
 #
 # Usage, from the package root:
 #
@@ -89,7 +92,7 @@ cat(nrow(manifest), "fixtures written to", out_dir, "\n")
 
 # The keys of §3: each figure body is a JSON object, from its "{" line to
 # the caption.
-key_caption_re <- "^ +Figure ([0-9]+): (.* Key)$"
+key_caption_re <- "^ +Figure ([0-9]+): (.* Key)(, in JWK Format)?$"
 key_rows <- list()
 for (at in grep(key_caption_re, lines)) {
   m <- regmatches(lines[at], regexec(key_caption_re, lines[at]))[[1]]
@@ -123,3 +126,101 @@ utils::write.table(keys, con, sep = "\t", quote = FALSE, row.names = FALSE)
 close(con)
 cat(nrow(keys), "keys written to", out_dir, "\n")
 
+
+# The plaintexts and the password of §5. Figure 72 and Figure 96 are quoted
+# or bare text with "\\xe2\\x80\\x93" standing for U+2013 EN DASH, which is
+# substituted back; Figure 95 is JSON whose whitespace "was added for
+# readability", which is removed.
+text_body <- function(at) {
+  i <- at - 1L
+  while (!nzchar(trimws(lines[[i]]))) {
+    i <- i - 1L
+  }
+  end <- i
+  while (i > 1L && nzchar(trimws(lines[[i - 1L]]))) {
+    i <- i - 1L
+  }
+  trimws(lines[i:end])
+}
+en_dash <- function(x) gsub("\\xe2\\x80\\x93", "\u2013", x, fixed = TRUE)
+texts <- list(
+  list(figure = 72L, what = "plaintext", value = function(body) {
+    en_dash(paste(gsub('^"|"$', "", body), collapse = ""))
+  }),
+  list(figure = 95L, what = "plaintext", value = function(body) {
+    gsub("\\s+", "", paste(body, collapse = ""))
+  }),
+  list(figure = 96L, what = "password", value = function(body) {
+    en_dash(paste(body, collapse = ""))
+  })
+)
+text_rows <- list()
+for (t in texts) {
+  at <- grep(sprintf("^ +Figure %d: ", t$figure), lines)
+  stopifnot(length(at) == 1L)
+  # Figure 95's JSON spans blank-free lines; Figure 72's quoted strings too.
+  body <- text_body(at)
+  if (t$figure == 95L) {
+    i <- at - 1L
+    # The outer object opens at the figure's own indent of three spaces;
+    # the inner ones are indented further.
+    while (!grepl("^ {3}\\{\\s*$", lines[[i]])) {
+      i <- i - 1L
+    }
+    body <- lines[i:(at - 1L)]
+  }
+  value <- enc2utf8(t$value(body))
+  sec_line <- lines[[max(sections[sections < at])]]
+  file <- sprintf("text-%03d.txt", t$figure)
+  text_rows[[length(text_rows) + 1L]] <- data.frame(
+    file = file,
+    figure = t$figure,
+    section = regmatches(sec_line, regexec(section_re, sec_line))[[1]][[2]],
+    what = t$what
+  )
+  con <- file(file.path(out_dir, file), "wb")
+  writeBin(charToRaw(value), con)
+  close(con)
+}
+con <- file(file.path(out_dir, "TEXTS.tsv"), "w")
+writeLines(
+  sprintf(
+    "# RFC 7520 <https://www.rfc-editor.org/rfc/rfc7520.txt>, sha256 %s, extracted by tools/rfc7520-fixtures.R",
+    unname(sha)
+  ),
+  con
+)
+utils::write.table(do.call(rbind, text_rows), con, sep = "\t", quote = FALSE,
+                   row.names = FALSE)
+close(con)
+cat(length(text_rows), "texts written to", out_dir, "\n")
+
+# The generated factors: every "Figure N: ..., base64url-encoded" whose body
+# is one or more lines of Base64url, joined.
+factor_caption_re <- "^ +Figure ([0-9]+): (.*), base64url-encoded$"
+factor_rows <- list()
+for (at in grep(factor_caption_re, lines)) {
+  m <- regmatches(lines[at], regexec(factor_caption_re, lines[at]))[[1]]
+  body <- text_body(at)
+  value <- paste(body, collapse = "")
+  stopifnot(grepl("^[A-Za-z0-9_-]+$", value))
+  sec_line <- lines[[max(sections[sections < at])]]
+  factor_rows[[length(factor_rows) + 1L]] <- data.frame(
+    figure = as.integer(m[[2]]),
+    section = regmatches(sec_line, regexec(section_re, sec_line))[[1]][[2]],
+    description = m[[3]],
+    value = value
+  )
+}
+con <- file(file.path(out_dir, "FACTORS.tsv"), "w")
+writeLines(
+  sprintf(
+    "# RFC 7520 <https://www.rfc-editor.org/rfc/rfc7520.txt>, sha256 %s, extracted by tools/rfc7520-fixtures.R",
+    unname(sha)
+  ),
+  con
+)
+utils::write.table(do.call(rbind, factor_rows), con, sep = "\t",
+                   quote = FALSE, row.names = FALSE)
+close(con)
+cat(length(factor_rows), "factors written to", out_dir, "\n")
