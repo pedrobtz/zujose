@@ -63,14 +63,48 @@ implemented_algorithms <- c(
   "A256KW",
   "A128CBC-HS256",
   "A192CBC-HS384",
-  "A256CBC-HS512"
+  "A256CBC-HS512",
+  "A128GCM",
+  "A192GCM",
+  "A256GCM",
+  "A128GCMKW",
+  "A192GCMKW",
+  "A256GCMKW",
+  "PBES2-HS256+A128KW",
+  "PBES2-HS384+A192KW",
+  "PBES2-HS512+A256KW"
 )
+
+# The zucrypt functions each release adds that zujwt uses. An algorithm is
+# available when the installed zucrypt is that release or later, or when it
+# already exports those functions: a development zucrypt (0.1.0.9000) can
+# carry a later release's functions before it is numbered.
+zucrypt_functions <- list(
+  "0.3.0" = c("crypt_aes_gcm_encrypt", "crypt_aes_gcm_decrypt", "crypt_pbkdf2")
+)
+
+zucrypt_provides <- function(version, installed) {
+  if (installed >= package_version(version)) {
+    return(TRUE)
+  }
+  fns <- zucrypt_functions[[version]]
+  !is.null(fns) &&
+    all(vapply(
+      fns,
+      exists,
+      logical(1),
+      envir = asNamespace("zucrypt"),
+      inherits = FALSE
+    ))
+}
 
 #' Algorithms available in this installation
 #'
 #' `zujwt_info()` lists every JOSE algorithm zujwt knows and whether it can
 #' be used here. An algorithm is available when this version of zujwt
-#' implements it and the installed zucrypt is recent enough. Using one that
+#' implements it and the installed zucrypt provides what it needs: zucrypt is
+#' the version in the `zucrypt` column or later, or already exports the
+#' functions that version adds. Using one that
 #' is not raises `zujwt_unsupported_error`.
 #'
 #' @returns A data frame with columns `algorithm`, `kind` (`"signature"`,
@@ -87,8 +121,9 @@ zujwt_info <- function() {
     implemented_algorithms &
     vapply(
       table$zucrypt,
-      function(v) installed >= package_version(v),
+      zucrypt_provides,
       logical(1),
+      installed = installed,
       USE.NAMES = FALSE
     )
   table[c("algorithm", "kind", "available", "zucrypt")]

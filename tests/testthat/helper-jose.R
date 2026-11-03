@@ -299,9 +299,10 @@ encrypt_fixed <- function(
   alg = NULL,
   enc = "A128CBC-HS256",
   ...,
-  cek = as.raw(seq_len(cbc_hs[[enc]]$key)),
-  iv = as.raw(seq_len(16)),
-  format = "compact"
+  cek = as.raw(seq_len(cek_bytes(enc))),
+  iv = as.raw(seq_len(iv_bytes(enc))),
+  format = "compact",
+  fixed = list()
 ) {
   args <- list(...)
   encrypt_jwe(
@@ -315,6 +316,44 @@ encrypt_fixed <- function(
     format = format,
     cek = cek,
     iv = iv,
-    call = NULL
+    call = NULL,
+    fixed = fixed
+  )
+}
+
+# An RFC 7520 plaintext or password (Figures 72, 95, 96), as UTF-8 text.
+rfc7520_text <- function(figure) {
+  path <- test_path("fixtures", "rfc7520", sprintf("text-%03d.txt", figure))
+  x <- readChar(path, file.size(path), useBytes = TRUE)
+  Encoding(x) <- "UTF-8"
+  x
+}
+
+# An RFC 7520 generated factor (a CEK, IV, salt or encrypted key), decoded.
+rfc7520_factor <- function(figure) {
+  f <- utils::read.delim(
+    test_path("fixtures", "rfc7520", "FACTORS.tsv"),
+    comment.char = "#",
+    stringsAsFactors = FALSE
+  )
+  b64url_decode(f$value[f$figure == figure], "factor")
+}
+
+# A compact PBES2 JWE header with the given `p2c` and `p2s`, and placeholder
+# parts: enough to reach the PBES2 header checks, never to decrypt.
+pbes2_token <- function(
+  p2c = 1000,
+  p2s = b64url_encode(as.raw(1:16)),
+  alg = "PBES2-HS256+A128KW"
+) {
+  header <- list(alg = alg, enc = "A128GCM", p2c = p2c, p2s = p2s)
+  header <- Filter(Negate(is.null), header)
+  paste(
+    b64_json(header),
+    "AAAA",
+    "AAAAAAAAAAAAAAAA",
+    "AAAA",
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    sep = "."
   )
 }
