@@ -18,7 +18,7 @@ test_that("jose_limits() has the documented defaults", {
 test_that("limits must be whole numbers of at least 1, or Inf", {
   expect_no_error(jose_limits(token = Inf, keys = 1))
   for (bad in list(0, -1, 1.5, NA_real_, "10", c(1, 2), NULL)) {
-    expect_error(jose_limits(token = bad), "token")
+    expect_error(jose_limits(token = bad), class = "zujose_argument_error")
   }
 })
 
@@ -27,5 +27,8 @@ test_that("jose_limits() prints every limit", {
 })
 
 test_that("a token is checked against `limits` that are not jose_limits", {
-  expect_error(jose_peek("a.b.c", limits = list(token = 10)), "jose_limits")
+  expect_error(
+    jose_peek("a.b.c", limits = list(token = 10)),
+    class = "zujose_argument_error"
+  )
 })

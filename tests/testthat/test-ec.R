@@ -220,7 +220,8 @@ test_that("ECDH-ES takes apu and apv, and several +KW recipients", {
         jwe_recipient(jwk_public(a), "ECDH-ES")
       ),
       format = "general"
-    )
+    ),
+    class = "zujose_argument_error"
   )
   expect_error(
     jwe_encrypt(
@@ -229,7 +230,7 @@ test_that("ECDH-ES takes apu and apv, and several +KW recipients", {
       "ECDH-ES",
       header = list(epk = list(kty = "EC"))
     ),
-    "epk"
+    class = "zujose_argument_error"
   )
 })
 

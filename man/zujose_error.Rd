@@ -11,6 +11,7 @@ Every error zujose raises inherits from \code{zujose_error}, then \code{error} a
 \details{
 \tabular{lll}{
    Class \tab Fields \tab Raised when \cr
+   \code{zujose_argument_error} \tab  \tab an argument is of the wrong type, out of range, or inconsistent with another, such as \code{format = "compact"} with several recipients \cr
    \code{zujose_parse_error} \tab  \tab a token, header or key is not well formed, or is over a limit \cr
    \code{zujose_policy_error} \tab  \tab an algorithm is not allowed, a \code{crit} header is not understood, or a key does not fit the algorithm \cr
    \code{zujose_key_error} \tab  \tab a key is missing, malformed or too weak \cr

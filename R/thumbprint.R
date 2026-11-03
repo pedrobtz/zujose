@@ -36,6 +36,7 @@ thumbprint_hashes <- c(
 jwk_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   call <- sys.call()
   key <- check_key(key, call)
+  check_flag(uri, "uri", call)
   if (!is_string(hash) || !hash %in% names(thumbprint_hashes)) {
     abort_zujose(
       "key",

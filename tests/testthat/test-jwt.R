@@ -94,19 +94,31 @@ test_that("issued_at, header and empty claims behave", {
 
 test_that("jwt_encode() refuses bad arguments", {
   key <- jwk_oct(as.raw(1:32))
-  expect_error(jwt_encode(list(1), key, "HS256"), "named list")
-  expect_error(jwt_encode(list(a = 1, a = 2), key, "HS256"), "named list")
-  expect_error(jwt_encode("x", key, "HS256"), "named list")
+  expect_error(
+    jwt_encode(list(1), key, "HS256"),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwt_encode(list(a = 1, a = 2), key, "HS256"),
+    class = "zujose_argument_error"
+  )
+  expect_error(jwt_encode("x", key, "HS256"), class = "zujose_argument_error")
   expect_error(
     jwt_encode(list(), key, "HS256", expires_in = "1h"),
-    "expires_in"
+    class = "zujose_argument_error"
   )
-  expect_error(jwt_encode(list(exp = "soon"), key, "HS256"), "exp")
+  expect_error(
+    jwt_encode(list(exp = "soon"), key, "HS256"),
+    class = "zujose_argument_error"
+  )
   expect_error(
     jwt_encode(list(), key, "HS256", issued_at = NA),
-    "issued_at"
+    class = "zujose_argument_error"
   )
-  expect_error(jwt_encode(list(), key, "HS256", jti = NA), "jti")
+  expect_error(
+    jwt_encode(list(), key, "HS256", jti = NA),
+    class = "zujose_argument_error"
+  )
 })
 
 test_that("jti = TRUE adds a random identifier, unless the claims set one", {
@@ -390,15 +402,15 @@ test_that("jwt_decode() refuses bad arguments", {
   key <- jwk_oct(as.raw(1:32))
   jwt <- jwt_encode(list(), key, "HS256", expires_in = 60)
   decode <- function(...) jwt_decode(jwt, key, "HS256", ...)
-  expect_error(decode(audience = 1), "audience")
-  expect_error(decode(issuer = c("a", "b")), "issuer")
-  expect_error(decode(type = NA_character_), "type")
-  expect_error(decode(required = NA), "required")
-  expect_error(decode(claims = list(1)), "claims")
-  expect_error(decode(validate = TRUE), "validate")
-  expect_error(decode(max_age = -1), "max_age")
-  expect_error(decode(leeway = NA), "leeway")
-  expect_error(decode(now = 1000), "now")
+  expect_error(decode(audience = 1), class = "zujose_argument_error")
+  expect_error(decode(issuer = c("a", "b")), class = "zujose_argument_error")
+  expect_error(decode(type = NA_character_), class = "zujose_argument_error")
+  expect_error(decode(required = NA), class = "zujose_argument_error")
+  expect_error(decode(claims = list(1)), class = "zujose_argument_error")
+  expect_error(decode(validate = TRUE), class = "zujose_argument_error")
+  expect_error(decode(max_age = -1), class = "zujose_argument_error")
+  expect_error(decode(leeway = NA), class = "zujose_argument_error")
+  expect_error(decode(now = 1000), class = "zujose_argument_error")
 })
 
 # The decoder -------------------------------------------------------------
@@ -425,7 +437,10 @@ test_that("jwt_decoder() applies the same checks every time", {
     class = "zujose_expired_error"
   )
   expect_error(jwt_decoder(key, "none"), class = "zujose_policy_error")
-  expect_error(jwt_decoder(key, "HS256", leeway = -1), "leeway")
+  expect_error(
+    jwt_decoder(key, "HS256", leeway = -1),
+    class = "zujose_argument_error"
+  )
 })
 
 test_that("an error's call never holds the token's text", {

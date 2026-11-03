@@ -359,23 +359,29 @@ test_that("jws_sign() refuses inconsistent requests", {
   key <- jwk_oct(as.raw(1:32))
   signers <- list(jws_signer(key, "HS256"), jws_signer(key, "HS256"))
   expect_error(jws_sign("x", key), class = "zujose_policy_error")
-  expect_error(jws_sign("x", signers), "general")
+  expect_error(jws_sign("x", signers), class = "zujose_argument_error")
   expect_error(
     jws_sign("x", signers, alg = "HS256", format = "general"),
-    "signer"
+    class = "zujose_argument_error"
   )
   expect_error(
     jws_sign("x", key, "HS256", unprotected = list(a = 1)),
-    "unprotected"
+    class = "zujose_argument_error"
   )
   expect_error(
     jws_sign("x", key, "HS256", header = list(alg = "HS512")),
-    "disagrees"
+    class = "zujose_argument_error"
   )
-  expect_error(jws_sign("x", key, "HS256", header = list(1)), "named list")
-  expect_error(jws_sign("x.y", key, "HS256", b64 = FALSE), "detached")
+  expect_error(
+    jws_sign("x", key, "HS256", header = list(1)),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jws_sign("x.y", key, "HS256", b64 = FALSE),
+    class = "zujose_argument_error"
+  )
   expect_type(jws_sign("x", key, "HS256", b64 = FALSE), "character")
-  expect_error(jws_sign(1, key, "HS256"), "payload")
+  expect_error(jws_sign(1, key, "HS256"), class = "zujose_argument_error")
   expect_error(jws_sign("x", "key", "HS256"), class = "zujose_key_error")
   expect_error(
     jws_sign("x", jwk_oct(as.raw(1:32), alg = "HS512"), "HS256"),

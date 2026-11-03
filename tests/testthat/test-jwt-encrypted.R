@@ -24,7 +24,7 @@ test_that("a JWE is refused where no decrypt is given (D12)", {
   )
   expect_error(
     jwt_decode(outer, signer, "HS256", decrypt = list(key = kek)),
-    "jwe_decryption"
+    class = "zujose_argument_error"
   )
 })
 
