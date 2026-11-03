@@ -29,10 +29,7 @@ for (i in seq_along(cases)) {
   values <- list()
   current <- NULL
   for (line in block) {
-    m <- regmatches(
-      line,
-      regexec("^     ([A-Z_]+) += +(([0-9a-f]{2} ?)+)$", line)
-    )[[1]]
+    m <- regmatches(line, regexec("^     ([A-Z_]+) += +(([0-9a-f]{2} ?)+)$", line))[[1]]
     if (length(m)) {
       current <- m[[2]]
       values[[current]] <- m[[3]]
