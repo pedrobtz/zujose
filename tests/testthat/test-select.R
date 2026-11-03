@@ -144,3 +144,32 @@ test_that("every JWA algorithm maps to its key types", {
   expect_identical(alg_key_types("none"), character())
   expect_identical(alg_key_types("HS1"), character())
 })
+
+test_that("a weak key in a set is skipped, not fatal", {
+  # A provider JWKS may still list a legacy key; without a kid, every key
+  # that fits is tried, and a too-weak one must not stop the search (#39).
+  good <- jwk_oct(as.raw(1:32))
+  token <- jws_sign("x", good, "HS256")
+  set <- jwk_set(jwk_oct(as.raw(1:16)), good)
+  expect_identical(
+    rawToChar(jws_verify(token, set, "HS256")$payload),
+    "x"
+  )
+
+  rsa <- jwk_generate("RSA")
+  token <- jws_sign("x", rsa, "RS256")
+  legacy <- as_jwk(oracle_pem("rsa-1024", public = TRUE))
+  set <- jwk_set(legacy, jwk_public(rsa))
+  expect_identical(
+    rawToChar(jws_verify(token, set, "RS256")$payload),
+    "x"
+  )
+})
+
+test_that("a set with only weak keys is still a key error", {
+  token <- jws_sign("x", jwk_oct(as.raw(1:32)), "HS256")
+  expect_error(
+    jws_verify(token, jwk_set(jwk_oct(as.raw(1:16))), "HS256"),
+    class = "zujose_key_error"
+  )
+})
