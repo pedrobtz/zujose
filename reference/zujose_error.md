@@ -46,5 +46,5 @@ tryCatch(
     paste("expired at", format(e$time, tz = "UTC"))
   }
 )
-#> [1] "expired at 2026-11-03 15:31:34"
+#> [1] "expired at 2026-11-03 15:50:54"
 ```
