@@ -2,6 +2,12 @@
 
 ## zujose 0.0.0.9000
 
+- [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
+  counts `limits$keys` across all of a token’s recipients, not per
+  recipient, so a JWE with many PBES2 or RSA recipients cannot multiply
+  the key-derivation work
+  ([\#37](https://github.com/pedrobtz/zujose/issues/37)).
+
 - [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
   and
   [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)

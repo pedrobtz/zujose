@@ -81,6 +81,6 @@ jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 #> <jwt_claims> verified HS256, key "k1"
 #>   sub: "u1"
 #>   aud: "api"
-#>   exp: 2026-11-03 14:50:10 UTC
-#>   iat: 2026-11-03 13:50:10 UTC
+#>   exp: 2026-11-03 14:57:23 UTC
+#>   iat: 2026-11-03 13:57:23 UTC
 ```
