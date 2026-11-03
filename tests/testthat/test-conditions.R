@@ -100,3 +100,37 @@ test_that("argument errors say which argument is wrong", {
     jwk_thumbprint(key, uri = NA)
   })
 })
+
+test_that("a bad format or require is an argument error", {
+  # These used match.arg(), which raised an unclassed error (#70).
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  token <- jws_sign("x", key)
+  for (bad in list("bogus", NA_character_, 1, c("compact", "general"))) {
+    expect_error(
+      jws_sign("x", key, format = bad),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", format = bad),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_verify(token, key, "HS256", require = bad),
+      class = "zujose_argument_error"
+    )
+  }
+  # The defaults and every valid choice still work.
+  expect_true(is.character(jws_sign("x", key, format = "general")))
+  expect_true(is.character(jwe_encrypt(
+    "x",
+    kek,
+    "A128KW",
+    format = "flattened"
+  )))
+  expect_s3_class(
+    jws_verify(token, key, "HS256", require = "any"),
+    "jws_verified"
+  )
+  expect_snapshot(jws_sign("x", key, format = "bogus"), error = TRUE)
+})
