@@ -92,7 +92,8 @@ valid. Sets <code>nbf</code>.</p></dd>
 
 
 <dt id="arg-jti">jti<a class="anchor" aria-label="anchor" href="#arg-jti"></a></dt>
-<dd><p>Whether to add a random <code>jti</code>. Needs zucrypt's randomness.</p></dd>
+<dd><p>Whether to add a random <code>jti</code>, 128 bits from the operating
+system's random source as Base64url, unless <code>claims</code> sets it.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -119,8 +120,8 @@ written as NumericDate, whole seconds since 1970. <code>expires_in</code> and
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_claims&gt; verified HS256, key "k1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sub: "u1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   aud: "api"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   exp: 2026-11-02 19:13:19 UTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   iat: 2026-11-02 18:13:19 UTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   exp: 2026-11-03 04:11:22 UTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   iat: 2026-11-03 03:11:22 UTC</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

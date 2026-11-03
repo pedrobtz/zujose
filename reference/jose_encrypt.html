@@ -106,10 +106,11 @@ recipients need <code>"general"</code>.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Encryption generates a fresh content encryption key and initialization
-vector for every message, so it needs cryptographic randomness from
-zucrypt (&gt;= 0.2.0). Until that is installed it raises
-<code>zujwt_unsupported_error</code>; decryption works without it.</p>
+    <p>Every message gets a fresh content encryption key and initialization
+vector, drawn from the operating system's cryptographic random source
+through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
+encryption. If the random source fails, the error is zucrypt's
+<code>zucrypt_entropy_error</code>, and nothing is returned.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -118,11 +119,18 @@ zucrypt (&gt;= 0.2.0). Until that is installed it raises
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_oct.html">jose_key_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">16</span><span class="op">)</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Until zucrypt (&gt;= 0.2.0) supplies randomness, this is unsupported.</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error in jose_encrypt("secret", key, alg = "A128KW") : </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Encryption needs random keys and IVs from zucrypt (&gt;= 0.2.0).</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jose_key_generate.html">jose_key_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jose_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">token</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.8hkwGREUtesKQ9NpmgO-KTIqRSD2xXp2txs9JIpylVAof8wE-qZn3Q.rI78wkJ3TSZlCvKK5vnZ9Q.BPWwhlCRB9dvJbz6-MPixA.35ng3UheDYLWb5cXmrl6qg"</span>
+<span class="r-in"><span><span class="fu"><a href="jose_decrypt.html">jose_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"A128KW"</span>,</span></span>
+<span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A128CBC-HS256"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_decrypted&gt; A128KW with A128CBC-HS256, key "kek"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Header:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   alg: "A128KW"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   enc: "A128CBC-HS256"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   kid: "kek"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Plaintext: 6 bytes</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

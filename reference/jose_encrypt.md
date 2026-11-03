@@ -68,10 +68,11 @@ The JWE, as a single string.
 
 ## Details
 
-Encryption generates a fresh content encryption key and initialization
-vector for every message, so it needs cryptographic randomness from
-zucrypt (\>= 0.2.0). Until that is installed it raises
-`zujwt_unsupported_error`; decryption works without it.
+Every message gets a fresh content encryption key and initialization
+vector, drawn from the operating system's cryptographic random source
+through zucrypt. They cannot be supplied: a reused IV or CEK breaks the
+encryption. If the random source fails, the error is zucrypt's
+`zucrypt_entropy_error`, and nothing is returned.
 
 ## See also
 
@@ -80,9 +81,16 @@ zucrypt (\>= 0.2.0). Until that is installed it raises
 ## Examples
 
 ``` r
-key <- jose_key_oct(as.raw(1:16), kid = "kek")
-# Until zucrypt (>= 0.2.0) supplies randomness, this is unsupported.
-try(jose_encrypt("secret", key, alg = "A128KW"))
-#> Error in jose_encrypt("secret", key, alg = "A128KW") : 
-#>   Encryption needs random keys and IVs from zucrypt (>= 0.2.0).
+key <- jose_key_generate("oct", alg = "A128KW", kid = "kek")
+token <- jose_encrypt("secret", key)
+token
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.8hkwGREUtesKQ9NpmgO-KTIqRSD2xXp2txs9JIpylVAof8wE-qZn3Q.rI78wkJ3TSZlCvKK5vnZ9Q.BPWwhlCRB9dvJbz6-MPixA.35ng3UheDYLWb5cXmrl6qg"
+jose_decrypt(token, key, algorithms = "A128KW",
+             encryptions = "A128CBC-HS256")
+#> <jose_decrypted> A128KW with A128CBC-HS256, key "kek"
+#> Header:
+#>   alg: "A128KW"
+#>   enc: "A128CBC-HS256"
+#>   kid: "kek"
+#> Plaintext: 6 bytes
 ```

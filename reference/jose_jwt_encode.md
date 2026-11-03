@@ -53,7 +53,8 @@ jose_jwt_encode(
 
 - jti:
 
-  Whether to add a random `jti`. Needs zucrypt's randomness.
+  Whether to add a random `jti`, 128 bits from the operating system's
+  random source as Base64url, unless `claims` sets it.
 
 ## Value
 
@@ -80,6 +81,6 @@ jose_jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 #> <jose_claims> verified HS256, key "k1"
 #>   sub: "u1"
 #>   aud: "api"
-#>   exp: 2026-11-02 19:13:19 UTC
-#>   iat: 2026-11-02 18:13:19 UTC
+#>   exp: 2026-11-03 04:11:22 UTC
+#>   iat: 2026-11-03 03:11:22 UTC
 ```

@@ -30,10 +30,14 @@ stays.
 
 ## Current state
 
-Scaffolded 2026-11-02 with `create-pkg.sh`; no functionality yet. The
-roadmap in `.agents/roadmap.md` takes it to v0.1.0. The design’s release
-gate (§11.2) holds the CRAN submission until `zuutf` and `zucrypt` (\>=
-0.5.0) are on CRAN. Stages 0–5 can be built on `zucrypt` 0.1.0 now.
+Scaffolded 2026-11-02 with `create-pkg.sh`. Stages 0–6 are done
+(2026-11-03): codec, `oct` keys and key sets, JWS with `HS*`, JWT, and
+JWE with `dir`, `A*KW` and `A*CBC-HS*`, with generated keys, CEKs and
+IVs. The roadmap in `.agents/roadmap.md` takes it to v0.1.0. The
+design’s release gate (§11.2) holds the CRAN submission until `zuutf`
+and `zucrypt` (\>= 0.5.0) are on CRAN. Randomness comes from `zucrypt`’s
+development version (`Remotes: pedrobtz/zucrypt`). Stage 7 waits on
+`zucrypt` Stage 14 (GCM, PBKDF2).
 
 ## Stage tracking
 

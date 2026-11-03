@@ -18,6 +18,8 @@
   : A reusable JWT check
 - [`jose_jwt_encode()`](https://pedrobtz.github.io/zujwt/reference/jose_jwt_encode.md)
   : Encode a JWT
+- [`jose_key_generate()`](https://pedrobtz.github.io/zujwt/reference/jose_key_generate.md)
+  : Generate a random key
 - [`jose_key_oct()`](https://pedrobtz.github.io/zujwt/reference/jose_key_oct.md)
   : Make a symmetric key
 - [`jose_keyset()`](https://pedrobtz.github.io/zujwt/reference/jose_keyset.md)
