@@ -21,8 +21,8 @@ jose_jwt_encode(
 \item{key}{A \code{jose_key}, or a list of \code{\link[=jose_signer]{jose_signer()}} objects for several
 signatures.}
 
-\item{alg}{The signature algorithm, such as \code{"HS256"}. \code{NULL} takes the
-key's own \code{alg}.}
+\item{alg}{The signature algorithm, such as \code{"HS256"} or \code{"RS256"}.
+\code{NULL} takes the key's own \code{alg}.}
 
 \item{header}{Protected header members. The default declares
 \code{typ: "JWT"}.}

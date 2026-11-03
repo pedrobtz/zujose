@@ -106,13 +106,13 @@ test_that("keys zujwt cannot use yet raise zujwt_unsupported_error", {
   err <- expect_error(
     resolve_keys(
       set,
-      list(alg = "RS256", kid = "bilbo.baggins@hobbiton.example"),
+      list(alg = "ES512", kid = "bilbo.baggins@hobbiton.example"),
       "verify",
       jose_limits()
     ),
     class = "zujwt_unsupported_error"
   )
-  expect_identical(err$needs, "0.4.0")
+  expect_identical(err$needs, "0.5.0")
 })
 
 test_that("more fitting keys than limits$keys is a key error", {

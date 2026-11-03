@@ -9,8 +9,8 @@ jose_signer(key, alg = NULL, header = NULL, unprotected = NULL)
 \arguments{
 \item{key}{A \code{jose_key}.}
 
-\item{alg}{The signature algorithm, such as \code{"HS256"}. \code{NULL} takes the
-key's own \code{alg}.}
+\item{alg}{The signature algorithm, such as \code{"HS256"} or \code{"RS256"}.
+\code{NULL} takes the key's own \code{alg}.}
 
 \item{header}{Further protected header members, as a named list.}
 

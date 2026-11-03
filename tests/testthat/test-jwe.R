@@ -23,10 +23,11 @@ test_that("RFC 7516 A.4 decrypts for its A128KW recipient", {
   # A single key is tried on the recipient whose algorithm fits.
   out <- jose_decrypt(rfc7516_a4(), v$key, "A128KW", "A128CBC-HS256")
   expect_identical(rawToChar(out$plaintext), v$plaintext)
-  # Allowing only RSA1_5 leaves nothing zujwt can use yet.
+  # Allowing only RSA1_5 leaves only the RSA recipient, which a symmetric
+  # key does not fit.
   expect_error(
     jose_decrypt(rfc7516_a4(), v$key, "RSA1_5", "A128CBC-HS256"),
-    class = "zujwt_unsupported_error"
+    class = "zujwt_policy_error"
   )
 })
 
@@ -339,9 +340,9 @@ test_that("encryption refuses inconsistent requests", {
   key <- jose_key_oct(as.raw(1:16))
   two <- list(jose_recipient(key, "A128KW"), jose_recipient(key, "A128KW"))
   expect_error(encrypt_fixed("x", key), class = "zujwt_policy_error")
-  # RSA key management needs zucrypt 0.4.0 (Stage 8).
+  # ECDH-ES needs the curves, which zujwt uses from Stage 9.
   expect_error(
-    encrypt_fixed("x", key, "RSA-OAEP"),
+    encrypt_fixed("x", key, "ECDH-ES"),
     class = "zujwt_unsupported_error"
   )
   expect_error(encrypt_fixed("x", key, "HS256"), class = "zujwt_policy_error")

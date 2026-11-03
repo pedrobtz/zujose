@@ -11,12 +11,17 @@
 #' `b64 = FALSE`, the payload is signed and carried unencoded (RFC 7797),
 #' and the header gains `b64: false` and `crit: ["b64"]`.
 #'
+#' The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
+#' `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
+#' RSA key of at least 2048 bits. `RS*` signatures are deterministic; `PS*`
+#' ones are randomised, with a salt as long as the digest.
+#'
 #' @param payload The payload: a raw vector, or a single string taken as
 #'   UTF-8 text.
 #' @param key A `jose_key`, or a list of [jose_signer()] objects for several
 #'   signatures.
-#' @param alg The signature algorithm, such as `"HS256"`. `NULL` takes the
-#'   key's own `alg`.
+#' @param alg The signature algorithm, such as `"HS256"` or `"RS256"`.
+#'   `NULL` takes the key's own `alg`.
 #' @param header Further protected header members, as a named list.
 #' @param unprotected Unprotected header members, as a named list. Only the
 #'   JSON serializations carry them.
@@ -377,12 +382,46 @@ verify_signature <- function(
 hmac_hash <- c(HS256 = "sha256", HS384 = "sha384", HS512 = "sha512")
 hmac_min_bytes <- c(HS256 = 32L, HS384 = 48L, HS512 = 64L)
 
+# RS* and PS* (RFC 7518 §3.3, §3.5): the digest, and whether it is PSS.
+# PSS uses MGF1 with the same digest and a salt as long as the digest, which
+# is what zucrypt's pss = TRUE does.
+rsa_sig_hash <- c(
+  RS256 = "sha256",
+  RS384 = "sha384",
+  RS512 = "sha512",
+  PS256 = "sha256",
+  PS384 = "sha384",
+  PS512 = "sha512"
+)
+
+digest_fun <- function(name) {
+  switch(
+    name,
+    sha256 = zucrypt::crypt_sha256,
+    sha384 = zucrypt::crypt_sha384,
+    sha512 = zucrypt::crypt_sha512
+  )
+}
+
 jws_sign <- function(alg, key, input, call) {
   if (alg %in% names(hmac_hash)) {
     check_hmac_key(key, alg, call)
     return(zucrypt::crypt_hmac(input, key$k, hmac_hash[[alg]]))
   }
   check_available(alg, call)
+  if (alg %in% names(rsa_sig_hash)) {
+    check_rsa_size(key, call)
+    if (!has_private(key)) {
+      abort_zujwt("key", "Signing needs the private key.", call = call)
+    }
+    return(zucrypt::crypt_signature_create(
+      input,
+      digest_fun(rsa_sig_hash[[alg]]),
+      rsa_crypt_key(key, TRUE),
+      pss = startsWith(alg, "PS")
+    ))
+  }
+  abort_unsupported(alg, "0.5.0", call = call)
 }
 
 jws_verify <- function(alg, key, input, signature, call) {
@@ -395,6 +434,20 @@ jws_verify <- function(alg, key, input, signature, call) {
     )
   }
   check_available(alg, call)
+  if (alg %in% names(rsa_sig_hash)) {
+    check_rsa_size(key, call)
+    return(tryCatch(
+      zucrypt::crypt_signature_verify(
+        input,
+        signature,
+        digest_fun(rsa_sig_hash[[alg]]),
+        rsa_crypt_key(key, FALSE),
+        pss = startsWith(alg, "PS")
+      ),
+      zucrypt_auth_error = function(e) FALSE
+    ))
+  }
+  abort_unsupported(alg, "0.5.0", call = call)
 }
 
 # RFC 7518 §3.2: an HMAC key at least as long as the hash output.

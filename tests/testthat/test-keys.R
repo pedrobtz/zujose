@@ -47,19 +47,20 @@ test_that("RFC 7520 §3.5 and §3.6 symmetric keys read", {
   expect_length(enc$k, 32L)
 })
 
-test_that("RSA, EC and OKP keys read but are marked not usable yet", {
+test_that("EC and OKP keys read but are marked not usable yet", {
   rsa <- as_jose_key(rfc7520_key(3))
   expect_identical(rsa$kty, "RSA")
-  expect_false(rsa$supported)
-  expect_identical(rsa$needs, "0.4.0")
+  expect_true(rsa$supported)
+  expect_null(rsa$needs)
 
   ec <- as_jose_key(rfc7520_key(1))
   expect_identical(ec$members$crv, "P-521")
+  expect_false(ec$supported)
   expect_identical(ec$needs, "0.5.0")
 
   okp <- as_jose_key('{"kty":"OKP","crv":"X25519","x":"AAAA"}')
   expect_identical(okp$needs, "0.5.0")
-  expect_snapshot(print(rsa))
+  expect_snapshot(print(ec))
 })
 
 test_that("as_jose_key() accepts a parsed list, a raw secret or a key", {
@@ -93,10 +94,9 @@ test_that("malformed JWKs are key errors", {
   expect_error(as_jose_key(list(1, 2)), class = "zujwt_key_error")
 })
 
-test_that("PEM is recognised and deferred to the RSA stage", {
+test_that("a PEM that is not a readable RSA key is a key error", {
   pem <- "-----BEGIN PUBLIC KEY-----\nMIIB\n-----END PUBLIC KEY-----"
-  err <- expect_error(as_jose_key(pem), class = "zujwt_unsupported_error")
-  expect_identical(err$needs, "0.4.0")
+  expect_error(as_jose_key(pem), class = "zujwt_key_error")
 })
 
 test_that("jose_jwk() round-trips every RFC 7520 key", {
@@ -216,8 +216,8 @@ test_that("jose_key_generate() refuses sizes and algorithms that do not fit", {
   expect_error(jose_key_generate("DSA"), class = "zujwt_key_error")
 })
 
-test_that("RSA, EC and OKP generation names the zucrypt it needs", {
-  needs <- c(RSA = "0.4.0", EC = "0.5.0", OKP = "0.5.0")
+test_that("EC and OKP generation names the zucrypt it needs", {
+  needs <- c(EC = "0.5.0", OKP = "0.5.0")
   for (kty in names(needs)) {
     err <- expect_error(
       jose_key_generate(kty),

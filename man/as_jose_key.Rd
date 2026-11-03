@@ -21,9 +21,13 @@ already parsed. A raw vector is taken as an \code{oct} secret, as by
 \code{\link[=jose_key_oct]{jose_key_oct()}}.
 }
 \details{
-Keys of type \code{RSA}, \code{EC} and \code{OKP} are read and kept, so they can be
-listed, selected, written and thumbprinted, but using one before zujwt
-supports it raises \code{zujwt_unsupported_error}.
+\code{RSA} keys need \code{n} and \code{e}, and for a private key all of \code{d}, \code{p}, \code{q},
+\code{dp}, \code{dq} and \code{qi}; they are checked when read. A PEM string holding an
+RSA key, in PKCS#1, PKCS#8 or SubjectPublicKeyInfo, is read too.
+
+Keys of type \code{EC} and \code{OKP} are read and kept, so they can be listed,
+selected, written and thumbprinted, but using one before zujwt supports it
+raises \code{zujwt_unsupported_error}.
 }
 \examples{
 key <- as_jose_key(

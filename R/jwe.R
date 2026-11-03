@@ -16,7 +16,10 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' `zucrypt_entropy_error`, and nothing is returned.
 #'
 #' Key management is `dir`, `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`,
-#' `A192GCMKW`, `A256GCMKW` or one of the `PBES2-*` algorithms; content
+#' `A192GCMKW`, `A256GCMKW`, one of the `PBES2-*` algorithms, or
+#' `RSA-OAEP` or `RSA-OAEP-256` to an RSA public key of at least 2048 bits.
+#' `RSA1_5` is refused: it is accepted by [jose_decrypt()] only, when
+#' `algorithms` names it, and it never encrypts. Content
 #' encryption is `A128CBC-HS256`, `A192CBC-HS384`, `A256CBC-HS512`,
 #' `A128GCM`, `A192GCM` or `A256GCM`. `A*GCMKW` writes the key wrapping `iv`
 #' and `tag` into the header, and `PBES2-*` writes a random 16-byte `p2s`;
@@ -204,6 +207,16 @@ encrypt_jwe <- function(
       }
       check_algorithms(alg, "key management", "alg", call)
       check_available(alg, call)
+      if (alg == "RSA1_5") {
+        abort_zujwt(
+          "policy",
+          paste0(
+            "RSA1_5 is accepted for decryption only; it never ",
+            "encrypts (RFC 8725 section 3.2). Use RSA-OAEP-256."
+          ),
+          call = call
+        )
+      }
       operation <- if (alg == "dir") "encrypt" else "wrapKey"
       if (!key_fits(r$key, alg, operation, enc)) {
         abort_zujwt(
@@ -355,6 +368,11 @@ encrypt_jwe <- function(
 #' the key management algorithms and the content encryption algorithms it
 #' accepts; neither has a default. A token with `zip` is refused (RFC 8725
 #' section 3.6).
+#'
+#' `RSA1_5` is decrypted only when `algorithms` names it. It is exposed to
+#' Bleichenbacher-style attacks (RFC 8725 section 3.2); a padding failure is
+#' replaced by a random content key, as RFC 7516 section 11.5 asks, so that
+#' it fails exactly as a wrong key does. Prefer `RSA-OAEP-256`.
 #'
 #' Every failure after the header checks (a wrong key, a bad tag, bad
 #' padding, a failed key unwrap, a wrong length) raises the same
@@ -509,9 +527,9 @@ decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
         )
         # A key of the wrong size for this recipient is ruled out, as one of
         # the wrong type is; only when none is left is that an error.
-        sized <- Filter(function(k) kek_fits(alg, enc, k), found)
+        sized <- Filter(function(k) kek_fits(alg, enc, k, TRUE), found)
         if (length(sized) == 0L) {
-          check_kek(alg, enc, found[[1]], call)
+          check_kek(alg, enc, found[[1]], call, decrypt = TRUE)
         }
         sized
       },
@@ -623,6 +641,16 @@ wrap_cek <- function(alg, key, cek, p2c = NULL, fixed = list()) {
     list(encrypted_key = raw(), header = list())
   } else if (alg %in% names(kw_key_bytes)) {
     list(encrypted_key = aes_key_wrap(key$k, cek), header = list())
+  } else if (is_rsa_kem(alg)) {
+    list(
+      encrypted_key = zucrypt::crypt_rsa_encrypt(
+        cek,
+        rsa_crypt_key(key, FALSE),
+        oaep = TRUE,
+        oaep_hash = rsa_kem[[alg]]
+      ),
+      header = list()
+    )
   } else if (alg %in% names(gcmkw_key_bytes)) {
     kw_iv <- fixed$kw_iv %||% zucrypt::crypt_rand_bytes(12L)
     sealed <- gcm_encrypt(key$k, kw_iv, cek, NULL)
@@ -716,6 +744,29 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
     key$k
   } else if (alg %in% names(kw_key_bytes)) {
     aes_key_unwrap(key$k, encrypted_key)
+  } else if (alg == "RSA1_5") {
+    # RFC 7516 section 11.5 and RFC 3218: a padding failure must not be
+    # distinguishable from any later one, so it is replaced by a random CEK
+    # of the right length and decryption goes on, to fail at the tag like
+    # any other wrong key.
+    cek <- tryCatch(
+      zucrypt::crypt_rsa_decrypt(encrypted_key, rsa_crypt_key(key, TRUE)),
+      zucrypt_error = function(e) NULL
+    )
+    if (is.null(cek) || length(cek) != cek_bytes(enc)) {
+      cek <- zucrypt::crypt_rand_bytes(cek_bytes(enc))
+    }
+    cek
+  } else if (is_rsa_kem(alg)) {
+    tryCatch(
+      zucrypt::crypt_rsa_decrypt(
+        encrypted_key,
+        rsa_crypt_key(key, TRUE),
+        oaep = TRUE,
+        oaep_hash = rsa_kem[[alg]]
+      ),
+      zucrypt_error = function(e) NULL
+    )
   } else if (alg %in% names(gcmkw_key_bytes)) {
     gcm_decrypt(key$k, params$kw_iv, encrypted_key, params$tag, NULL)
   } else {
@@ -742,12 +793,30 @@ kek_bytes <- function(alg, enc) {
   }
 }
 
-kek_fits <- function(alg, enc, key) {
+# RSA key management (RFC 7518 §4.2, §4.3): the OAEP digest, or NA for
+# RSA1_5, which only decrypts.
+rsa_kem <- c("RSA-OAEP" = "sha1", "RSA-OAEP-256" = "sha256", "RSA1_5" = NA)
+
+is_rsa_kem <- function(alg) alg %in% names(rsa_kem)
+
+# Whether `key` can manage the CEK for `alg`. For RSA: at least 2048 bits,
+# and for decryption the private key.
+kek_fits <- function(alg, enc, key, decrypt = FALSE) {
+  if (is_rsa_kem(alg)) {
+    return((key$bits %||% 0) >= 2048 && (!decrypt || has_private(key)))
+  }
   need <- kek_bytes(alg, enc)
   if (is.na(need)) length(key$k) >= 1L else length(key$k) == need
 }
 
-check_kek <- function(alg, enc, key, call) {
+check_kek <- function(alg, enc, key, call, decrypt = FALSE) {
+  if (is_rsa_kem(alg)) {
+    check_rsa_size(key, call)
+    if (decrypt && !has_private(key)) {
+      abort_zujwt("key", "Decrypting needs the private RSA key.", call = call)
+    }
+    return(invisible())
+  }
   if (!kek_fits(alg, enc, key)) {
     abort_zujwt(
       "key",

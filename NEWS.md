@@ -54,6 +54,14 @@
   bytes, is refused before any key is derived. A `dir` key whose `alg` names
   the content encryption, as in RFC 7520 section 5.6, is accepted.
 
+* RSA: `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` signatures,
+  and `RSA-OAEP` and `RSA-OAEP-256` key management. `RSA1_5` decrypts only
+  when `algorithms` names it, never encrypts, and fails like a wrong key
+  when its padding is bad. RSA keys are read from JWKs (with all CRT
+  parameters for a private key) and from PEM, written with the new
+  `jose_pem()`, generated with `jose_key_generate("RSA")`, and must be at
+  least 2048 bits to be used.
+
 * `jose_key_generate()` makes a random `oct` key, sized for its `alg`.
   `RSA`, `EC` and `OKP` generation names the zucrypt version it needs.
 

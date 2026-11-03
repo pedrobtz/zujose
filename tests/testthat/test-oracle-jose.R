@@ -52,3 +52,28 @@ test_that("a jose token signed with the wrong secret is refused", {
     class = "zujwt_signature_error"
   )
 })
+
+test_that("jose verifies the RSA JWTs zujwt signs, and the reverse", {
+  skip_if_not_installed("jose")
+  skip_if_not_installed("openssl")
+  theirs <- openssl::rsa_keygen(2048)
+  key <- as_jose_key(openssl::write_pem(theirs))
+  for (size in c(256, 384, 512)) {
+    alg <- paste0("RS", size)
+    jwt <- jose_jwt_encode(
+      list(sub = "u1", aud = "api"),
+      key,
+      alg,
+      expires_in = 600
+    )
+    claims <- jose::jwt_decode_sig(jwt, theirs$pubkey)
+    expect_identical(claims$sub, "u1", info = alg)
+    jwt <- jose::jwt_encode_sig(
+      jose::jwt_claim(sub = "u2", aud = "api", exp = Sys.time() + 600),
+      key = theirs,
+      size = size
+    )
+    claims <- jose_jwt_decode(jwt, jose_public(key), alg, audience = "api")
+    expect_identical(claims$sub, "u2", info = alg)
+  }
+})
