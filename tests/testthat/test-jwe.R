@@ -430,3 +430,30 @@ test_that("a key of the wrong size for one recipient is only ruled out there", {
     charToRaw("x")
   )
 })
+
+test_that("algorithms and encryptions are checked before any decryption", {
+  # The key fits, so only the allow-lists can refuse the token, and they
+  # must do so before a key is unwrapped or content decrypted (#36).
+  kek <- jwk_oct(as.raw(1:16))
+  token <- jwe_encrypt("x", kek, "A128KW", enc = "A128CBC-HS256")
+  password <- jwk_oct(charToRaw("pw"))
+  pbes2 <- jwe_encrypt(
+    "x",
+    password,
+    "PBES2-HS256+A128KW",
+    header = list(p2c = 1000L)
+  )
+  local_no_crypto()
+  expect_error(
+    jwe_decrypt(token, kek, "A256KW", "A128CBC-HS256"),
+    class = "zujose_policy_error"
+  )
+  expect_error(
+    jwe_decrypt(token, kek, "A128KW", "A256GCM"),
+    class = "zujose_policy_error"
+  )
+  expect_error(
+    jwe_decrypt(pbes2, password, "PBES2-HS384+A192KW", "A128CBC-HS256"),
+    class = "zujose_policy_error"
+  )
+})
