@@ -36,7 +36,9 @@ jws_verify(
 - payload:
 
   For a detached payload (RFC 7515 Appendix F), the payload: a raw
-  vector or a single string.
+  vector or a single string. A JSON serialization without a `payload`
+  member needs it; a compact one with an empty payload part is checked
+  over the empty payload when it is not given.
 
 - require:
 

@@ -86,7 +86,9 @@ returning one.</p></dd>
 
 <dt id="arg-payload">payload<a class="anchor" aria-label="anchor" href="#arg-payload"></a></dt>
 <dd><p>For a detached payload (RFC 7515 Appendix F), the payload:
-a raw vector or a single string.</p></dd>
+a raw vector or a single string. A JSON serialization without a
+<code>payload</code> member needs it; a compact one with an empty payload part is
+checked over the empty payload when it is not given.</p></dd>
 
 
 <dt id="arg-require">require<a class="anchor" aria-label="anchor" href="#arg-require"></a></dt>

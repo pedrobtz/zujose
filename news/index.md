@@ -2,6 +2,53 @@
 
 ## zujose 0.0.0.9000
 
+- Every `zujose_argument_error` names the function the caller called,
+  such as
+  [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md)
+  rather than the
+  [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md)
+  it calls, and every argument is checked before the token is read:
+  [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
+  reported a bad token before a bad `decrypt`, `limits` or `key`, and
+  [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
+  and
+  [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
+  before a bad `key`, `payload` or `limits`
+  ([\#75](https://github.com/pedrobtz/zujose/issues/75)).
+
+- A caller’s `header` or `unprotected` member of the wrong type, such as
+  `jws_sign(..., header = list(typ = 1))`, is a `zujose_argument_error`
+  on every encoder:
+  [`jws_sign()`](https://pedrobtz.github.io/zujose/reference/jws_sign.md),
+  [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md),
+  [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md),
+  [`jwe_encrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_encrypt.md)
+  and
+  [`jwe_recipient()`](https://pedrobtz.github.io/zujose/reference/jwe_recipient.md).
+  It was a `zujose_parse_error`, the class for a malformed token, or was
+  raised only when signing
+  ([\#148](https://github.com/pedrobtz/zujose/issues/148)).
+
+- A key argument of the wrong R type is a `zujose_argument_error`, as
+  [`?zujose_error`](https://pedrobtz.github.io/zujose/reference/zujose_error.md)
+  now states once: a mistake in the caller’s own code is an argument
+  error, and anything wrong with a token is a token error. `jwk_oct(1)`,
+  `jwk_set(1)`, `jwk_thumbprint(1)`, `as_jwk(123)`, a `key` that is not
+  a `jwk` (or, when verifying or decrypting, a `jwk_set` or function),
+  and
+  [`jwk_generate()`](https://pedrobtz.github.io/zujose/reference/jwk_generate.md)’s
+  `kty`, `crv`, `alg` and `size` of the wrong type or out of their range
+  raised `zujose_key_error`. A malformed or too weak key is still a
+  `zujose_key_error`
+  ([\#78](https://github.com/pedrobtz/zujose/issues/78)).
+
+- [`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
+  refuses a flattened or general JWS without a `payload` member, given
+  no `payload` argument, with `zujose_parse_error`. It verified the
+  token over the empty payload. An empty `payload` member is still the
+  empty payload, and the compact serialization is unchanged
+  ([\#147](https://github.com/pedrobtz/zujose/issues/147)).
+
 - [`zujose_info()`](https://pedrobtz.github.io/zujose/reference/zujose_info.md)
   and `zujose_unsupported_error` name zucrypt 0.1.1 as the version every
   algorithm needs. zucrypt re-planned its releases, and 0.1.1 now
