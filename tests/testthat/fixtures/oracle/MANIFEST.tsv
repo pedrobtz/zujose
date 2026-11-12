@@ -10,4 +10,4 @@ ec-p384.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
 ec-p521.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
 ec-p521.pub.pem	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
 tokens.tsv	PyJWT 2.15.1, cryptography 50.0.2	tools/make-oracle-fixtures.py
-jwe-noncanonical.tsv	jwcrypto 1.6.1	tools/make-jwe-noncanonical.py
+jwe-noncanonical.tsv	jwcrypto 1.5.6	tools/make-jwe-noncanonical.py
