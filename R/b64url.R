@@ -23,10 +23,11 @@ b64url_encode <- function(x) {
   zuutf::base64_encode(x, url = TRUE, pad = FALSE)
 }
 
-# The longest unpadded Base64url text that decodes to at most `bytes` bytes.
+# The longest unpadded Base64url text that decodes to at most `bytes` bytes:
+# exactly the encoded length of `bytes` bytes, as decoding is strict.
 b64url_max_chars <- function(bytes) {
   if (is.infinite(bytes)) {
     return(Inf)
   }
-  ceiling(bytes / 3) * 4
+  ceiling(4 * bytes / 3)
 }

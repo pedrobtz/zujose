@@ -32,3 +32,76 @@ test_that("a token is checked against `limits` that are not jose_limits", {
     class = "zujose_argument_error"
   )
 })
+
+test_that("the header and payload limits are exact in bytes", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- jws_sign("abcdef", key, alg = "HS256")
+  header <- nchar('{"alg":"HS256"}')
+  expect_no_error(
+    jws_verify(token, key, "HS256", limits = jose_limits(header = header))
+  )
+  expect_error(
+    jws_verify(token, key, "HS256", limits = jose_limits(header = header - 1)),
+    class = "zujose_parse_error"
+  )
+  expect_no_error(
+    jws_verify(token, key, "HS256", limits = jose_limits(payload = 6))
+  )
+  expect_error(
+    jws_verify(token, key, "HS256", limits = jose_limits(payload = 5)),
+    class = "zujose_parse_error"
+  )
+  json <- jws_sign("abcdef", key, alg = "HS256", format = "flattened")
+  expect_error(
+    jws_verify(json, key, "HS256", limits = jose_limits(payload = 4)),
+    class = "zujose_parse_error"
+  )
+  part <- strsplit(token, ".", fixed = TRUE)[[1]][[1]]
+  header <- length(b64url_decode(part, "header"))
+  expect_error(
+    jwe_decrypt(
+      token,
+      key,
+      "A128KW",
+      "A128GCM",
+      limits = jose_limits(header = header - 1)
+    ),
+    class = "zujose_parse_error"
+  )
+})
+
+test_that("the payload limit bounds a JWE ciphertext exactly", {
+  key <- jwk_oct(as.raw(1:16))
+  token <- jwe_encrypt("abcdef", key, alg = "A128KW", enc = "A128GCM")
+  expect_no_error(
+    jwe_decrypt(
+      token,
+      key,
+      "A128KW",
+      "A128GCM",
+      limits = jose_limits(payload = 6)
+    )
+  )
+  expect_error(
+    jwe_decrypt(
+      token,
+      key,
+      "A128KW",
+      "A128GCM",
+      limits = jose_limits(payload = 4)
+    ),
+    class = "zujose_parse_error"
+  )
+  part <- strsplit(token, ".", fixed = TRUE)[[1]][[1]]
+  header <- length(b64url_decode(part, "header"))
+  expect_error(
+    jwe_decrypt(
+      token,
+      key,
+      "A128KW",
+      "A128GCM",
+      limits = jose_limits(header = header - 1)
+    ),
+    class = "zujose_parse_error"
+  )
+})

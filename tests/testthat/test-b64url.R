@@ -41,9 +41,13 @@ test_that("the message names the part, never the text", {
   expect_no_match(conditionMessage(err), "secret")
 })
 
-test_that("b64url_max_chars() bounds the encoded length of n bytes", {
+test_that("b64url_max_chars() is the exact encoded length of n bytes", {
   for (n in 0:30) {
-    expect_lte(nchar(b64url_encode(as.raw(seq_len(n)))), b64url_max_chars(n))
+    expect_identical(
+      as.numeric(nchar(b64url_encode(as.raw(seq_len(n))))),
+      b64url_max_chars(n)
+    )
+    expect_gt(nchar(b64url_encode(raw(n + 1))), b64url_max_chars(n))
   }
   expect_identical(b64url_max_chars(Inf), Inf)
 })

@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* The `header` and `payload` limits of `jose_limits()` are exact in bytes
+  for Base64url parts. Before, a limit of `n` let up to two more bytes
+  through in a compact or JSON JWS and in a JWE ciphertext (#91).
+
 * `jws_sign()` refuses `b64` and `crit` in `header` or `unprotected`; the
   `b64` argument sets them. A caller's `b64: false` header with an encoded
   payload gave a token that verified as the wrong bytes (#72).
