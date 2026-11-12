@@ -38,10 +38,13 @@ build the zucrypt key for each operation. Stage 10 added the README, the
 pkgdown articles (Get started, migrating from `jose`, the JWKS resolver)
 and the JWE oracle. Next is Stage 11, Full CI. The
 roadmap in `.agents/roadmap.md` takes it to v0.1.0. The design's release
-gate (§11.2) holds the CRAN submission until `zuutf` and `zucrypt` (>= 0.5.0)
-are on CRAN. Randomness comes from `zucrypt`'s development version
-(`Remotes: pedrobtz/zucrypt`), as do AES-GCM and PBKDF2 (zucrypt Stage
-14a), RSA (15a) and the curves (16a).
+gate (§11.2) holds the CRAN submission until `zuutf` and `zucrypt` (>= 0.1.1)
+are on CRAN. `zucrypt` 0.1.1 carries everything zujose uses beyond HMAC
+and AES-CBC: randomness, SHA-2, AES-GCM and PBKDF2 (zucrypt Stage 14a),
+RSA (15a) and the curves (16a). Until it is on CRAN they come from
+`zucrypt`'s development version (`Remotes: pedrobtz/zucrypt`); when its
+`main` reaches `Version: 0.1.1`, raise `Imports` to `zucrypt (>= 0.1.1)`
+(#47).
 
 ## Stage tracking
 

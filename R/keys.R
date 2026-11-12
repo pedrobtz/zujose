@@ -30,7 +30,7 @@ private_members <- c("d", "p", "q", "dp", "dq", "qi", "oth", "k")
 # this version of zujose implements it and the installed zucrypt provides it
 # (zucrypt_provides(), algorithms.R); until then it is read and kept, but
 # not used.
-pending_key_types <- c(RSA = "0.4.0", EC = "0.5.0", OKP = "0.5.0")
+pending_key_types <- c(RSA = "0.1.1", EC = "0.1.1", OKP = "0.1.1")
 implemented_key_types <- c("oct", "RSA", "EC", "OKP")
 
 # The curves zujose uses: EC on the three NIST curves, OKP for X25519 only

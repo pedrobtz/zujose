@@ -105,7 +105,7 @@ test_that("keys zujose cannot use yet raise zujose_unsupported_error", {
   # With a zucrypt that lacks the curve functions, EC keys are read and kept
   # but not usable.
   local_mocked_bindings(zucrypt_provides = function(version, installed) {
-    version != "0.5.0"
+    version != "0.1.1"
   })
   set <- as_jwk_set(rfc7520_jwks())
   err <- expect_error(
@@ -117,7 +117,7 @@ test_that("keys zujose cannot use yet raise zujose_unsupported_error", {
     ),
     class = "zujose_unsupported_error"
   )
-  expect_identical(err$needs, "0.5.0")
+  expect_identical(err$needs, "0.1.1")
 })
 
 test_that("more fitting keys than limits$keys is a key error", {

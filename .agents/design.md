@@ -153,6 +153,16 @@ Even GCM and randomness are not there yet: `zucrypt` is preparing 0.1.1
 `HS*`, `dir` and `A*KW` with `A*CBC-HS*`, `oct` keys and thumbprints.
 JWE encryption works only with a supplied CEK and IV until 0.2.0.
 
+**Amended 2026-11-12.** `zucrypt` re-planned its releases (its roadmap,
+"Re-planned 2026-11-12"). It split Stages 13a to 16a off its tranches
+for this package; all four are done, and they ship together in
+`zucrypt` 0.1.1: randomness, SHA-2 as named functions, AES-GCM, PBKDF2,
+RSA and key I/O, EC keys, ECDSA, ECDH and X25519. Every primitive in the
+table above beyond HMAC and AES-CBC, Ed25519 apart, is therefore in
+0.1.1, and `zujose` needs `zucrypt` (>= 0.1.1) for every algorithm. The
+tranche releases 0.2.0 to 0.5.0 remain `zucrypt`'s plans for its own
+broader API; `zujose` no longer waits on them.
+
 `zuutf` 0.1.0 has closed all eight stages (#2–#9); its `v0.1.0` issue (#1)
 and `CRAN-submission` issue (#10) are open, and crandb returns
 `not_found`. It exports `base64_encode(x, url, pad, line_length)` and
@@ -594,8 +604,10 @@ when the named `zucrypt` stage has merged on its `main`.
 `zujose` 0.1.0 is not submitted to CRAN until all of these hold:
 
 1. `zuutf` is on CRAN, so `Remotes:` can be dropped.
-2. `zucrypt` (>= 0.5.0) is on CRAN, with RSA, PSS, OAEP with SHA-256,
-   ECDSA, ECDH and X25519, so Stages 6–8 have shipped.
+2. `zucrypt` (>= 0.1.1) is on CRAN, with randomness, AES-GCM, PBKDF2,
+   RSA, PSS, OAEP with SHA-256, ECDSA, ECDH and X25519, so Stages 6–8
+   can ship. (It read `>= 0.5.0` before `zucrypt`'s 2026-11-12
+   re-plan; see section 3.)
 3. Zero cookbook vectors skip on the release leg.
 
 Until then the package is usable from GitHub with the subset that

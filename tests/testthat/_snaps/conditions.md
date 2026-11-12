@@ -3,7 +3,7 @@
     Code
       conditionMessage(err)
     Output
-      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.4.0)."
+      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.1.1)."
 
 # argument errors say which argument is wrong
 
