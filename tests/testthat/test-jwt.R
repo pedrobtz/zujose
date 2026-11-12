@@ -521,3 +521,62 @@ test_that("a claim value JSON cannot represent is an argument error (#123)", {
     )
   }
 })
+
+test_that("names on scalar arguments and claims do not change the JWT (#120)", {
+  withr::local_seed(1)
+  key <- jwk_oct(as.raw(1:32))
+  local_mocked_bindings(jwt_now = function() 1000)
+  same <- function(named, plain) {
+    expect_identical(
+      jose_peek(named)$claims,
+      jose_peek(plain)$claims
+    )
+  }
+  same(
+    jwt_encode(list(), key, "HS256", expires_in = c(ttl = 60)),
+    jwt_encode(list(), key, "HS256", expires_in = 60)
+  )
+  same(
+    jwt_encode(list(), key, "HS256", not_before = c(t = 5)),
+    jwt_encode(list(), key, "HS256", not_before = 5)
+  )
+  same(
+    jwt_encode(
+      list(exp = c(t = 1.9e9), nbf = c(t = 1), iat = c(t = 1)),
+      key,
+      "HS256"
+    ),
+    jwt_encode(list(exp = 1.9e9, nbf = 1, iat = 1), key, "HS256")
+  )
+  same(
+    jwt_encode(
+      list(iss = c(x = "me"), sub = c(x = "u"), aud = c(a = "x", b = "y")),
+      key,
+      "HS256"
+    ),
+    jwt_encode(list(iss = "me", sub = "u", aud = c("x", "y")), key, "HS256")
+  )
+  expect_identical(
+    jose_peek(jwt_encode(
+      list(),
+      key,
+      c(a = "HS256"),
+      header = list(typ = c(t = "JWT"))
+    ))$headers[[1]],
+    list(alg = "HS256", typ = "JWT")
+  )
+})
+
+test_that("a named issuer or subject matches its value (#120)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(list(iss = "me", sub = "u"), key, "HS256")
+  claims <- jwt_decode(
+    jwt,
+    key,
+    "HS256",
+    issuer = c(x = "me"),
+    subject = c(y = "u"),
+    required = character()
+  )
+  expect_identical(claims$iss, "me")
+})

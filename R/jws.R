@@ -74,7 +74,7 @@ jws_sign <- function(
         "With several signers, give `alg` and headers to each jws_signer()."
       )
     }
-    key
+    unname(key)
   } else {
     abort_zujose(
       "key",
@@ -184,6 +184,7 @@ jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  alg <- if (!is.null(alg)) unname(alg)
   header <- check_header_arg(header, "header")
   unprotected <- check_header_arg(unprotected, "unprotected")
   check_disjoint_headers(header, unprotected)
@@ -600,7 +601,14 @@ check_flag <- function(x, name, call) {
   }
 }
 
-check_header_arg <- function(x, name) {
+# A header or claims argument, checked; the members in `scalars`, which
+# JSON gives one type, lose any names, which zujson would write as an
+# object (#120).
+check_header_arg <- function(
+  x,
+  name,
+  scalars = c("alg", "enc", "kid", "typ", "cty", "p2c")
+) {
   if (is.null(x)) {
     return(empty_object())
   }
@@ -612,6 +620,11 @@ check_header_arg <- function(x, name) {
     abort_zujose("argument", sprintf("`%s` must be a named list.", name))
   }
   check_json_arg(x, name)
+  for (member in intersect(scalars, names(x))) {
+    if (is.atomic(x[[member]])) {
+      x[[member]] <- unname(x[[member]])
+    }
+  }
   if (length(x) == 0L) empty_object() else x
 }
 

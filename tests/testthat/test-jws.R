@@ -651,3 +651,17 @@ test_that("a header value JSON cannot represent is an argument error (#123)", {
     )
   }
 })
+
+test_that("a named list of signers writes `signatures` as an array (#120)", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- jws_sign(
+    "x",
+    list(a = jws_signer(key, c(n = "HS256"))),
+    format = "general"
+  )
+  expect_true(startsWith(
+    token,
+    "{\"payload\":\"eA\",\"signatures\":[{"
+  ))
+  expect_identical(jws_verify(token, key, "HS256")$alg, "HS256")
+})

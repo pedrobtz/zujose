@@ -326,3 +326,17 @@ test_that("a key of unknown type prints as such", {
   })
   expect_null(as_jwk('{"kty":"foo"}')$needs)
 })
+
+test_that("names on a key's kid, alg, use and key_ops are dropped (#120)", {
+  key <- jwk_oct(
+    as.raw(1:32),
+    kid = c(a = "k"),
+    alg = c(b = "HS256"),
+    use = c(c = "sig")
+  )
+  expect_identical(
+    jose_peek(jws_sign("x", key))$headers[[1]],
+    list(alg = "HS256", kid = "k")
+  )
+  expect_identical(key$kid, "k")
+})

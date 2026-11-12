@@ -488,10 +488,11 @@ new_jose_key <- function(
   structure(
     list(
       kty = kty,
-      kid = kid,
-      alg = alg,
-      use = use,
-      key_ops = key_ops,
+      # Names would make zujson write a member as an object (#120).
+      kid = unname(kid),
+      alg = unname(alg),
+      use = unname(use),
+      key_ops = unname(key_ops),
       k = k,
       members = members,
       bits = bits,

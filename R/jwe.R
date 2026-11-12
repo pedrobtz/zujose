@@ -116,6 +116,7 @@ jwe_recipient <- function(key, alg = NULL, header = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  alg <- if (!is.null(alg)) unname(alg)
   header <- check_header_arg(header, "header")
   check_no_zip(header)
   if ("enc" %in% names(header)) {
@@ -156,6 +157,10 @@ encrypt_jwe <- function(
   fixed = list()
 ) {
   bytes <- as_payload_bytes(plaintext, call)
+  if (!is_string(enc)) {
+    abort_zujose("argument", "`enc` must be a single string.")
+  }
+  enc <- unname(enc)
   check_algorithms(enc, "content encryption", "enc", call)
   check_available(enc, call)
   header <- check_header_arg(header, "header")
@@ -177,7 +182,7 @@ encrypt_jwe <- function(
         "With several recipients, give `alg` to each jwe_recipient()."
       )
     }
-    key
+    unname(key)
   } else {
     abort_zujose(
       "key",

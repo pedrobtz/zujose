@@ -41,7 +41,11 @@ jwt_encode <- function(
   jti = FALSE
 ) {
   call <- sys.call()
-  claims <- check_header_arg(claims, "claims")
+  claims <- check_header_arg(
+    claims,
+    "claims",
+    c("iss", "sub", "aud", "exp", "nbf", "iat", "jti")
+  )
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)
   now <- jwt_now()
@@ -171,6 +175,9 @@ jwt_decode <- function(
     leeway,
     now
   )
+  # identical() would compare names too (#120).
+  issuer <- if (!is.null(issuer)) unname(issuer)
+  subject <- if (!is.null(subject)) unname(subject)
   if (!is_string(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
@@ -650,7 +657,7 @@ as_numeric_date <- function(x, name) {
       sprintf("`%s` must be a time or a number of seconds.", name)
     )
   }
-  x
+  unname(x)
 }
 
 as_seconds <- function(x, name) {
@@ -663,7 +670,7 @@ as_seconds <- function(x, name) {
       sprintf("`%s` must be a number of seconds or a difftime.", name)
     )
   }
-  round(x)
+  round(unname(x))
 }
 
 as_posixct <- function(x) {

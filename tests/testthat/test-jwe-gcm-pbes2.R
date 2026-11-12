@@ -457,3 +457,37 @@ test_that("a header member is read by its exact name, not as p2c (#122)", {
     expect_false("p2c" %in% names(jose_peek(token)$headers[[1]]))
   }
 })
+
+test_that("a named p2c or enc is written as its value (#120)", {
+  local_mocked_bindings(pbes2_kek = function(...) as.raw(1:16))
+  password <- jwk_oct(charToRaw("pw"))
+  for (where in c("header", "unprotected", "recipient")) {
+    p2c <- list(p2c = c(n = 1000))
+    token <- switch(
+      where,
+      header = jwe_encrypt(
+        "x",
+        password,
+        "PBES2-HS256+A128KW",
+        enc = c(e = "A128GCM"),
+        header = p2c
+      ),
+      unprotected = jwe_encrypt(
+        "x",
+        password,
+        "PBES2-HS256+A128KW",
+        unprotected = p2c,
+        format = "flattened"
+      ),
+      recipient = jwe_encrypt(
+        "x",
+        list(jwe_recipient(password, c(a = "PBES2-HS256+A128KW"), p2c)),
+        format = "general"
+      )
+    )
+    header <- jose_peek(token)$headers[[1]]
+    expect_identical(header$p2c, 1000L)
+    expect_type(header$alg, "character")
+    expect_type(header$enc, "character")
+  }
+})

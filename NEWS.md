@@ -1,5 +1,12 @@
 # zujose 0.0.0.9000
 
+* Names on R arguments no longer change the JSON zujose writes or the
+  values it compares. A named `expires_in`, `not_before`, `exp`, `nbf`,
+  `iat`, `p2c`, `alg`, `enc`, `kid`, `typ` or registered claim was written
+  as an object, a named list of `jws_signer()`s wrote `signatures` as an
+  object, and a named `issuer` or `subject` in `jwt_decode()` never
+  matched (#120).
+
 * `jwe_encrypt()` and `jwe_recipient()` refuse `zip` in every header with
   `zujose_argument_error`. In `unprotected` or a recipient's header it was
   written over content that was never compressed (#117).
