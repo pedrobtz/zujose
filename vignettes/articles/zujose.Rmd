@@ -272,6 +272,10 @@ jwt_decode(
 )$sub
 ```
 
+Each layer has its own allow-list: `decrypt` for the JWE, and the key and
+`algorithms` for the signature. Nesting stops at one level: a signed JWT
+inside another signed JWT is refused.
+
 ## Reading a token without checking it
 
 Sometimes you need to look inside a token before you can check it, for

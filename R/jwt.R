@@ -142,17 +142,21 @@ jwt_encode <- function(
 #' A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
 #' section 7), and one that does is refused with `zujose_policy_error`.
 #'
-#' A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
-#' That inner JWT is verified with the same `key` and `algorithms`, and its
-#' claims are checked. Deeper nesting is refused.
-#'
 #' A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
 #' it, so a check meant for signed tokens never silently accepts encrypted
-#' ones. The JWE carries a signed JWT (`cty: "JWT"`), verified as above,
-#' or, when its key management is symmetric (`dir`, `A*KW`, `A*GCMKW` or
-#' `PBES2-*`), the claims themselves. With RSA or ECDH key management anyone
-#' holding the recipient's public key can encrypt a token, so the claims must
-#' be signed: an encrypted-only JWT is refused with `zujose_policy_error`.
+#' ones. Each layer has its own allow-list: `decrypt` for the JWE, and
+#' `key` and `algorithms` for the signature. The JWE's key management must
+#' be in `decrypt`'s algorithms, checked first. The JWE then carries a
+#' signed JWT (`cty: "JWT"`), verified as above, or, when its key
+#' management is symmetric (`dir`, `A*KW`, `A*GCMKW` or `PBES2-*`), the
+#' claims themselves. With RSA or ECDH key management anyone holding the
+#' recipient's public key can encrypt a token, so the claims must be signed:
+#' an encrypted-only JWT is refused with `zujose_policy_error`.
+#'
+#' Nesting is one level only, a signed JWT inside a JWE. A signed JWT whose
+#' header has `cty: "JWT"` is refused with `zujose_policy_error` before its
+#' signature is checked, whether it is the token or inside a JWE. To accept a
+#' signed JWT inside another, call [jws_verify()] on each.
 #'
 #' Each failed check raises a subclass of `zujose_claim_error` carrying the
 #' claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
@@ -253,12 +257,22 @@ jwt_decode <- function(
         call = call
       )
     }
-    # An encrypted-only JWT is authentic only when the key management is
-    # symmetric: with RSA or ECDH, anyone holding the recipient's public key
-    # can make one. Its claims must then come inside a signed JWT (#34).
-    # Decided on the header, before any decryption.
-    outer <- jose_parse(token, limits, call)$protected
-    if (!is_nested(outer) && !identical(alg_key_types(outer[["alg"]]), "oct")) {
+    # Policy first, decided on the header before any decryption: the
+    # caller's allow-list, then the rule for encrypted-only JWTs. One of
+    # those is authentic only when the key management is symmetric: with
+    # RSA or ECDH, anyone holding the recipient's public key can make one,
+    # so its claims must come inside a signed JWT (design §8.5).
+    obj <- jose_parse(token, limits, call)
+    alg <- obj$protected[["alg"]]
+    if (!alg %in% decrypt$algorithms) {
+      abort_zujose(
+        "policy",
+        "The token's key management is not in `decrypt$algorithms`.",
+        call = call
+      )
+    }
+    public_key <- any(alg_key_types(alg) %in% c("RSA", "EC", "OKP"))
+    if (public_key && !is_nested(obj$protected)) {
       abort_zujose(
         "policy",
         paste0(
@@ -269,7 +283,7 @@ jwt_decode <- function(
       )
     }
     opened <- decrypt_jwe(
-      token,
+      obj,
       decrypt$key,
       decrypt$algorithms,
       decrypt$encryptions,
@@ -282,11 +296,8 @@ jwt_decode <- function(
       list(header = opened$header, payload = opened$plaintext)
     }
   } else {
-    refuse_unencoded(token, limits, call)
+    check_jws_header(token, limits, call)
     verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
-    if (is_nested(verified$header)) {
-      verified <- verify_inner(verified$payload, key, algorithms, limits, call)
-    }
   }
   header <- verified$header
   check_type(header, type, call)
@@ -676,7 +687,7 @@ check_type <- function(header, type, call) {
   invisible()
 }
 
-# The JWT nested inside a JWS or JWE: a compact JWS, one level only.
+# The JWT nested inside a JWE: a compact JWS, one level only (design §8.5).
 verify_inner <- function(bytes, key, algorithms, limits, call) {
   inner <- if (!any(bytes == as.raw(0))) rawToChar(bytes) else ""
   Encoding(inner) <- "UTF-8"
@@ -687,26 +698,33 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
       call = call
     )
   }
-  refuse_unencoded(inner, limits, call)
-  verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
-  if (is_nested(verified$header)) {
-    abort_zujose(
-      "policy",
-      "A JWT nested more than one level deep is refused.",
-      call = call
-    )
-  }
-  verified
+  check_jws_header(inner, limits, call)
+  verify_jws(inner, key, algorithms, NULL, "all", limits, call)
 }
 
-# RFC 7797 §7: JWTs must not use the unencoded payload option. Decided on
-# the parsed header, before any key is tried (#126).
-refuse_unencoded <- function(token, limits, call) {
+# The rules for a signed JWT's header, decided before any key is tried.
+# RFC 7797 §7: JWTs must not use the unencoded payload option. Design §8.5:
+# only a JWE may carry another JWT, so a signed JWT with `cty: "JWT"` is
+# refused, whether it is the token or nested inside a JWE.
+check_jws_header <- function(token, limits, call) {
   obj <- jose_parse(token, limits, call)
-  if (identical(obj$type, "JWS") && !obj$b64) {
+  if (!identical(obj$type, "JWS")) {
+    return(invisible())
+  }
+  if (!obj$b64) {
     abort_zujose(
       "policy",
       "A JWT must not use an unencoded payload (`b64: false`).",
+      call = call
+    )
+  }
+  if (is_nested(obj$signatures[[1]]$protected)) {
+    abort_zujose(
+      "policy",
+      paste0(
+        "A signed JWT must not carry another JWT (`cty: \"JWT\"`); ",
+        "only a JWE may."
+      ),
       call = call
     )
   }

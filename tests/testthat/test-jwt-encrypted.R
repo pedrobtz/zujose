@@ -137,3 +137,32 @@ test_that("a signed JWT inside a public-key JWE still decodes", {
   )
   expect_identical(claims$sub, "u")
 })
+
+test_that("a JWE's algorithm is checked against decrypt first (#77)", {
+  # A disallowed or unknown key management algorithm gets the allow-list
+  # error, not the rule for encrypted-only JWTs, and before any decryption.
+  kek <- jwk_oct(as.raw(1:16))
+  decrypt <- jwe_decryption(kek, "A128KW", "A128GCM")
+  rsa <- jwk_generate("RSA")
+  claims <- '{"sub":"admin","exp":2000000000}'
+  foo <- paste(
+    b64_json(list(alg = "foo", enc = "A128GCM")),
+    "",
+    "AAAAAAAAAAAAAAAA",
+    "AAAA",
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    sep = "."
+  )
+  wrong <- jwe_encrypt(claims, jwk_public(rsa), "RSA-OAEP-256", "A128GCM")
+  local_mocked_bindings(decrypt_jwe = function(...) stop("decrypted"))
+  for (token in c(foo, wrong)) {
+    expect_error(
+      jwt_decode(token, kek, "HS256", decrypt = decrypt),
+      class = "zujose_policy_error"
+    )
+  }
+  expect_snapshot(error = TRUE, {
+    jwt_decode(foo, kek, "HS256", decrypt = decrypt)
+    jwt_decode(wrong, kek, "HS256", decrypt = decrypt)
+  })
+})

@@ -102,17 +102,21 @@ compared, and passed to a function, as the \code{POSIXct} times
 A JWT must not use the unencoded payload option, \code{b64: false} (RFC 7797
 section 7), and one that does is refused with \code{zujose_policy_error}.
 
-A JWT whose header has \code{cty: "JWT"} carries another JWT as its payload.
-That inner JWT is verified with the same \code{key} and \code{algorithms}, and its
-claims are checked. Deeper nesting is refused.
-
 A JWT sent as a JWE is accepted only when \code{decrypt} says how to decrypt
 it, so a check meant for signed tokens never silently accepts encrypted
-ones. The JWE carries a signed JWT (\code{cty: "JWT"}), verified as above,
-or, when its key management is symmetric (\code{dir}, \code{A*KW}, \code{A*GCMKW} or
-\verb{PBES2-*}), the claims themselves. With RSA or ECDH key management anyone
-holding the recipient's public key can encrypt a token, so the claims must
-be signed: an encrypted-only JWT is refused with \code{zujose_policy_error}.
+ones. Each layer has its own allow-list: \code{decrypt} for the JWE, and
+\code{key} and \code{algorithms} for the signature. The JWE's key management must
+be in \code{decrypt}'s algorithms, checked first. The JWE then carries a
+signed JWT (\code{cty: "JWT"}), verified as above, or, when its key
+management is symmetric (\code{dir}, \code{A*KW}, \code{A*GCMKW} or \verb{PBES2-*}), the
+claims themselves. With RSA or ECDH key management anyone holding the
+recipient's public key can encrypt a token, so the claims must be signed:
+an encrypted-only JWT is refused with \code{zujose_policy_error}.
+
+Nesting is one level only, a signed JWT inside a JWE. A signed JWT whose
+header has \code{cty: "JWT"} is refused with \code{zujose_policy_error} before its
+signature is checked, whether it is the token or inside a JWE. To accept a
+signed JWT inside another, call \code{\link[=jws_verify]{jws_verify()}} on each.
 
 Each failed check raises a subclass of \code{zujose_claim_error} carrying the
 claim name: \code{zujose_expired_error}, \code{zujose_not_yet_valid_error},

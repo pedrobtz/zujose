@@ -553,7 +553,14 @@ jwe_decrypt <- function(
   check_algorithms(encryptions, "content encryption", "encryptions", call)
   check_key_arg(key, call)
   check_limits(limits, call)
-  decrypt_jwe(token, key, algorithms, encryptions, limits, call)
+  decrypt_jwe(
+    jose_parse(token, limits, call),
+    key,
+    algorithms,
+    encryptions,
+    limits,
+    call
+  )
 }
 
 #' Accept an encrypted JWT
@@ -589,8 +596,8 @@ print.jwe_decryption <- function(x, ...) {
   invisible(x)
 }
 
-decrypt_jwe <- function(token, key, algorithms, encryptions, limits, call) {
-  obj <- jose_parse(token, limits, call)
+# `obj` is the token as jose_parse() returns it.
+decrypt_jwe <- function(obj, key, algorithms, encryptions, limits, call) {
   if (obj$type != "JWE") {
     abort_zujose("policy", "Expected a JWE, not a JWS.", call = call)
   }

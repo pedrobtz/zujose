@@ -477,8 +477,14 @@ without `aud` fails when the caller does (RFC 8725 §3.9). `issuer`,
 `subject` and `type` are exact single-string matches. An array-valued `iss`
 or `sub` is a claim error, never a membership test: PyJWT
 (CVE-2024-53861) and joserfc (CVE-2026-75509) were both caught by looser
-matching. A nested JWT (`cty: "JWT"`) is unwrapped one level, with its own
-`algorithms`; deeper nesting fails. An encrypted-only JWT, a JWE carrying
+matching. A nested JWT (`cty: "JWT"`) is unwrapped one level only: a signed
+JWT inside a JWE, with a separate allow-list for each layer, the
+`jwe_decryption()` object's for the JWE and `algorithms` and `key` for the
+signature. A signed JWT inside a signed JWT, and any deeper nesting, is a
+`zujose_policy_error`, decided on the header before any signature is
+checked; a caller who needs one calls `jws_verify()` twice. Go-jose and
+Nimbus nest the same way, and jwcrypto and panva `jose` do not unwrap at
+all (Amended 2026-11-12, #46). An encrypted-only JWT, a JWE carrying
 the claims set itself, is accepted only with symmetric key management
 (`dir`, `A*KW`, `A*GCMKW`, `PBES2-*`): with RSA or ECDH key management
 anyone holding the recipient's public key can make one, so its claims

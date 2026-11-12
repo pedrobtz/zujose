@@ -255,7 +255,9 @@ validation, interoperating with `jose` for `HS*`.
 - `jose_jwt_decoder()`, the function factory of §7.5.
 - `jose_claims` class, with `POSIXct` times and the header attribute.
 - The claim-error leaf classes of §9.
-- Nested JWS-in-JWS (`cty: "JWT"`), one level, with its own `algorithms`.
+- Nested JWT (`cty: "JWT"`), one level: a signed JWT inside a JWE, with a
+  separate allow-list per layer. A signed JWT inside a signed JWT is
+  refused (Amended 2026-11-12, #46).
 - The `jose` oracle under `skip_if_not_installed("jose")`: each package
   verifies what the other signs.
 
