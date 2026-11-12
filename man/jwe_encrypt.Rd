@@ -30,7 +30,9 @@ own \code{alg}.}
 RFC 7518 requires every implementation to support.}
 
 \item{header}{Further protected header members, as a named list. For
-\verb{PBES2-*}, \code{p2c} sets the iteration count.}
+\verb{PBES2-*}, \code{p2c} sets the iteration count. \code{alg} and \code{enc} are set
+through their arguments, and no header may hold \code{zip}: zujose does not
+compress.}
 
 \item{unprotected}{Shared unprotected header members, as a named list.
 Only the JSON serializations carry them.}

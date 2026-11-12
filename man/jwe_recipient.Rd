@@ -11,7 +11,8 @@ jwe_recipient(key, alg = NULL, header = NULL)
 
 \item{alg}{The key management algorithm, or \code{NULL} for the key's own.}
 
-\item{header}{Per-recipient unprotected header members, as a named list.}
+\item{header}{Per-recipient unprotected header members, as a named list.
+It cannot hold \code{enc} or \code{zip}, and an \code{alg} must agree with \code{alg}.}
 }
 \value{
 A \code{jwe_recipient}.

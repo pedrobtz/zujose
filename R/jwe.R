@@ -45,7 +45,9 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' @param enc The content encryption algorithm. `"A128CBC-HS256"` is the one
 #'   RFC 7518 requires every implementation to support.
 #' @param header Further protected header members, as a named list. For
-#'   `PBES2-*`, `p2c` sets the iteration count.
+#'   `PBES2-*`, `p2c` sets the iteration count. `alg` and `enc` are set
+#'   through their arguments, and no header may hold `zip`: zujose does not
+#'   compress.
 #' @param unprotected Shared unprotected header members, as a named list.
 #'   Only the JSON serializations carry them.
 #' @param aad Additional authenticated data, as a raw vector or a string.
@@ -104,6 +106,7 @@ jwe_encrypt <- function(
 #' @param key A `jwk`.
 #' @param alg The key management algorithm, or `NULL` for the key's own.
 #' @param header Per-recipient unprotected header members, as a named list.
+#'   It cannot hold `enc` or `zip`, and an `alg` must agree with `alg`.
 #' @returns A `jwe_recipient`.
 #' @export
 #' @examples
@@ -113,10 +116,29 @@ jwe_recipient <- function(key, alg = NULL, header = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  header <- check_header_arg(header, "header")
+  check_no_zip(header)
+  if ("enc" %in% names(header)) {
+    abort_zujose(
+      "argument",
+      "Set `enc` through jwe_encrypt(), not a recipient's header."
+    )
+  }
   structure(
-    list(key = key, alg = alg, header = check_header_arg(header, "header")),
+    list(key = key, alg = alg, header = header),
     class = "jwe_recipient"
   )
+}
+
+# zujose never compresses, so a `zip` header would describe content that
+# is not compressed (design §8.6, RFC 8725 section 3.6, #117).
+check_no_zip <- function(header) {
+  if ("zip" %in% names(header)) {
+    abort_zujose(
+      "argument",
+      "zujose does not compress content; a `zip` header is refused."
+    )
+  }
 }
 
 encrypt_jwe <- function(
@@ -178,14 +200,16 @@ encrypt_jwe <- function(
       "The compact serialization has no unprotected header and no `aad`."
     )
   }
-  for (name in c("alg", "enc", "zip")) {
-    if (name %in% names(header)) {
+  for (name in c("alg", "enc")) {
+    if (name %in% c(names(header), names(unprotected))) {
       abort_zujose(
         "argument",
-        sprintf("Set `%s` through its argument, not `header`.", name)
+        sprintf("Set `%s` through its argument, not a header.", name)
       )
     }
   }
+  check_no_zip(header)
+  check_no_zip(unprotected)
   for (r in recipients) {
     check_disjoint_headers(header, unprotected, r$header)
   }
@@ -243,6 +267,21 @@ encrypt_jwe <- function(
     },
     ""
   )
+  # A recipient's own `alg` header must name its algorithm, which is
+  # written once, as jws_sign() requires of `header$alg` (#129).
+  for (i in seq_along(recipients)) {
+    own <- recipients[[i]]$header
+    if ("alg" %in% names(own)) {
+      if (!identical(own[["alg"]], algs[[i]])) {
+        abort_zujose(
+          "argument",
+          "A recipient's `header$alg` disagrees with its algorithm."
+        )
+      }
+      own <- own[names(own) != "alg"]
+      recipients[[i]]$header <- if (length(own)) own else empty_object()
+    }
+  }
   if (any(algs %in% c("dir", "ECDH-ES")) && length(recipients) > 1L) {
     abort_zujose(
       "argument",

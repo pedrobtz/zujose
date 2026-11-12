@@ -1,5 +1,13 @@
 # zujose 0.0.0.9000
 
+* `jwe_encrypt()` and `jwe_recipient()` refuse `zip` in every header with
+  `zujose_argument_error`. In `unprotected` or a recipient's header it was
+  written over content that was never compressed (#117).
+
+* `jwe_encrypt()` refuses a `jwe_recipient()` header `alg` that disagrees
+  with the recipient's algorithm, in every format, as `jws_sign()` does. It
+  was silently replaced in the general serialization (#129).
+
 * `jws_sign()`, `jws_signer()`, `jwe_encrypt()`, `jwe_recipient()` and
   `jwt_encode()` refuse, with `zujose_argument_error`, a header or claims
   set with a repeated, `NA` or empty name at any depth, a member given in

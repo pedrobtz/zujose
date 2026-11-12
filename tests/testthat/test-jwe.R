@@ -648,3 +648,54 @@ test_that("JWE headers with repeated or empty names are refused (#119)", {
     class = "zujose_argument_error"
   )
 })
+
+test_that("zip is refused in every header jwe_encrypt() takes (#117)", {
+  kek <- jwk_oct(as.raw(1:16))
+  zip <- list(zip = "DEF")
+  expect_error(
+    jwe_encrypt("x", kek, "A128KW", header = zip),
+    class = "zujose_argument_error"
+  )
+  for (format in c("flattened", "general")) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", unprotected = zip, format = format),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jwe_recipient(kek, "A128KW", header = zip),
+    class = "zujose_argument_error"
+  )
+})
+
+test_that("a recipient header alg must agree with the algorithm (#129)", {
+  kek <- jwk_oct(as.raw(1:16))
+  for (format in c("flattened", "general")) {
+    expect_error(
+      jwe_encrypt(
+        "p",
+        list(jwe_recipient(kek, "A128KW", header = list(alg = "A256KW"))),
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_encrypt(
+        "p",
+        list(jwe_recipient(
+          jwk_oct(as.raw(1:16), alg = "A128KW"),
+          header = list(alg = "A256KW")
+        )),
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+    # The same `alg` is written once.
+    token <- jwe_encrypt(
+      "p",
+      list(jwe_recipient(kek, "A128KW", header = list(alg = "A128KW"))),
+      format = format
+    )
+    expect_identical(jose_peek(token)$headers[[1]]$alg, "A128KW")
+  }
+})
