@@ -29,6 +29,13 @@
     Output
       <jwe_decryption> A128KW with A128CBC-HS256
 
+# a truncated tag that is a prefix of the real one is refused
+
+    Code
+      cat(unique(messages))
+    Output
+      Decryption failed.
+
 # a bad plaintext or aad is named in the error
 
     Code

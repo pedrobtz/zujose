@@ -190,7 +190,7 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   its inputs, and `rsa_2040_jwk()` is a public key under the 2048-bit
   minimum.
 - **Keep the suite inside the CRAN time budget.** The whole suite takes
-  about 80 seconds.
+  about 100 seconds.
 
 ## Assurance
 

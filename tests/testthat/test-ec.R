@@ -329,6 +329,7 @@ test_that("an ECDH-ES failure after policy is the one decrypt error", {
   # A wrong private key, a flipped tag, and an ECDH-ES token that carries an
   # encrypted key all fail with the class and message every other JWE
   # failure has, so none of them is an oracle (#41).
+  messages <- character()
   for (crv in c("P-256", "X25519")) {
     kty <- if (crv == "X25519") "OKP" else "EC"
     right <- jwk_generate(kty, crv = crv)
@@ -354,10 +355,13 @@ test_that("an ECDH-ES failure after policy is the one decrypt error", {
           class = "zujose_decrypt_error",
           info = paste(crv, alg)
         )
-        expect_identical(conditionMessage(err), "Decryption failed.")
+        messages <- c(messages, conditionMessage(err))
       }
     }
   }
+  # One message for every cause; its wording is pinned in a snapshot.
+  expect_length(unique(messages), 1L)
+  expect_snapshot(cat(unique(messages)))
 })
 
 # Keys ---------------------------------------------------------------------

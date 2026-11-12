@@ -589,6 +589,7 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
   # prefix, and a 4-byte tag can be forged in about 2^32 tries (RFC 8725;
   # design §10). Every truncation is the one decryption error (#73).
   kek <- jwk_oct(as.raw(1:16))
+  messages <- character()
   for (enc in c("A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM")) {
     token <- jwe_encrypt("attack at dawn", kek, "A128KW", enc = enc)
     parts <- strsplit(token, ".", fixed = TRUE)[[1]]
@@ -606,9 +607,12 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
         class = "zujose_decrypt_error",
         info = paste(enc, n)
       )
-      expect_identical(conditionMessage(err), "Decryption failed.")
+      messages <- c(messages, conditionMessage(err))
     }
   }
+  # One message for every truncation; its wording is pinned in a snapshot.
+  expect_length(unique(messages), 1L)
+  expect_snapshot(cat(unique(messages)))
 })
 
 test_that("JWE headers with repeated or empty names are refused (#119)", {
