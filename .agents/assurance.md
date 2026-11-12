@@ -84,7 +84,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | JWK export, every `kty`                   | round trip for every RFC 7520 key; jwcrypto, dev, reads the exported set                | tests/testthat/test-keys.R, tools/jwe-oracle/                 |
 | PEM import, RSA and EC                    | `cryptography`'s PEMs give keys that verify PyJWT's tokens                              | tests/testthat/test-oracle.R                                  |
 | PEM export, RSA                           | identical to `cryptography`'s PKCS#8 and SPKI bytes                                     | tests/testthat/test-rsa.R                                     |
-| PEM export, EC and X25519                 | identical to `cryptography`'s PEM bytes                                                 | gap #103                                                        |
+| PEM export, EC and X25519                 | identical to `cryptography`'s PKCS#8 and SPKI bytes for P-256, P-384, P-521 and X25519  | tests/testthat/test-ec.R                                      |
 | JWK Set parse and emit                    | RFC 7520 keys as one set; RFC 7517 §5 skip rule; round trip                             | tests/testthat/test-keyset.R                                  |
 | JWK Set parse, published sets             | RFC 7517 Appendix A sets, member by member                                              | gap #104                                                        |
 | RFC 7638 thumbprint, RSA                  | RFC 7638 §3.1 value; RFC 9278 URI                                                       | tests/testthat/test-thumbprint.R                              |
