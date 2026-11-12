@@ -1,0 +1,30 @@
+source("helper.R")
+d <- zujson::json_parse(paste(readLines("data/sig.json"), collapse = "\n"), simplify = "none")
+t <- d$tokens
+k <- function(n) try_(paste("key", n), as_jwk(d[[n]]))
+for (n in grep("priv|pub|jwk", names(d), value = TRUE)) { kk <- k(n); if (inherits(kk, "jwk")) cat("   ", kk$kty, kk$members$crv %||% "", kk$bits %||% NA, "supported:", kk$supported, "private:", zujose:::has_private(kk), "\n") }
+rsa <- as_jwk(d$rsa_pub_spki)
+stopifnot(identical(jwk_thumbprint(as_jwk(d$rsa_pub_spki)), jwk_thumbprint(as_jwk(d$rsa_jwk_pub))), identical(jwk_thumbprint(as_jwk(d$rsa_priv_pkcs1)), jwk_thumbprint(as_jwk(d$rsa_jwk_priv))))
+v <- function(n, key, alg = sub("_.*", "", n), tok = t[[n]]) try_(n, jws_verify(tok, key, algorithms = alg))
+for (n in grep("^(RS|PS)", names(t), value = TRUE)) v(n, rsa)
+v("RS256_1024", as_jwk(d$rsa1024_pub)); v("RS256_e3", as_jwk(d$rsa_e3_priv))
+try_("PS256 tok as RS256 alg-list", jws_verify(t$PS256, rsa, algorithms = "RS256"))
+try_("RS256 w/ private key", jws_verify(t$RS256, as_jwk(d$rsa_priv_pkcs8), algorithms = "RS256"))
+# RSA sig length variants
+p <- strsplit(t$RS256, ".", fixed = TRUE)[[1]]; s <- unb64(p[3])
+for (sg in list(short = s[-1], long = c(as.raw(0), s), empty = raw(), zeros = raw(256), ff = as.raw(rep(255, 256)), one = c(raw(255), as.raw(1)))) try_("RS256 sig variant", jws_verify(paste0(p[1], ".", p[2], ".", b64(sg)), rsa, algorithms = "RS256"))
+p <- strsplit(t$PS256, ".", fixed = TRUE)[[1]]; s <- unb64(p[3])
+for (sg in list(short = s[-1], long = c(as.raw(0), s), empty = raw(), zeros = raw(256), ff = as.raw(rep(255, 256)))) try_("PS256 sig variant", jws_verify(paste0(p[1], ".", p[2], ".", b64(sg)), rsa, algorithms = "PS256"))
+ec <- list(ES256 = as_jwk(d[["ec_P-256_pub"]]), ES384 = as_jwk(d[["ec_P-384_pub"]]), ES512 = as_jwk(d[["ec_P-521_pub"]]))
+for (n in grep("^ES(256|384|512)", names(t), value = TRUE)) { a <- sub("_.*", "", n); if (a %in% names(ec)) v(n, ec[[a]], a) }
+v("ES256_with_p384", ec$ES384, "ES256")
+try_("ES256 tok w/ P-384 key", jws_verify(t$ES256, ec$ES384, algorithms = "ES256"))
+try_("ES256 tok, alg list ES384", jws_verify(t$ES256, ec$ES256, algorithms = "ES384"))
+try_("ES256K", jws_verify(t$ES256K, ec$ES256, algorithms = "ES256"))
+try_("ES256 with RSA key", jws_verify(t$ES256, rsa, algorithms = "ES256"))
+try_("RS256 with oct key=PEM bytes (confusion)", jws_verify(t$RS256, jwk_oct(charToRaw(d$rsa_pub_spki)), algorithms = c("RS256", "HS256")))
+# HS256 token signed with the public PEM as secret, verified with RSA key and both algs allowed
+ct <- hs('{"alg":"HS256"}', "x", charToRaw(d$rsa_pub_spki)); try_("HS256 confusion w/ rsa key", jws_verify(ct, rsa, algorithms = c("RS256", "HS256")))
+ok <- vapply(unlist(d$many_es256), function(tk) !inherits(tryCatch(jws_verify(tk, ec$ES256, algorithms = "ES256"), error = function(e) e), "error"), NA); cat("many ES256 ok:", sum(ok), "/", length(ok), "\n")
+ok <- vapply(unlist(d$many_es512), function(tk) !inherits(tryCatch(jws_verify(tk, ec$ES512, algorithms = "ES512"), error = function(e) e), "error"), NA); cat("many ES512 ok:", sum(ok), "/", length(ok), "\n")
+lead0 <- sum(vapply(unlist(d$many_es256), function(tk) { s <- unb64(strsplit(tk, ".", fixed = TRUE)[[1]][3]); s[1] == 0 || s[33] == 0 }, NA)); cat("leading-zero cases among ES256:", lead0, "\n")

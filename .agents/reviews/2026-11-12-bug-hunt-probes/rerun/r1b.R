@@ -1,0 +1,11 @@
+source("../hunt-1/pre.R")
+T <- function(label, expr) { cat("==", label, ": "); r <- tryCatch(expr, error=function(e) paste0("ERROR<", class(e)[1], "> ", conditionMessage(e))); cat(if (is.character(r)) r else format(r), "\n") }
+k <- key; E <- list(exp = 4e9)
+tok <- jwt_encode(c(list(scope="read"), E), k, "HS256")
+T("F1", { jwt_decode(tok, k, "HS256", claims=list(scope="read", scope="write")); "ACCEPTED" })
+T("F9 kidnap", { t <- jwt_encode(E, k, "HS256", header=list(kidnap="zzz")); capture.output(print(jwt_decode(t, jwk_oct(as.raw(1:32)), "HS256")))[1] })
+T("F16 order", { t <- jwt_encode(c(list(o=list(a=1,b=2)), E), k, "HS256"); jwt_decode(t, k, "HS256", claims=list(o=list(b=2,a=1))); "ACCEPTED" })
+T("F19", { t <- jwt_encode(c(list(iss="me"), E), k, "HS256"); jwt_decode(t, k, "HS256", issuer=c(x="me")); "ACCEPTED" })
+kw <- jwk_oct(as.raw(1:16))
+T("F17", { r <- jwe_recipient(kw, "A128KW", header=list(alg="A256KW")); t <- jwe_encrypt("x", list(r), format="general"); t })
+T("F8", { options(OutDec=",", warn=2); capture.output(print(jose_limits())); "printed" })
