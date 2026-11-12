@@ -580,3 +580,16 @@ test_that("a named issuer or subject matches its value (#120)", {
   )
   expect_identical(claims$iss, "me")
 })
+
+test_that("jwt_encode() takes one key, not a list of signers (#130)", {
+  key <- jwk_oct(as.raw(1:32))
+  expect_error(
+    jwt_encode(list(a = 1), list(jws_signer(key, "HS256"))),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwt_encode(list(a = 1), jws_signer(key, "HS256")),
+    class = "zujose_argument_error"
+  )
+  expect_error(jwt_encode(list(a = 1), "key"), class = "zujose_key_error")
+})

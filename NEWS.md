@@ -1,5 +1,10 @@
 # zujose 0.0.0.9000
 
+* `jwt_encode()` documents `key` as one `jwk`, and refuses `jws_signer()`s
+  with a clear `zujose_argument_error`: a JWT is compact and has one
+  signature. It inherited a list-of-signers `key` from `jws_sign()` that
+  its own default header made it refuse (#130).
+
 * Errors that escaped as base R, zucrypt or zujson conditions are now
   `zujose_error`s: an `enc` that is not one string in `jwe_encrypt()`, a
   NUL byte in an unencoded (`b64 = FALSE`) payload, an RSA `size` that is

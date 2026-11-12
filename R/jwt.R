@@ -9,6 +9,8 @@
 #' written as NumericDate, whole seconds since 1970. `expires_in` and
 #' `not_before` count from now.
 #'
+#' @param key A `jwk`. A JWT is in the compact serialization, which carries
+#'   one signature, so a list of [jws_signer()]s is refused.
 #' @param claims The claims, as a named list. It may be empty. Names must
 #'   be unique and not empty at every depth, and values must be of a type
 #'   JSON can represent.
@@ -41,6 +43,20 @@ jwt_encode <- function(
   jti = FALSE
 ) {
   call <- sys.call()
+  # A JWT is a compact JWS, which carries one signature (#130).
+  if (
+    inherits(key, "jws_signer") ||
+      (is.list(key) &&
+        !inherits(key, "jwk") &&
+        any(vapply(key, inherits, logical(1), "jws_signer")))
+  ) {
+    abort_zujose(
+      "argument",
+      "A JWT has one signature: give `key` as one jwk, not jws_signer()s.",
+      call = call
+    )
+  }
+  check_key(key, call)
   claims <- check_header_arg(
     claims,
     "claims",
