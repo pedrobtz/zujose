@@ -52,7 +52,8 @@ as_jwk_set <- function(x) {
   if (inherits(x, "jwk_set")) {
     return(x)
   }
-  if (is.character(x)) {
+  json <- is.character(x)
+  if (json) {
     if (!is_string(x)) {
       abort_zujose("key", "A JWK Set must be a single string.", call = call)
     }
@@ -71,7 +72,10 @@ as_jwk_set <- function(x) {
   }
   known <- c("oct", names(pending_key_types))
   keys <- lapply(entries, function(entry) {
-    key <- tryCatch(as_jwk(entry), zujose_key_error = function(e) NULL)
+    key <- tryCatch(
+      if (is.list(entry)) list_to_key(entry, call, json) else as_jwk(entry),
+      zujose_key_error = function(e) NULL
+    )
     if (!is.null(key) && key$kty %in% known) key
   })
   new_jose_keyset(Filter(Negate(is.null), keys))

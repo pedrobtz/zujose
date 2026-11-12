@@ -530,12 +530,17 @@ as_jwk.character <- function(x, ...) {
   if (grepl("^[[:space:]]*-----BEGIN", x)) {
     return(pem_to_key(x, call))
   }
-  jwk_to_key(json_key_object(x, "JWK", call), call)
+  jwk_to_key(json_key_object(x, "JWK", call), call, json = TRUE)
 }
 
 #' @export
 as_jwk.list <- function(x, ...) {
-  call <- sys.call(-1)
+  list_to_key(x, sys.call(-1))
+}
+
+# `json` is whether the list was parsed from JSON text, where an array is
+# always a list; a list built in R may hold a character vector instead.
+list_to_key <- function(x, call, json = FALSE) {
   if (!is_json_object(x) || has_repeated_names(x)) {
     abort_zujose(
       "key",
@@ -543,7 +548,7 @@ as_jwk.list <- function(x, ...) {
       call = call
     )
   }
-  jwk_to_key(x, call)
+  jwk_to_key(x, call, json)
 }
 
 #' @export
@@ -564,18 +569,12 @@ json_key_object <- function(text, what, call) {
   )
 }
 
-jwk_to_key <- function(jwk, call) {
+jwk_to_key <- function(jwk, call, json = FALSE) {
   kty <- member(jwk, "kty")
   if (!is_string(kty)) {
     abort_zujose("key", "A JWK must have a string `kty`.", call = call)
   }
-  key_ops <- member(jwk, "key_ops")
-  if (!is.null(key_ops)) {
-    if (!is.list(key_ops) || !all(vapply(key_ops, is_string, logical(1)))) {
-      abort_zujose("key", "`key_ops` must be an array of strings.", call = call)
-    }
-    key_ops <- unlist(key_ops)
-  }
+  key_ops <- jwk_key_ops(member(jwk, "key_ops"), json, call)
   common <- c("kty", "kid", "alg", "use", "key_ops")
   members <- jwk[setdiff(names(jwk), common)]
 
@@ -624,6 +623,25 @@ jwk_to_key <- function(jwk, call) {
     bits = bits,
     call = call
   )
+}
+
+# `key_ops` is an array of strings (RFC 7517 §4.3): a JSON array, or a
+# character vector in a list built in R. A present empty array permits no
+# operation, so it is kept as character(0), never NULL (#121).
+jwk_key_ops <- function(key_ops, json, call) {
+  if (is.null(key_ops)) {
+    return(NULL)
+  }
+  if (!json && is.character(key_ops) && is.null(names(key_ops))) {
+    return(key_ops)
+  }
+  ok <- is.list(key_ops) &&
+    is.null(names(key_ops)) &&
+    all(vapply(key_ops, is_string, logical(1)))
+  if (!ok) {
+    abort_zujose("key", "`key_ops` must be an array of strings.", call = call)
+  }
+  as.character(unlist(key_ops))
 }
 
 # An RSA JWK's members must make a key: n and e, and for a private key all

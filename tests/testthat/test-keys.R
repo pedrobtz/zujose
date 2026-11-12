@@ -239,3 +239,33 @@ test_that("a refused oct size has a message", {
     error = TRUE
   )
 })
+
+test_that("an empty `key_ops` permits no operation, and survives JSON", {
+  # #121: a present empty array is no operations, not no restriction.
+  k <- b64url_encode(as.raw(1:32))
+  read <- as_jwk(sprintf('{"kty":"oct","k":"%s","key_ops":[]}', k))
+  expect_identical(read$key_ops, character())
+  expect_error(jws_sign("x", read, "HS256"), class = "zujose_policy_error")
+  made <- jwk_oct(as.raw(1:32), key_ops = character())
+  back <- as_jwk(jwk_json(made, TRUE))
+  expect_identical(back$key_ops, character())
+  expect_error(jws_sign("x", back, "HS256"), class = "zujose_policy_error")
+})
+
+test_that("`key_ops` must be an array of strings", {
+  k <- b64url_encode(as.raw(1:32))
+  for (ops in c('{}', '{"a":"sign"}', '"sign"', '[1]', '["sign",null]')) {
+    json <- sprintf('{"kty":"oct","k":"%s","key_ops":%s}', k, ops)
+    expect_error(as_jwk(json), class = "zujose_key_error", info = ops)
+  }
+  key <- as_jwk(list(kty = "oct", k = k, key_ops = c("sign", "verify")))
+  expect_identical(key$key_ops, c("sign", "verify"))
+  set <- as_jwk_set(list(
+    keys = list(
+      list(kty = "oct", k = k, key_ops = c("sign", "verify"))
+    )
+  ))
+  expect_length(set, 1L)
+  text <- sprintf('{"keys":[{"kty":"oct","k":"%s","key_ops":"sign"}]}', k)
+  expect_length(as_jwk_set(text), 0L)
+})

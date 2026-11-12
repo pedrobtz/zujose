@@ -1,5 +1,10 @@
 # zujose 0.0.0.9000
 
+* A JWK's `key_ops` must be an array of strings; a JSON object is a key
+  error. A present empty array permits no operation, and stays empty when
+  written and read back, where before it meant no restriction. A list
+  built in R may give `key_ops` as a character vector (#121).
+
 * `as_jwk()` refuses an RSA JWK with `oth`, private or public: zujose has
   no multi-prime keys (#125).
 
