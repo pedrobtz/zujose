@@ -168,7 +168,16 @@ test_that("the default size follows alg", {
     A128GCMKW = 16L,
     A192GCMKW = 24L,
     A256GCMKW = 32L,
-    dir = 32L
+    dir = 32L,
+    "PBES2-HS256+A128KW" = 32L,
+    "PBES2-HS384+A192KW" = 32L,
+    "PBES2-HS512+A256KW" = 32L,
+    "A128CBC-HS256" = 32L,
+    "A192CBC-HS384" = 48L,
+    "A256CBC-HS512" = 64L,
+    A128GCM = 16L,
+    A192GCM = 24L,
+    A256GCM = 32L
   )
   for (alg in names(sizes)) {
     expect_length(jwk_generate("oct", alg = alg)$k, sizes[[alg]])
@@ -207,7 +216,7 @@ test_that("jwk_generate() refuses sizes and algorithms that do not fit", {
   expect_length(jwk_generate("oct", size = 128)$k, 16L)
   expect_length(jwk_generate("oct", size = 192, alg = "dir")$k, 24L)
   # Not an oct algorithm at all.
-  for (alg in c("RS256", "ES256", "A128CBC-HS256", "PBES2-HS256+A128KW")) {
+  for (alg in c("RS256", "ES256", "ECDH-ES", "A128GCMX")) {
     expect_error(
       jwk_generate("oct", alg = alg),
       class = "zujose_key_error"
@@ -268,4 +277,24 @@ test_that("`key_ops` must be an array of strings", {
   expect_length(set, 1L)
   text <- sprintf('{"keys":[{"kty":"oct","k":"%s","key_ops":"sign"}]}', k)
   expect_length(as_jwk_set(text), 0L)
+})
+
+test_that("jwk_generate() makes an oct key for every oct algorithm", {
+  # #132: PBES2, and a `dir` key named by its content encryption, as
+  # jwk_oct() and key selection allow.
+  password <- jwk_generate("oct", alg = "PBES2-HS256+A128KW")
+  token <- jwe_encrypt("hi", password)
+  out <- jwe_decrypt(token, password, "PBES2-HS256+A128KW", "A128CBC-HS256")
+  expect_identical(out$plaintext, charToRaw("hi"))
+  expect_length(jwk_generate("oct", 128, alg = "PBES2-HS512+A256KW")$k, 16L)
+  cek <- jwk_generate("oct", alg = "A256GCM")
+  token <- jwe_encrypt("hi", cek, alg = "dir", enc = "A256GCM")
+  expect_identical(
+    jwe_decrypt(token, cek, "dir", "A256GCM")$plaintext,
+    charToRaw("hi")
+  )
+  expect_error(
+    jwk_generate("oct", size = 256, alg = "A128GCM"),
+    class = "zujose_key_error"
+  )
 })

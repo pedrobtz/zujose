@@ -1,5 +1,10 @@
 # zujose 0.0.0.9000
 
+* `jwk_generate("oct")` accepts every `oct` algorithm `jwk_oct()` does: a
+  `PBES2-*` password (256 bits by default), and a `dir` key named by its
+  content encryption, such as `alg = "A128GCM"`, made at that algorithm's
+  exact size (#132).
+
 * A JWK's `key_ops` must be an array of strings; a JSON object is a key
   error. A present empty array permits no operation, and stays empty when
   written and read back, where before it meant no restriction. A list

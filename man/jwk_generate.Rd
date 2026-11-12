@@ -46,10 +46,12 @@ P-256, P-384 or P-521) and \code{OKP} (X25519) keys. There is no Ed25519.
 \details{
 Without \code{size}, an \code{oct} key is as long as \code{alg} needs: the hash size for
 \code{HS256}, \code{HS384} and \code{HS512} (RFC 7518 section 3.2), the key size for
-\code{A*KW} and \code{A*GCMKW}, and 256 bits otherwise. A \code{dir} key is the content
-encryption key itself, so give its \code{size}: 256 bits for \code{A128CBC-HS256},
-384 for \code{A192CBC-HS384}, 512 for \code{A256CBC-HS512}, and 128, 192 or 256
-for \code{A128GCM}, \code{A192GCM} and \code{A256GCM}.
+\code{A*KW} and \code{A*GCMKW}, and 256 bits otherwise, as for a \verb{PBES2-*}
+password. A \code{dir} key is the content encryption key itself: name it by
+its content encryption, such as \code{alg = "A128GCM"}, to get its exact size
+(256 bits for \code{A128CBC-HS256}, 384 for \code{A192CBC-HS384}, 512 for
+\code{A256CBC-HS512}, and 128, 192 or 256 for \code{A128GCM}, \code{A192GCM} and
+\code{A256GCM}), or give \code{alg = "dir"} and its \code{size}.
 
 An \code{RSA} key's \code{size} is its modulus, 2048 bits by default and at most
 4096, with public exponent 65537. Generating one takes a moment.

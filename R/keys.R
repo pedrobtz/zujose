@@ -213,10 +213,12 @@ jwk_oct <- function(
 #'
 #' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
 #' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
-#' `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key is the content
-#' encryption key itself, so give its `size`: 256 bits for `A128CBC-HS256`,
-#' 384 for `A192CBC-HS384`, 512 for `A256CBC-HS512`, and 128, 192 or 256
-#' for `A128GCM`, `A192GCM` and `A256GCM`.
+#' `A*KW` and `A*GCMKW`, and 256 bits otherwise, as for a `PBES2-*`
+#' password. A `dir` key is the content encryption key itself: name it by
+#' its content encryption, such as `alg = "A128GCM"`, to get its exact size
+#' (256 bits for `A128CBC-HS256`, 384 for `A192CBC-HS384`, 512 for
+#' `A256CBC-HS512`, and 128, 192 or 256 for `A128GCM`, `A192GCM` and
+#' `A256GCM`), or give `alg = "dir"` and its `size`.
 #'
 #' An `RSA` key's `size` is its modulus, 2048 bits by default and at most
 #' 4096, with public exponent 65537. Generating one takes a moment.
@@ -415,6 +417,15 @@ oct_key_bits <- function(alg, call) {
   }
   if (grepl("^A(128|192|256)(GCM)?KW$", alg)) {
     bits <- as.numeric(substr(alg, 2L, 4L))
+    return(list(bits = bits, min = bits, exact = TRUE))
+  }
+  # A PBES2 key is a password, of any length (#132).
+  if ("oct" %in% alg_key_types(alg)) {
+    return(list(bits = 256, min = 128, exact = FALSE))
+  }
+  # A `dir` key named by its content encryption is that algorithm's CEK.
+  if (alg %in% c(names(cbc_hs), names(gcm_key_bytes))) {
+    bits <- 8 * cek_bytes(alg)
     return(list(bits = bits, min = bits, exact = TRUE))
   }
   abort_zujose(
