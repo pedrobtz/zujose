@@ -4,7 +4,7 @@
       print(jose_limits(signatures = 2))
     Output
       <jose_limits>
-        token      1,048,576
+        token      2,097,152
         header     16,384
         payload    1,048,576
         signatures 2

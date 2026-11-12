@@ -10,7 +10,10 @@
 #' the token, and fails with `zujose_key_error`. Give the keys a `kid`, or
 #' narrow the set. Use `Inf` to switch a limit off.
 #'
-#' @param token Maximum length of a token, in bytes.
+#' @param token Maximum length of a token, in bytes. This bounds the encoded
+#'   form, which is about 4/3 of the payload, so the default of 2 MiB leaves
+#'   room for a payload at the `payload` limit. Encoding functions do not
+#'   check these limits.
 #' @param header Maximum length of a decoded protected header, in bytes.
 #' @param payload Maximum length of a payload or ciphertext, in bytes. This
 #'   applies to detached and unencoded (`b64: false`) payloads too.
@@ -26,7 +29,7 @@
 #' jose_limits()
 #' jose_limits(token = 8192, signatures = 1)
 jose_limits <- function(
-  token = 2^20,
+  token = 2^21,
   header = 2^14,
   payload = 2^20,
   signatures = 16,

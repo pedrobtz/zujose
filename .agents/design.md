@@ -359,7 +359,7 @@ cl <- check(jwt)                         # same checks, every call
 ```r
 jose_peek(tok)       # every part decoded: headers, payload, claims, signatures
                      # or encrypted keys, IV, ciphertext, tag, AAD; unverified
-jose_limits(token = 2^20, header = 2^14, payload = 2^20, signatures = 16,
+jose_limits(token = 2^21, header = 2^14, payload = 2^20, signatures = 16,
             recipients = 16, keys = 16, p2c = 600000)
 zujose_info()         # data frame: algorithm, kind, available, zucrypt needed
 ```
@@ -510,11 +510,13 @@ PyJWT's do: `zujose_expired_error`, `zujose_not_yet_valid_error`,
 errors carry both times. Messages name claims and times but never echo
 key material, decrypted bytes or token text (joserfc CVE-2025-65015).
 
-`jose_limits()` caps token length (1 MiB), header length (16 KiB), payload
-length including detached and `b64: false` payloads (1 MiB; joserfc
-CVE-2026-48990 missed that path), signatures and recipients per JSON
-object (16), keys tried per token (16) and PBES2 iterations (600 000).
-Each is checked before decoding.
+`jose_limits()` caps token length (2 MiB, as the encoded form is about
+4/3 of the payload), header length (16 KiB), payload length including
+detached and `b64: false` payloads (1 MiB; joserfc CVE-2026-48990 missed
+that path), signatures and recipients per JSON object (16), keys tried
+per token (16) and PBES2 iterations (600 000).
+Each is checked before decoding. Encoders do not check the limits, which
+guard untrusted input.
 
 ## 10. Testing
 

@@ -5,7 +5,7 @@
 \title{Resource limits for untrusted tokens}
 \usage{
 jose_limits(
-  token = 2^20,
+  token = 2^21,
   header = 2^14,
   payload = 2^20,
   signatures = 16,
@@ -15,7 +15,10 @@ jose_limits(
 )
 }
 \arguments{
-\item{token}{Maximum length of a token, in bytes.}
+\item{token}{Maximum length of a token, in bytes. This bounds the encoded
+form, which is about 4/3 of the payload, so the default of 2 MiB leaves
+room for a payload at the \code{payload} limit. Encoding functions do not
+check these limits.}
 
 \item{header}{Maximum length of a decoded protected header, in bytes.}
 

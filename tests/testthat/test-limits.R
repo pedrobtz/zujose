@@ -4,7 +4,7 @@ test_that("jose_limits() has the documented defaults", {
   expect_identical(
     unclass(limits),
     list(
-      token = 2^20,
+      token = 2^21,
       header = 2^14,
       payload = 2^20,
       signatures = 16,
@@ -104,4 +104,13 @@ test_that("the payload limit bounds a JWE ciphertext exactly", {
     ),
     class = "zujose_parse_error"
   )
+})
+
+test_that("a payload at the default limit fits the default token limit", {
+  key <- jwk_oct(as.raw(1:32))
+  payload <- as.raw(rep_len(0:255, 2^20))
+  token <- jws_sign(payload, key, alg = "HS256")
+  expect_identical(jws_verify(token, key, "HS256")$payload, payload)
+  token <- jwe_encrypt(payload, key, alg = "dir", enc = "A256GCM")
+  expect_identical(jwe_decrypt(token, key, "dir", "A256GCM")$plaintext, payload)
 })

@@ -1,5 +1,10 @@
 # zujose 0.0.0.9000
 
+* The default `token` limit of `jose_limits()` is 2 MiB, up from 1 MiB, so
+  a token whose payload is at the default 1 MiB `payload` limit can be
+  read. `token` bounds the encoded form, about 4/3 of the payload.
+  Encoders do not check the limits (#134).
+
 * `jws_verify()` counts `limits$keys` across all of a general JWS's
   signatures, not per signature, as `jwe_decrypt()` does. It checks every
   signature's algorithm and keys before verifying any (#92).
