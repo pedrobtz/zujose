@@ -644,6 +644,21 @@ check_rsa_jwk <- function(members, call) {
       call = call
     )
   }
+  # RFC 7518 §2: a Base64urlUInt uses the fewest octets, so a key has one
+  # encoding and one thumbprint (#94).
+  for (name in c("n", "e", if (all(given)) rsa_private_members)) {
+    value <- jwk_member_raw(members, name)
+    if (is.null(value) || length(value) == 0L || value[[1]] == as.raw(0)) {
+      abort_zujose(
+        "key",
+        sprintf(
+          "The RSA JWK's `%s` is not a minimal Base64urlUInt.",
+          name
+        ),
+        call = call
+      )
+    }
+  }
   key <- list(kty = "RSA", members = members)
   ck <- tryCatch(
     rsa_crypt_key(key, all(given)),
@@ -658,6 +673,15 @@ check_rsa_jwk <- function(members, call) {
     )
   }
   as.integer(as.list(ck)$size)
+}
+
+# A JWK member's bytes, or NULL when it is not a string of Base64url.
+jwk_member_raw <- function(members, name) {
+  value <- members[[name]]
+  if (!is_string(value)) {
+    return(NULL)
+  }
+  tryCatch(b64url_decode(value, name), zujose_error = function(e) NULL)
 }
 
 # An EC JWK needs a NIST curve, x and y; an X25519 one, x. Either may carry
@@ -678,12 +702,36 @@ check_ec_jwk <- function(kty, members, call) {
       call = call
     )
   }
+  # RFC 7518 §6.2.1.2, §6.2.1.3 and §6.2.2.1 (and RFC 8037 §2): `x`, `y`
+  # and `d` are the full coordinate length, never shorter or longer (#94).
+  bytes <- if (kty == "OKP") 32L else (ec_curves[[members$crv]] + 7L) %/% 8L
+  for (name in intersect(c("x", "y", "d"), names(members))) {
+    if (length(jwk_member_raw(members, name)) != bytes) {
+      abort_zujose(
+        "key",
+        sprintf("The JWK's `%s` is not %d bytes long.", name, bytes),
+        call = call
+      )
+    }
+  }
   key <- list(kty = kty, members = members)
+  private <- "d" %in% names(members)
   ck <- tryCatch(
-    ec_crypt_key(key, "d" %in% names(members)),
+    ec_crypt_key(key, private),
     zujose_error = function(e) e,
     zucrypt_error = function(e) e
   )
+  # An EC private key is built from x, y and d together, so zucrypt checks
+  # that they agree; an X25519 one only from d, so `x` is compared with the
+  # public key d makes (#124).
+  if (
+    !inherits(ck, "error") &&
+      kty == "OKP" &&
+      private &&
+      !identical(as.list(ck)$data$x, jwk_member_raw(members, "x"))
+  ) {
+    ck <- simpleError("x does not match d")
+  }
   if (inherits(ck, "error")) {
     abort_zujose(
       "key",

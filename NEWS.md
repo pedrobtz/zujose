@@ -1,5 +1,14 @@
 # zujose 0.0.0.9000
 
+* `as_jwk()` refuses a key whose members are not in their one canonical
+  form: an RSA member with a leading zero octet, or an EC or X25519 `x`,
+  `y` or `d` that is not exactly the curve's length. Such a key had a
+  different thumbprint from the same key written canonically. An ECDH-ES
+  `epk` is held to the same rule (#94).
+
+* `as_jwk()` refuses a private X25519 JWK whose `x` is not the public key
+  of its `d` (#124).
+
 * Printing `jose_limits()` no longer warns in a session whose `OutDec` is
   a comma (#137).
 

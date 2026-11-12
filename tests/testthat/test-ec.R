@@ -392,3 +392,55 @@ test_that("zujose_info() reports ES* and ECDH-ES available", {
   )
   expect_true(all(info$available[info$algorithm %in% ec]))
 })
+
+test_that("EC and X25519 members not of the curve's length are refused", {
+  # RFC 7518 sections 6.2.1.2, 6.2.1.3 and 6.2.2.1: x, y and d are the
+  # full coordinate length, so each key has one encoding (#94).
+  for (crv in c("P-256", "P-521", "X25519")) {
+    kty <- if (crv == "X25519") "OKP" else "EC"
+    jwk <- zujson::json_parse(jwk_json(jwk_generate(kty, crv = crv), TRUE))
+    for (name in intersect(c("x", "y", "d"), names(jwk))) {
+      value <- b64url_decode(jwk[[name]], "x")
+      for (bytes in list(c(as.raw(0), value), value[-1])) {
+        bad <- jwk
+        bad[[name]] <- b64url_encode(bytes)
+        expect_error(as_jwk(bad), class = "zujose_key_error", info = name)
+      }
+    }
+    expect_no_error(as_jwk(jwk))
+  }
+})
+
+test_that("an ephemeral key not of the curve's length is refused", {
+  key <- jwk_generate("EC")
+  good <- jwk_public(jwk_generate("EC"))$members
+  long <- good
+  long$x <- b64url_encode(c(as.raw(0), b64url_decode(good$x, "x")))
+  okp <- jwk_generate("OKP")
+  x <- b64url_decode(jwk_public(jwk_generate("OKP"))$members$x, "x")
+  for (case in list(
+    list(c(list(kty = "EC"), long), key),
+    list(list(kty = "OKP", crv = "X25519", x = b64url_encode(x[-1])), okp),
+    list(
+      list(kty = "OKP", crv = "X25519", x = b64url_encode(c(x, raw(1)))),
+      okp
+    )
+  )) {
+    expect_error(
+      jwe_decrypt(ecdh_token(case[[1]]), case[[2]], "ECDH-ES", "A128GCM"),
+      class = "zujose_parse_error"
+    )
+  }
+})
+
+test_that("an X25519 private JWK whose `x` does not match `d` is refused", {
+  # #124: the public key derived from `d` must be `x`.
+  jwk <- zujson::json_parse(jwk_json(jwk_generate("OKP"), TRUE))
+  other <- jwk_public(jwk_generate("OKP"))$members$x
+  for (x in c(b64url_encode(raw(32)), "AA", other)) {
+    bad <- jwk
+    bad$x <- x
+    expect_error(as_jwk(bad), class = "zujose_key_error")
+  }
+  expect_no_error(as_jwk(jwk))
+})
