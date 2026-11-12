@@ -182,7 +182,8 @@ test_that("an algorithm zucrypt cannot run is refused before decrypting", {
 })
 
 test_that("an unwrapped CEK of the wrong size for GCM is the decrypt error", {
-  # A128KW wraps a 32-byte CEK, but A128GCM needs 16 bytes.
+  # A128KW wraps a 32-byte CEK, but A128GCM needs 16 bytes. recover_cek()
+  # refuses it before GCM runs, as one more uniform decryption failure.
   key <- jwk_oct(as.raw(1:16))
   token <- paste(
     b64_json(list(alg = "A128KW", enc = "A128GCM")),
