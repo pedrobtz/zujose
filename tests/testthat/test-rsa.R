@@ -328,3 +328,12 @@ test_that("RSA members with a leading zero octet are refused", {
   expect_error(as_jwk(public), class = "zujose_key_error")
   expect_no_error(as_jwk(jwk))
 })
+
+test_that("an RSA JWK with `oth` is refused", {
+  # RFC 7518 section 6.3.2.7: zujose has no multi-prime keys (#125).
+  jwk <- zujson::json_parse(rfc7520_key(4))
+  oth <- list(list(r = "AQAB", d = "AQAB", t = "AQAB"))
+  expect_error(as_jwk(c(jwk, list(oth = oth))), class = "zujose_key_error")
+  public <- c(jwk[c("kty", "n", "e")], list(oth = oth))
+  expect_error(as_jwk(public), class = "zujose_key_error")
+})

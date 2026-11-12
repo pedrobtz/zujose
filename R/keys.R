@@ -633,6 +633,15 @@ check_rsa_jwk <- function(members, call) {
   if (!all(c("n", "e") %in% names(members))) {
     abort_zujose("key", "An RSA JWK needs `n` and `e`.", call = call)
   }
+  # RFC 7518 §6.3.2.7: an implementation without multi-prime keys must not
+  # use a key with `oth`, private or not (#125).
+  if ("oth" %in% names(members)) {
+    abort_zujose(
+      "key",
+      "zujose does not support multi-prime RSA keys (`oth`).",
+      call = call
+    )
+  }
   given <- rsa_private_members %in% names(members)
   if (any(given) && !all(given)) {
     abort_zujose(

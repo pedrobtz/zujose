@@ -1,5 +1,8 @@
 # zujose 0.0.0.9000
 
+* `as_jwk()` refuses an RSA JWK with `oth`, private or public: zujose has
+  no multi-prime keys (#125).
+
 * `as_jwk()` refuses a key whose members are not in their one canonical
   form: an RSA member with a leading zero octet, or an EC or X25519 `x`,
   `y` or `d` that is not exactly the curve's length. Such a key had a
