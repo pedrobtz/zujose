@@ -126,7 +126,7 @@ elliptic-curve keys on P-256, P-384, P-521 and X25519:</p>
 only the public part unless you ask for the private one:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/jwk_json.html">jwk_json</a></span><span class="op">(</span><span class="va">signer</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"TET4Fp7EClNWrQBkApMfi8jAmq8wHdP2xPV8Ko7xCNg\",\"y\":\"mus0I4DUu1jXePIC1ORjvOeOWNYMV_alptMMEs7VG3E\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"VrsZJM6k3QcY9F-lEV9jAXgMZSjHDv1Ee5VAggdHfyA\",\"y\":\"w6u96IXX50QcFUI_kKAQ3jtZiWDZlQQj-oL7OYkMzPY\",\"kid\":\"ec-1\",\"alg\":\"ES256\"}"</span></span></code></pre></div>
 <p>A key set holds several keys. Its JWK Set text is what an identity
 provider publishes, and what a client reads to verify the provider’s
 tokens:</p>
@@ -137,7 +137,7 @@ tokens:</p>
 <span><span class="co">#&gt;   EC "ec-1" ES256</span></span>
 <span><span class="co">#&gt;   RSA "rsa-1" RS256</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/jwk_json.html">jwk_json</a></span><span class="op">(</span><span class="va">keys</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; {"keys":[{"kty":"EC","crv":"P-256","x":"TET4Fp7EClNWrQBkApMfi8jAmq8wHdP2xPV8Ko7xCNg","y":"mus0I4DUu1jXePIC1ORjvOeOWNYMV_alptMMEs7VG3E","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"y_0X2wZC7dKt1mPTEd4YMvXP5obnFFSnX5QrrU_qBTze9-QW2GNUUT1PW8MV6IxeZh0rOZZLHUFz-zPRB76Czs4xFqEBCScOiSC9tgq-YD3KnnKbLQJYw5k4zDZ-gpOpWuIXkG4SMyOuLVbqk3ky6V8qjChF2SAAgW6-s7lRUv6ioBrCtHVoR0h_26ewkv3yFGwhlfQXui9v-rMmEDtd_v8GlJacSjK4BxcjIhGLRUGl73zotwmuq5dA4O2iv7dSlL3bQ7IllOIzua0qrjZEUG8Hl6QhtHQNP9jDaqWzJuzT-iQVS3O-4eh_8cHzAc7C-cy_xiUiEbVF_DMxev52Xw","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}</span></span></code></pre></div>
+<span><span class="co">#&gt; {"keys":[{"kty":"EC","crv":"P-256","x":"VrsZJM6k3QcY9F-lEV9jAXgMZSjHDv1Ee5VAggdHfyA","y":"w6u96IXX50QcFUI_kKAQ3jtZiWDZlQQj-oL7OYkMzPY","kid":"ec-1","alg":"ES256"},{"kty":"RSA","n":"zUhWXzkUbMCSEbOOySsJTwQ1Pdqs64V5XBe_r7xScNLP5q7U86X4My0AqVsNObnLiCB6a9hqj24bFwM7Ck6_afG1rSmWcQEXoT6PhqOFVLfJ8cOLeMo9FdDF6kvRSkoY55-0xiJHjOkrn_Z5fCc_5KMUeeOXSOSV9uGA1tN0JiTpuEbtmSMZ-i9qpMpcUf1BKQK_zVB8K0iJRdKcXms4V7GhmZlYOuI8uFkUKORLHiHjqzRBfJ2G88ip53Joa6JiAV-QByuHx06kWlK9yrQAvB1sGSf7MOXDwIDBm6G1cQrk_D2xB6UW5KaM2FyODbZWfx5WP3ntWvpgUiByfCCrvQ","e":"AQAB","kid":"rsa-1","alg":"RS256"}]}</span></span></code></pre></div>
 <p><code><a href="../reference/jwk_set.html">as_jwk_set()</a></code> reads that text back. A key in a set is
 picked by the <code>kid</code> in a token’s header. Two more tools help
 with naming keys: <code><a href="../reference/jwk_with_kid.html">jwk_with_kid()</a></code> names a key by its RFC
@@ -179,8 +179,8 @@ are matched when you give them:</p>
 <span><span class="co">#&gt;   iss: "https://auth.example"</span></span>
 <span><span class="co">#&gt;   sub: "user-17"</span></span>
 <span><span class="co">#&gt;   aud: "orders-api"</span></span>
-<span><span class="co">#&gt;   exp: 2026-11-03 17:54:42 UTC</span></span>
-<span><span class="co">#&gt;   iat: 2026-11-03 17:44:42 UTC</span></span></code></pre></div>
+<span><span class="co">#&gt;   exp: 2026-11-12 09:52:21 UTC</span></span>
+<span><span class="co">#&gt;   iat: 2026-11-12 09:42:21 UTC</span></span></code></pre></div>
 <p><code>claims</code> takes per-claim expectations, as a value or as a
 function that must return <code>TRUE</code>, and <code>validate</code>
 takes one function of all the claims:</p>
@@ -218,7 +218,7 @@ message:</p>
 <span>  <span class="fu"><a href="../reference/jwt_decode.html">jwt_decode</a></span><span class="op">(</span><span class="va">expired</span>, <span class="va">hmac</span>, algorithms <span class="op">=</span> <span class="st">"HS256"</span><span class="op">)</span>,</span>
 <span>  zujose_expired_error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"expired at"</span>, <span class="va">e</span><span class="op">$</span><span class="va">time</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "expired at 2026-11-03 16:44:43"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "expired at 2026-11-12 08:42:21"</span></span></code></pre></div>
 <p>A token signed with an algorithm you did not allow is a policy error,
 raised before any cryptography is done:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -345,8 +345,8 @@ verifies nothing:</p>
 <span><span class="co">#&gt;   iss: "https://auth.example"</span></span>
 <span><span class="co">#&gt;   sub: "user-17"</span></span>
 <span><span class="co">#&gt;   aud: "orders-api"</span></span>
-<span><span class="co">#&gt;   exp: 1793728482</span></span>
-<span><span class="co">#&gt;   iat: 1793727882</span></span>
+<span><span class="co">#&gt;   exp: 1794477141</span></span>
+<span><span class="co">#&gt;   iat: 1794476541</span></span>
 <span><span class="co">#&gt; Signature: 64 bytes</span></span></code></pre></div>
 <p>Its result is classed <code>jose_unverified</code> and says so. Use
 it to decide which key or policy to apply, never to decide whether to

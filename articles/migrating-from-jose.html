@@ -144,7 +144,7 @@ Set</td>
 </tbody>
 </table>
 <p>Some names look alike across the two packages,
-<code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_encode_hmac()</a></code> and <code><a href="../reference/jwt_encode.html">jwt_encode()</a></code> for one,
+<code>jwt_encode_hmac()</code> and <code><a href="../reference/jwt_encode.html">jwt_encode()</a></code> for one,
 but no zujose function has the same name as a jose function, so both
 packages can be attached at once.</p>
 <p>zujose also covers what jose does not: JWE, the JSON serializations,
@@ -157,7 +157,7 @@ encrypted JWTs.</p>
 <div class="section level3">
 <h3 id="you-name-the-algorithms">You name the algorithms<a class="anchor" aria-label="anchor" href="#you-name-the-algorithms"></a>
 </h3>
-<p><code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_decode_hmac()</a></code> and <code><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_decode_sig()</a></code> take
+<p><code>jwt_decode_hmac()</code> and <code>jwt_decode_sig()</code> take
 the algorithm from the token’s header, limited only by the type of key.
 <code><a href="../reference/jwt_decode.html">jwt_decode()</a></code> has an <code>algorithms</code> argument with
 no default, and refuses any other algorithm before it does any
@@ -211,11 +211,11 @@ text; <code><a href="../reference/zujose_error.html">?zujose_error</a></code> li
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-lib.r-universe.dev/jose" class="external-link">jose</a></span><span class="op">)</span></span>
 <span><span class="va">secret</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"a shared secret of at least 32 bytes!"</span><span class="op">)</span></span>
-<span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_encode_hmac</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://r-lib.r-universe.dev/jose/reference/jwt_claim.html" class="external-link">jwt_claim</a></span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span>, exp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fl">600</span><span class="op">)</span>,</span>
+<span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu">jwt_encode_hmac</span><span class="op">(</span></span>
+<span>  <span class="fu">jwt_claim</span><span class="op">(</span>sub <span class="op">=</span> <span class="st">"user-17"</span>, aud <span class="op">=</span> <span class="st">"orders-api"</span>, exp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.time</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fl">600</span><span class="op">)</span>,</span>
 <span>  secret <span class="op">=</span> <span class="va">secret</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://r-lib.r-universe.dev/jose/reference/jwt_encode.html" class="external-link">jwt_decode_hmac</a></span><span class="op">(</span><span class="va">jwt</span>, secret <span class="op">=</span> <span class="va">secret</span><span class="op">)</span></span>
+<span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu">jwt_decode_hmac</span><span class="op">(</span><span class="va">jwt</span>, secret <span class="op">=</span> <span class="va">secret</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="va">claims</span><span class="op">$</span><span class="va">aud</span> <span class="op">==</span> <span class="st">"orders-api"</span><span class="op">)</span></span></code></pre></div>
 <p>does the same with zujose like this:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">

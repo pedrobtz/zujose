@@ -25,9 +25,7 @@ library(zujose)
 | `jwk_write(x)`, `write_jwk(x)` | `jwk_json(x)`; `jwk_pem(x)` for PEM |
 | `base64url_encode(x)`, `base64url_decode(x)` | `zuutf::base64_encode(x, url = TRUE, pad = FALSE)`, `zuutf::base64_decode(x, url = TRUE)` |
 
-Some names look alike across the two packages,
-[`jwt_encode_hmac()`](https://r-lib.r-universe.dev/jose/reference/jwt_encode.html)
-and
+Some names look alike across the two packages, `jwt_encode_hmac()` and
 [`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md)
 for one, but no zujose function has the same name as a jose function, so
 both packages can be attached at once.
@@ -40,11 +38,8 @@ encrypted JWTs.
 
 ### You name the algorithms
 
-[`jwt_decode_hmac()`](https://r-lib.r-universe.dev/jose/reference/jwt_encode.html)
-and
-[`jwt_decode_sig()`](https://r-lib.r-universe.dev/jose/reference/jwt_encode.html)
-take the algorithm from the token’s header, limited only by the type of
-key.
+`jwt_decode_hmac()` and `jwt_decode_sig()` take the algorithm from the
+token’s header, limited only by the type of key.
 [`jwt_decode()`](https://pedrobtz.github.io/zujose/reference/jwt_decode.md)
 has an `algorithms` argument with no default, and refuses any other
 algorithm before it does any cryptography. This closes algorithm
