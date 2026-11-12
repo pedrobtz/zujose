@@ -158,7 +158,8 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   `oracle_pem()`, `oracle_key()` and `oracle_tokens()` read the PyJWT
   fixtures, and `oracle_now()` is a time before their `exp`.
   `oracle_zujose_tokens()` reads the tokens zujose signed for PyJWT to
-  verify (`tools/make-zujose-tokens.R`).
+  verify (`tools/make-zujose-tokens.R`), and `oracle_claims()` PyJWT's
+  claim verdicts (`tools/make-claim-verdicts.py`).
   `oracle_thumbprints()` reads the jwcrypto thumbprints that
   `tools/make-jwk-thumbprints.py` writes. `rfc7517_jwks()` reads the RFC
   7517 Appendix A sets, which `tools/rfc7516-7517-fixtures.R` extracts,

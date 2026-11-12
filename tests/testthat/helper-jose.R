@@ -598,3 +598,13 @@ oracle_jwe_json <- function() {
     quote = ""
   )
 }
+
+# PyJWT's verdicts over a grid of claims, leeways, audiences, issuers and
+# subjects, at 1e9 (tools/make-claim-verdicts.py, #106).
+oracle_claims <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "claims.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}

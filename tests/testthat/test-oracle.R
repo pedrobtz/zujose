@@ -233,3 +233,93 @@ test_that("zujose emits the tokens PyJWT verified", {
     }
   }
 })
+
+# PyJWT's claim verdicts (tools/make-claim-verdicts.py, #106): the same
+# accept or reject at the same time, leeway, audience, issuer and subject.
+
+test_that("zujose decides claims as PyJWT does, but for listed reasons", {
+  # Where zujose decides otherwise on purpose, row by row, and why. Each
+  # must still disagree, so the list cannot go stale. Rows not listed, such
+  # as `exp: true`, may agree for another reason: both refuse it.
+  divergent <- list(
+    # PyJWT truncates a NumericDate with int(), so it takes a numeric
+    # string or `true` as a time. Design §8.5: NumericDate must be a
+    # number; a string is a malformed token.
+    "a NumericDate is a number" = c(
+      "expstring-l0",
+      "expstring-l60",
+      "nbfstring-l60",
+      "nbftrue-l0",
+      "nbftrue-l60",
+      "iatstring-l60",
+      "iattrue-l0",
+      "iattrue-l60"
+    ),
+    # int() also drops the fraction. RFC 7519 §2 allows a non-integer
+    # NumericDate, and zujose compares the value as given.
+    "a fractional NumericDate is kept" = c(
+      "exp+0.5-l0",
+      "nbf+0.5-l0",
+      "iat+0.5-l0"
+    ),
+    # jwt_decode()'s roxygen: times must be within about two billion years
+    # of 1970, which POSIXct can hold (#127).
+    "a NumericDate POSIXct cannot hold" = c("exphuge-l0", "exphuge-l60"),
+    # Design §8.5: `required` defaults to "exp"; PyJWT requires nothing.
+    "exp is required by default" = "required-default-no-exp",
+    # PyJWT treats a false `aud` ([], "", null, 0, false) as absent.
+    # Design §8.5: a token that carries `aud` fails without `audience`.
+    "aud is present" = c(
+      "aud-array-empty-none",
+      "aud-empty-none",
+      "aud-null-none",
+      "aud-zero-none",
+      "aud-false-none"
+    ),
+    # PyJWT checks `iss` only when given `issuer`. jwt_decode()'s roxygen:
+    # an `iss` that is not a single string is refused.
+    "iss must be a string" = c(
+      "iss-number-none",
+      "iss-null-none",
+      "iss-array-none"
+    ),
+    # PyJWT skips `subject` when the token has no `sub`; zujose requires
+    # the claim it is asked to match, as it does `iss`.
+    "subject needs sub" = "sub-absent-me"
+  )
+  divergent <- unlist(divergent)
+  rows <- oracle_claims()
+  key <- jwk_oct(as.raw(1:64))
+  now <- as.POSIXct(1e9, origin = "1970-01-01", tz = "UTC")
+  arg <- function(x) if (nzchar(x)) unlist(zujson::json_parse(x))
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    args <- list(
+      row$token,
+      key,
+      "HS256",
+      audience = arg(row$audience),
+      issuer = arg(row$issuer),
+      subject = arg(row$subject),
+      leeway = as.numeric(row$leeway),
+      now = now
+    )
+    if (row$required != "default") {
+      args$required <- as.character(arg(row$required))
+    }
+    ours <- tryCatch(
+      {
+        do.call(jwt_decode, args)
+        "accept"
+      },
+      zujose_error = function(e) "reject"
+    )
+    if (row$id %in% divergent) {
+      expect_false(identical(ours, row$verdict), info = row$id)
+    } else {
+      expect_identical(ours, row$verdict, info = row$id)
+    }
+  }
+  expect_true(all(divergent %in% rows$id))
+  expect_identical(nrow(rows), 159L)
+})

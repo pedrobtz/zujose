@@ -90,7 +90,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | RFC 7638 thumbprint, RSA                  | RFC 7638 §3.1 value; RFC 9278 URI                                                       | tests/testthat/test-thumbprint.R                              |
 | Thumbprint, EC, OKP and oct               | RFC 8037 A.3 value; jwcrypto's `thumbprint()` for P-256 to P-521, X25519, Ed25519, oct  | tests/testthat/test-thumbprint.R                              |
 | JWT claim validation                      | RFC 7519 §3.1; hand straddles of `exp`, `nbf`, `iat` at the leeway                      | tests/testthat/test-jwt.R                                     |
-| JWT claim verdicts                        | PyJWT's accept or reject over a grid of claims, times and leeways                       | gap #106                                                        |
+| JWT claim verdicts                        | PyJWT's accept or reject (`claims.tsv`) over 159 claims, times, leeways, audiences, issuers and subjects; 23 listed divergences, each with its reason | tests/testthat/test-oracle.R                                  |
 | Nested JWT decode                         | RFC 7520 §6, PS256 inside RSA-OAEP, to its `iss`                                        | tests/testthat/test-rsa.R, test-jwt-encrypted.R               |
 | Nested JWT emit                           | round trip                                                                              | tests/testthat/test-jwt-encrypted.R                           |
 | `jose_peek()`                             | RFC 7519 headers and claims; RFC 7520 parts equal the decoded compact parts             | tests/testthat/test-peek.R                                    |

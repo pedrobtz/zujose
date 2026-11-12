@@ -17,3 +17,4 @@ thumbprints.tsv	jwcrypto 1.5.6	tools/make-jwk-thumbprints.py
 jwe-vectors.tsv	jwcrypto 1.5.6	tools/make-jwe-vectors.py
 jwe-json.tsv	jwcrypto 1.5.6	tools/make-jwe-json.py
 zujose-tokens.tsv	zujose 0.0.0.9000; verified by PyJWT 2.15.1	tools/make-zujose-tokens.R
+claims.tsv	PyJWT 2.15.1	tools/make-claim-verdicts.py
