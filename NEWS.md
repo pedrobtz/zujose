@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* Header members and key members are read by their exact names. A
+  `p2count` header member no longer sets the PBES2 iteration count, and a
+  `kidnap` header no longer prints as the key's `kid` (#122).
+
 * Printing a key of an unknown `kty` says "unknown key type" instead of
   "needs zucrypt (>= NA)" (#136).
 

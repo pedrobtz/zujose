@@ -79,7 +79,12 @@ ec_crypt_key <- function(key, private) {
       }
     )
   }
-  zucrypt::crypt_ec_key(key$members$crv, m("x"), m("y"), if (private) m("d"))
+  zucrypt::crypt_ec_key(
+    key$members[["crv"]],
+    m("x"),
+    m("y"),
+    if (private) m("d")
+  )
 }
 
 # JWK members from a zucrypt EC or X25519 key.
@@ -111,7 +116,7 @@ crypt_key_members <- function(ck) {
     list(kty = "OKP", members = ec_members(ck), bits = 255L)
   } else {
     m <- ec_members(ck)
-    list(kty = "EC", members = m, bits = unname(ec_curves[[m$crv]]))
+    list(kty = "EC", members = m, bits = unname(ec_curves[[m[["crv"]]]]))
   }
 }
 
@@ -469,14 +474,14 @@ new_jose_key <- function(
       )
     }
   }
-  supported <- key_type_usable(kty, members$crv)
+  supported <- key_type_usable(kty, members[["crv"]])
   # An OKP curve other than X25519 (Ed25519, X448) waits on no zucrypt
   # version: the bundled library has none of them.
   # An unknown key type waits on no zucrypt version either (#136).
   needs <- if (
     kty %in%
       names(pending_key_types) &&
-      !(kty == "OKP" && !identical(members$crv, "X25519"))
+      !(kty == "OKP" && !identical(members[["crv"]], "X25519"))
   ) {
     unname(pending_key_types[[kty]])
   }
@@ -624,7 +629,9 @@ jwk_to_key <- function(jwk, call, json = FALSE) {
 
   bits <- if (kty == "RSA" && key_type_usable("RSA")) {
     check_rsa_jwk(members, call)
-  } else if (kty %in% c("EC", "OKP") && key_type_usable(kty, members$crv)) {
+  } else if (
+    kty %in% c("EC", "OKP") && key_type_usable(kty, members[["crv"]])
+  ) {
     check_ec_jwk(kty, members, call)
   }
 
@@ -733,7 +740,7 @@ check_ec_jwk <- function(kty, members, call) {
   need <- if (kty == "EC") c("crv", "x", "y") else c("crv", "x")
   if (
     !all(need %in% names(members)) ||
-      (kty == "EC" && !members$crv %in% names(ec_curves))
+      (kty == "EC" && !members[["crv"]] %in% names(ec_curves))
   ) {
     abort_zujose(
       "key",
@@ -747,7 +754,11 @@ check_ec_jwk <- function(kty, members, call) {
   }
   # RFC 7518 §6.2.1.2, §6.2.1.3 and §6.2.2.1 (and RFC 8037 §2): `x`, `y`
   # and `d` are the full coordinate length, never shorter or longer (#94).
-  bytes <- if (kty == "OKP") 32L else (ec_curves[[members$crv]] + 7L) %/% 8L
+  bytes <- if (kty == "OKP") {
+    32L
+  } else {
+    (ec_curves[[members[["crv"]]]] + 7L) %/% 8L
+  }
   for (name in intersect(c("x", "y", "d"), names(members))) {
     if (length(jwk_member_raw(members, name)) != bytes) {
       abort_zujose(
@@ -782,7 +793,7 @@ check_ec_jwk <- function(kty, members, call) {
       call = call
     )
   }
-  if (kty == "OKP") 255L else unname(ec_curves[[members$crv]])
+  if (kty == "OKP") 255L else unname(ec_curves[[members[["crv"]]]])
 }
 
 # A PEM key, through zucrypt: private first, then public.
@@ -1020,7 +1031,10 @@ format.jwk <- function(x, ...) {
       if (!x$kty %in% c("oct", names(pending_key_types))) {
         "  ! not usable: unknown key type"
       } else if (is.null(x$needs)) {
-        sprintf("  ! not usable: zujose has no %s", x$members$crv %||% x$kty)
+        sprintf(
+          "  ! not usable: zujose has no %s",
+          x$members[["crv"]] %||% x$kty
+        )
       } else {
         sprintf("  ! not usable yet: needs zucrypt (>= %s)", x$needs)
       }

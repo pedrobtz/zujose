@@ -213,7 +213,7 @@ jwt_decode <- function(
     # can make one. Its claims must then come inside a signed JWT (#34).
     # Decided on the header, before any decryption.
     outer <- jose_parse(token, limits, call)$protected
-    if (!is_nested(outer) && !identical(alg_key_types(outer$alg), "oct")) {
+    if (!is_nested(outer) && !identical(alg_key_types(outer[["alg"]]), "oct")) {
       abort_zujose(
         "policy",
         paste0(
@@ -708,9 +708,9 @@ print.jwt_claims <- function(x, ...) {
   header <- attr(x, "header")
   cat(sprintf(
     "<jwt_claims> verified %s%s\n",
-    header$alg,
-    if (!is.null(header$kid)) {
-      paste0(", key ", encodeString(header$kid, quote = '"'))
+    member(header, "alg"),
+    if (!is.null(member(header, "kid"))) {
+      paste0(", key ", encodeString(member(header, "kid"), quote = '"'))
     } else {
       ""
     }

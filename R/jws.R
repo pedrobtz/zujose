@@ -221,7 +221,7 @@ protected_header <- function(signer, b64, call) {
       )
     }
   }
-  if ("alg" %in% names(header) && !identical(header$alg, alg)) {
+  if ("alg" %in% names(header) && !identical(header[["alg"]], alg)) {
     abort_zujose("argument", "`header$alg` disagrees with `alg`.")
   }
   header <- header[setdiff(names(header), "alg")]

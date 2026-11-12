@@ -479,3 +479,15 @@ test_that("a token that is not a single string is a parse error", {
     expect_error(jwt_decode(token, key, "HS256"), class = "zujose_parse_error")
   }
 })
+
+test_that("printing claims reads `kid` by its exact name (#122)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(
+    list(sub = "u"),
+    key,
+    "HS256",
+    header = list(typ = "JWT", kidnap = "zzz")
+  )
+  claims <- jwt_decode(jwt, key, "HS256", required = character())
+  expect_no_match(capture_output(print(claims)), "zzz", fixed = TRUE)
+})

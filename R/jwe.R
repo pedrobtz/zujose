@@ -264,7 +264,9 @@ encrypt_jwe <- function(
     b64url_decode(value, name, call)
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
-    p2c <- recipients[[i]]$header$p2c %||% header$p2c %||% unprotected$p2c
+    p2c <- recipients[[i]]$header[["p2c"]] %||%
+      header[["p2c"]] %||%
+      unprotected[["p2c"]]
     if (!is_pbes2(algs[[i]])) {
       if (!is.null(p2c)) {
         abort_zujose("argument", "`p2c` applies only to PBES2 key management.")
@@ -710,7 +712,7 @@ wrap_cek <- function(
     # A fresh ephemeral key on the recipient's curve (RFC 7518 §4.6);
     # `fixed$epk` injects RFC 7518 Appendix C's.
     eph <- fixed$epk %||%
-      jwk_generate(key$kty, crv = key$members$crv)
+      jwk_generate(key$kty, crv = key$members[["crv"]])
     z <- ecdh_secret(eph, key)
     out <- list(header = list(epk = epk_jwk(eph)))
     if (alg == "ECDH-ES") {
@@ -908,7 +910,8 @@ kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
   if (is_ecdh(alg)) {
     return(
       (!decrypt || has_private(key)) &&
-        (is.null(params) || identical(key$members$crv, params$epk$members$crv))
+        (is.null(params) ||
+          identical(key$members[["crv"]], params$epk$members[["crv"]]))
     )
   }
   if (is_rsa_kem(alg)) {
@@ -925,7 +928,7 @@ check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
     }
     if (
       !is.null(params) &&
-        !identical(key$members$crv, params$epk$members$crv)
+        !identical(key$members[["crv"]], params$epk$members[["crv"]])
     ) {
       abort_zujose(
         "key",

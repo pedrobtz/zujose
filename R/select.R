@@ -105,7 +105,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
 # Design §8.2: ES256 only with P-256, ES384 with P-384, ES512 with P-521;
 # ECDH-ES with a NIST curve or X25519.
 curve_fits <- function(key, alg) {
-  crv <- key$members$crv
+  crv <- key$members[["crv"]]
   if (grepl("^ES(256|384|512)$", alg)) {
     want <- c(ES256 = "P-256", ES384 = "P-384", ES512 = "P-521")[[alg]]
     return(identical(crv, want))
