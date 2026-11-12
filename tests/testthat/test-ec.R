@@ -301,6 +301,19 @@ test_that("an ephemeral key on another curve than the key is refused", {
   )
 })
 
+test_that("an ephemeral key's curve is checked before any key agreement", {
+  # A second guard for the epk curve rule (#79): a P-256 ephemeral key
+  # against a P-521 key, with ECDH-ES+A128KW, never reaches ECDH.
+  key <- jwk_generate("EC", crv = "P-521")
+  p256 <- jwk_public(jwk_generate("EC", crv = "P-256"))$members
+  token <- ecdh_token(c(list(kty = "EC"), p256), alg = "ECDH-ES+A128KW")
+  local_no_crypto()
+  expect_error(
+    jwe_decrypt(token, key, "ECDH-ES+A128KW", "A128GCM"),
+    class = "zujose_key_error"
+  )
+})
+
 test_that("a low-order X25519 ephemeral key is refused with the header", {
   # The all-zero point is rejected when the header is parsed, before any key
   # agreement, so it is a parse error, not a decryption failure.

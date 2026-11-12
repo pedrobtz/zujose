@@ -340,6 +340,21 @@ test_that("algorithms has no default and names known signature algorithms", {
   }
 })
 
+test_that("no verifying or decrypting function defaults its allow-lists", {
+  # A second guard for the invariant, independent of calling each function:
+  # a default here reopens algorithm confusion (#79).
+  no_default <- function(f, arg) {
+    identical(formals(f)[[arg]], quote(expr = ))
+  }
+  for (f in c("jws_verify", "jwt_decode", "jwt_decoder")) {
+    expect_true(no_default(get(f), "algorithms"), info = f)
+  }
+  for (f in c("jwe_decrypt", "jwe_decryption")) {
+    expect_true(no_default(get(f), "algorithms"), info = f)
+    expect_true(no_default(get(f), "encryptions"), info = f)
+  }
+})
+
 test_that("HMAC keys shorter than the hash are refused", {
   short <- jwk_oct(as.raw(1:31))
   expect_error(jws_sign("x", short, alg = "HS256"), class = "zujose_key_error")
