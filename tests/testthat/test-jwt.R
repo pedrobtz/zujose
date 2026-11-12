@@ -781,3 +781,21 @@ test_that("claims compares values nested as deep as JSON parses", {
     class = "zujose_claim_error"
   )
 })
+
+test_that("jwt_encode() refuses a NumericDate jwt_decode() would refuse (#127)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (claim in c("exp", "nbf", "iat")) {
+    claims <- stats::setNames(list(1e308), claim)
+    expect_error(
+      jwt_encode(claims, key, "HS256"),
+      class = "zujose_argument_error",
+      info = claim
+    )
+  }
+  expect_error(
+    jwt_encode(list(), key, "HS256", expires_in = 1e308),
+    class = "zujose_argument_error"
+  )
+  jwt <- jwt_encode(list(exp = 1e16), key, "HS256")
+  expect_s3_class(jwt_decode(jwt, key, "HS256")$exp, "POSIXct")
+})

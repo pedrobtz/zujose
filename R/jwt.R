@@ -69,10 +69,16 @@ jwt_encode <- function(
     claims[[name]] <- as_numeric_date(claims[[name]], name)
   }
   if (!is.null(expires_in)) {
-    claims[["exp"]] <- now + as_seconds(expires_in, "expires_in")
+    claims[["exp"]] <- as_numeric_date(
+      now + as_seconds(expires_in, "expires_in"),
+      "expires_in"
+    )
   }
   if (!is.null(not_before)) {
-    claims[["nbf"]] <- now + as_seconds(not_before, "not_before")
+    claims[["nbf"]] <- as_numeric_date(
+      now + as_seconds(not_before, "not_before"),
+      "not_before"
+    )
   }
   if (issued_at && !"iat" %in% names(claims)) {
     claims[["iat"]] <- now
@@ -798,6 +804,14 @@ as_numeric_date <- function(x, name) {
     abort_zujose(
       "argument",
       sprintf("`%s` must be a time or a number of seconds.", name)
+    )
+  }
+  # jwt_decode() refuses a NumericDate POSIXct cannot hold (#127), so a
+  # token that carries one is not written either.
+  if (is.na(as.POSIXlt(as_posixct(x)))) {
+    abort_zujose(
+      "argument",
+      sprintf("`%s` is beyond any time R can represent.", name)
     )
   }
   unname(x)
