@@ -68,18 +68,20 @@ jwt_encode <- function(
   check_flag(jti, "jti", call)
   now <- jwt_now()
   for (name in intersect(c("exp", "nbf", "iat"), names(claims))) {
-    claims[[name]] <- as_numeric_date(claims[[name]], name)
+    claims[[name]] <- as_numeric_date(claims[[name]], name, call)
   }
   if (!is.null(expires_in)) {
     claims[["exp"]] <- as_numeric_date(
-      now + as_seconds(expires_in, "expires_in"),
-      "expires_in"
+      now + as_seconds(expires_in, "expires_in", call),
+      "expires_in",
+      call
     )
   }
   if (!is.null(not_before)) {
     claims[["nbf"]] <- as_numeric_date(
-      now + as_seconds(not_before, "not_before"),
-      "not_before"
+      now + as_seconds(not_before, "not_before", call),
+      "not_before",
+      call
     )
   }
   if (issued_at && !"iat" %in% names(claims)) {
@@ -89,7 +91,17 @@ jwt_encode <- function(
     claims[["jti"]] <- b64url_encode(zucrypt::crypt_rand_bytes(16L))
   }
 
-  jws_sign(zujson::json_write(claims), key, alg = alg, header = header)
+  sign_jws(
+    zujson::json_write(claims),
+    key,
+    alg,
+    header,
+    NULL,
+    "compact",
+    TRUE,
+    FALSE,
+    call
+  )
 }
 
 #' Check a JWT and return its claims
@@ -211,11 +223,16 @@ jwt_decode <- function(
     validate,
     max_age,
     leeway,
-    now
+    now,
+    call
   )
+  check_decrypt_arg(decrypt, call)
+  check_limits(limits, call)
   # identical() would compare names too (#120).
   issuer <- if (!is.null(issuer)) unname(issuer)
   subject <- if (!is.null(subject)) unname(subject)
+  # A token that is not one string is a token error, not an argument
+  # error: it comes from outside, often a missing HTTP header (#76).
   if (!is_string(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
@@ -226,10 +243,6 @@ jwt_decode <- function(
       "A JWT uses the compact serialization.",
       call = call
     )
-  }
-
-  if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
-    abort_zujose("argument", "`decrypt` must be made by jwe_decryption().")
   }
 
   if (compact_parts(token) == 5L) {
@@ -339,9 +352,7 @@ jwt_decoder <- function(
   call <- sys.call()
   check_algorithms(algorithms, "signature", call = call)
   check_key_arg(key, call)
-  if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
-    abort_zujose("argument", "`decrypt` must be made by jwe_decryption().")
-  }
+  check_decrypt_arg(decrypt, call)
   check_decode_args(
     audience,
     issuer,
@@ -352,9 +363,10 @@ jwt_decoder <- function(
     validate,
     max_age,
     leeway,
-    Sys.time()
+    Sys.time(),
+    call
   )
-  check_limits(limits)
+  check_limits(limits, call)
   force(key)
   function(token, now = Sys.time()) {
     jwt_decode(
@@ -724,9 +736,10 @@ check_decode_args <- function(
   validate,
   max_age,
   leeway,
-  now
+  now,
+  call
 ) {
-  bad <- function(what) abort_zujose("argument", what)
+  bad <- function(what) abort_zujose("argument", what, call = call)
   if (
     !is.null(audience) &&
       (!is.character(audience) || length(audience) == 0L || anyNA(audience))
@@ -795,20 +808,31 @@ check_decode_args <- function(
   }
 }
 
+check_decrypt_arg <- function(decrypt, call) {
+  if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
+    abort_zujose(
+      "argument",
+      "`decrypt` must be made by jwe_decryption().",
+      call = call
+    )
+  }
+}
+
 # Helpers -----------------------------------------------------------------
 
 jwt_now <- function() {
   floor(as.numeric(Sys.time()))
 }
 
-as_numeric_date <- function(x, name) {
+as_numeric_date <- function(x, name, call) {
   if (inherits(x, "POSIXct")) {
     x <- floor(as.numeric(x))
   }
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
     abort_zujose(
       "argument",
-      sprintf("`%s` must be a time or a number of seconds.", name)
+      sprintf("`%s` must be a time or a number of seconds.", name),
+      call = call
     )
   }
   # jwt_decode() refuses a NumericDate POSIXct cannot hold (#127), so a
@@ -816,20 +840,22 @@ as_numeric_date <- function(x, name) {
   if (is.na(as.POSIXlt(as_posixct(x)))) {
     abort_zujose(
       "argument",
-      sprintf("`%s` is beyond any time R can represent.", name)
+      sprintf("`%s` is beyond any time R can represent.", name),
+      call = call
     )
   }
   unname(x)
 }
 
-as_seconds <- function(x, name) {
+as_seconds <- function(x, name, call) {
   if (inherits(x, "difftime")) {
     x <- as.numeric(x, units = "secs")
   }
   if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
     abort_zujose(
       "argument",
-      sprintf("`%s` must be a number of seconds or a difftime.", name)
+      sprintf("`%s` must be a number of seconds or a difftime.", name),
+      call = call
     )
   }
   round(unname(x))

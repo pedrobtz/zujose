@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* Every `zujose_argument_error` names the function the caller called, such
+  as `jwt_encode()` rather than the `jws_sign()` it calls, and every
+  argument is checked before the token is read: `jwt_decode()` reported a
+  bad token before a bad `decrypt`, `limits` or `key`, and `jws_verify()`
+  and `jwe_decrypt()` before a bad `key`, `payload` or `limits` (#75).
+
 * A caller's `header` or `unprotected` member of the wrong type, such as
   `jws_sign(..., header = list(typ = 1))`, is a `zujose_argument_error`
   on every encoder: `jws_sign()`, `jws_signer()`, `jwt_encode()`,

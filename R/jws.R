@@ -57,12 +57,28 @@ jws_sign <- function(
 ) {
   call <- sys.call()
   format <- arg_choice(format, "format", call)
+  sign_jws(payload, key, alg, header, unprotected, format, b64, detached, call)
+}
+
+# The body of jws_sign(), shared with jwt_encode() so that errors name the
+# function the caller called.
+sign_jws <- function(
+  payload,
+  key,
+  alg,
+  header,
+  unprotected,
+  format,
+  b64,
+  detached,
+  call
+) {
   bytes <- as_payload_bytes(payload, call)
   check_flag(b64, "b64", call)
   check_flag(detached, "detached", call)
 
   signers <- if (inherits(key, "jwk")) {
-    list(jws_signer(key, alg, header, unprotected))
+    list(new_signer(key, alg, header, unprotected, call))
   } else if (
     is.list(key) &&
       length(key) > 0L &&
@@ -71,7 +87,8 @@ jws_sign <- function(
     if (!is.null(alg) || !is.null(header) || !is.null(unprotected)) {
       abort_zujose(
         "argument",
-        "With several signers, give `alg` and headers to each jws_signer()."
+        "With several signers, give `alg` and headers to each jws_signer().",
+        call = call
       )
     }
     unname(key)
@@ -83,7 +100,11 @@ jws_sign <- function(
     )
   }
   if (length(signers) > 1L && format != "general") {
-    abort_zujose("argument", "Several signatures need `format = \"general\"`.")
+    abort_zujose(
+      "argument",
+      "Several signatures need `format = \"general\"`.",
+      call = call
+    )
   }
   if (
     format == "compact" &&
@@ -91,7 +112,8 @@ jws_sign <- function(
   ) {
     abort_zujose(
       "argument",
-      "The compact serialization has no unprotected header."
+      "The compact serialization has no unprotected header.",
+      call = call
     )
   }
 
@@ -102,7 +124,8 @@ jws_sign <- function(
     if (!isTRUE(zuutf::utf_valid(bytes)) || any(bytes == as.raw(0))) {
       abort_zujose(
         "argument",
-        "An unencoded payload must be valid UTF-8 without NUL bytes."
+        "An unencoded payload must be valid UTF-8 without NUL bytes.",
+        call = call
       )
     }
     text <- rawToChar(bytes)
@@ -117,7 +140,8 @@ jws_sign <- function(
   ) {
     abort_zujose(
       "argument",
-      "An unencoded payload containing \".\" must be detached in the compact serialization."
+      "An unencoded payload containing \".\" must be detached in the compact serialization.",
+      call = call
     )
   }
   signed_payload <- if (b64) charToRaw(payload_text) else bytes
@@ -189,15 +213,18 @@ jws_sign <- function(
 #'   format = "general"
 #' )
 jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
-  call <- sys.call()
+  new_signer(key, alg, header, unprotected, sys.call())
+}
+
+new_signer <- function(key, alg, header, unprotected, call) {
   key <- check_key(key, call)
   if (!is.null(alg) && !is_string(alg)) {
-    abort_zujose("argument", "`alg` must be a single string.")
+    abort_zujose("argument", "`alg` must be a single string.", call = call)
   }
   alg <- if (!is.null(alg)) unname(alg)
   header <- check_header_arg(header, "header", call = call)
   unprotected <- check_header_arg(unprotected, "unprotected", call = call)
-  check_disjoint_headers(header, unprotected)
+  check_disjoint_headers(header, unprotected, call = call)
   structure(
     list(key = key, alg = alg, header = header, unprotected = unprotected),
     class = "jws_signer"
@@ -235,7 +262,11 @@ protected_header <- function(signer, b64, call) {
     }
   }
   if ("alg" %in% names(header) && !identical(header[["alg"]], alg)) {
-    abort_zujose("argument", "`header$alg` disagrees with `alg`.")
+    abort_zujose(
+      "argument",
+      "`header$alg` disagrees with `alg`.",
+      call = call
+    )
   }
   header <- header[setdiff(names(header), "alg")]
   kid <- if (
@@ -302,6 +333,10 @@ jws_verify <- function(
   check_algorithms(algorithms, "signature", call = call)
   check_key_arg(key, call)
   require <- arg_choice(require, "require", call)
+  if (!is.null(payload)) {
+    as_payload_bytes(payload, call)
+  }
+  check_limits(limits, call)
   verify_jws(token, key, algorithms, payload, require, limits, call)
 }
 
@@ -591,7 +626,11 @@ as_payload_bytes <- function(x, call) {
   if (is_string(x)) {
     return(charToRaw(enc2utf8(x)))
   }
-  abort_zujose("argument", "`payload` must be a raw vector or a single string.")
+  abort_zujose(
+    "argument",
+    "`payload` must be a raw vector or a single string.",
+    call = call
+  )
 }
 
 # match.arg() for a user argument, raising zujose_argument_error: the
@@ -635,7 +674,7 @@ check_header_arg <- function(
   name,
   scalars = c("alg", "enc", "kid", "typ", "cty", "p2c"),
   strings = c("alg", "enc", "kid", "typ", "cty"),
-  call = NULL
+  call
 ) {
   if (is.null(x)) {
     return(empty_object())
@@ -645,9 +684,13 @@ check_header_arg <- function(
       is.data.frame(x) ||
       (length(x) > 0L && is.null(names(x)))
   ) {
-    abort_zujose("argument", sprintf("`%s` must be a named list.", name))
+    abort_zujose(
+      "argument",
+      sprintf("`%s` must be a named list.", name),
+      call = call
+    )
   }
-  check_json_arg(x, name)
+  check_json_arg(x, name, call)
   for (member in intersect(strings, names(x))) {
     if (!is_string(x[[member]])) {
       abort_zujose(
@@ -699,7 +742,7 @@ json_arg_problem <- function(x) {
 
 # Refuse an argument zujose would write as JSON, as json_arg_problem()
 # describes, with zujose_argument_error.
-check_json_arg <- function(x, name) {
+check_json_arg <- function(x, name, call) {
   problem <- json_arg_problem(x)
   if (identical(problem, "names")) {
     abort_zujose(
@@ -707,7 +750,8 @@ check_json_arg <- function(x, name) {
       sprintf(
         "`%s` must have names that are unique and not empty, at every depth.",
         name
-      )
+      ),
+      call = call
     )
   }
   if (identical(problem, "type")) {
@@ -716,7 +760,8 @@ check_json_arg <- function(x, name) {
       sprintf(
         "`%s` holds a value JSON cannot represent, such as a raw vector.",
         name
-      )
+      ),
+      call = call
     )
   }
   invisible(x)
@@ -724,11 +769,12 @@ check_json_arg <- function(x, name) {
 
 # Refuse a member given in more than one of the caller's headers, which
 # check_headers() would report as a malformed token (#119).
-check_disjoint_headers <- function(...) {
+check_disjoint_headers <- function(..., call) {
   if (anyDuplicated(unlist(lapply(list(...), names)))) {
     abort_zujose(
       "argument",
-      "A header member is given in more than one header."
+      "A header member is given in more than one header.",
+      call = call
     )
   }
 }

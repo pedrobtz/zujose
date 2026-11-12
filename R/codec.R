@@ -44,7 +44,7 @@ registered_headers <- c(
 understood_crit <- "b64"
 
 jose_parse <- function(token, limits, call = NULL) {
-  check_limits(limits)
+  check_limits(limits, call)
   if (!is.character(token) || length(token) != 1L || is.na(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }

@@ -37,6 +37,7 @@ jose_limits <- function(
   keys = 16,
   p2c = 600000
 ) {
+  call <- sys.call()
   limits <- list(
     token = token,
     header = header,
@@ -56,7 +57,8 @@ jose_limits <- function(
     if (!ok) {
       abort_zujose(
         "argument",
-        sprintf("`%s` must be a whole number of at least 1, or Inf.", name)
+        sprintf("`%s` must be a whole number of at least 1, or Inf.", name),
+        call = call
       )
     }
   }
@@ -77,7 +79,7 @@ print.jose_limits <- function(x, ...) {
   invisible(x)
 }
 
-check_limits <- function(limits, call = NULL) {
+check_limits <- function(limits, call) {
   if (!inherits(limits, "jose_limits")) {
     abort_zujose(
       "argument",
