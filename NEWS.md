@@ -1,5 +1,8 @@
 # zujose 0.0.0.9000
 
+* Printing a key of an unknown `kty` says "unknown key type" instead of
+  "needs zucrypt (>= NA)" (#136).
+
 * `[` on a `jwk_set` refuses an NA or out-of-range index with
   `zujose_argument_error`, instead of making a set that holds `NULL` and
   cannot be printed (#135).

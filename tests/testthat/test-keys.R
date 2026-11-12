@@ -317,3 +317,12 @@ test_that("jwk_public() maps private key_ops to their public counterparts", {
   set <- jwk_public(jwk_set(key))
   expect_identical(set[[1]]$key_ops, "verify")
 })
+
+test_that("a key of unknown type prints as such", {
+  # #136: no zucrypt version makes it usable.
+  expect_snapshot({
+    print(as_jwk('{"kty":"foo","k":"AQID"}'))
+    print(as_jwk('{"kty":"OCT","k":"AQID"}'))
+  })
+  expect_null(as_jwk('{"kty":"foo"}')$needs)
+})

@@ -472,8 +472,13 @@ new_jose_key <- function(
   supported <- key_type_usable(kty, members$crv)
   # An OKP curve other than X25519 (Ed25519, X448) waits on no zucrypt
   # version: the bundled library has none of them.
-  needs <- if (!(kty == "OKP" && !identical(members$crv, "X25519"))) {
-    unname(pending_key_types[kty])
+  # An unknown key type waits on no zucrypt version either (#136).
+  needs <- if (
+    kty %in%
+      names(pending_key_types) &&
+      !(kty == "OKP" && !identical(members$crv, "X25519"))
+  ) {
+    unname(pending_key_types[[kty]])
   }
   structure(
     list(
@@ -1012,7 +1017,9 @@ format.jwk <- function(x, ...) {
   if (!x$supported) {
     lines <- c(
       lines,
-      if (is.null(x$needs)) {
+      if (!x$kty %in% c("oct", names(pending_key_types))) {
+        "  ! not usable: unknown key type"
+      } else if (is.null(x$needs)) {
         sprintf("  ! not usable: zujose has no %s", x$members$crv %||% x$kty)
       } else {
         sprintf("  ! not usable yet: needs zucrypt (>= %s)", x$needs)
