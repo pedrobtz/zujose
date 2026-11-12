@@ -320,21 +320,47 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
     }
   }
 
-  verified <- list()
+  # Policy and key selection run for every signature before any
+  # cryptography, and `limits$keys` bounds the keys tried for the whole
+  # token, not per signature, as in jwe_decrypt() (#37, #92).
   first_error <- NULL
-  for (s in obj$signatures) {
-    header <- c(s$protected, s$header)
-    attempt <- function() {
-      verify_signature(s, header, key, algorithms, signed_payload, limits, call)
+  guard <- function(f) {
+    if (require == "all") {
+      return(f())
     }
-    result <- if (require == "all") {
-      attempt()
-    } else {
-      tryCatch(attempt(), zujose_error = function(e) {
-        first_error <<- first_error %||% e
-        NULL
-      })
+    tryCatch(f(), zujose_error = function(e) {
+      first_error <<- first_error %||% e
+      NULL
+    })
+  }
+  headers <- lapply(obj$signatures, function(s) c(s$protected, s$header))
+  keys <- lapply(seq_along(obj$signatures), function(i) {
+    guard(function() {
+      signature_keys(headers[[i]], key, algorithms, limits, call)
+    })
+  })
+  if (sum(lengths(keys)) > limits$keys) {
+    abort_zujose(
+      "key",
+      "More keys fit the token's signatures than `limits$keys` allows.",
+      call = call
+    )
+  }
+
+  verified <- list()
+  for (i in seq_along(obj$signatures)) {
+    if (length(keys[[i]]) == 0L) {
+      next
     }
+    result <- guard(function() {
+      verify_signature(
+        obj$signatures[[i]],
+        headers[[i]],
+        keys[[i]],
+        signed_payload,
+        call
+      )
+    })
     if (!is.null(result)) {
       verified[[length(verified) + 1L]] <- result
     }
@@ -358,15 +384,8 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
   )
 }
 
-verify_signature <- function(
-  s,
-  header,
-  key,
-  algorithms,
-  signed_payload,
-  limits,
-  call
-) {
+# The keys to try for one signature, after its algorithm passes the policy.
+signature_keys <- function(header, key, algorithms, limits, call) {
   alg <- header[["alg"]]
   if (!alg %in% algorithms) {
     abort_zujose(
@@ -381,7 +400,11 @@ verify_signature <- function(
   # stop the search (#39). With none strong enough, the first is used, so
   # its check raises the key error.
   strong <- Filter(function(k) sig_key_strong(alg, k), keys)
-  keys <- if (length(strong) > 0L) strong else keys[1]
+  if (length(strong) > 0L) strong else keys[1]
+}
+
+verify_signature <- function(s, header, keys, signed_payload, call) {
+  alg <- header[["alg"]]
   input <- c(charToRaw(s$protected_b64), charToRaw("."), signed_payload)
   for (k in keys) {
     if (jws_verify_bytes(alg, k, input, s$signature, call)) {

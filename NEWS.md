@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `jws_verify()` counts `limits$keys` across all of a general JWS's
+  signatures, not per signature, as `jwe_decrypt()` does. It checks every
+  signature's algorithm and keys before verifying any (#92).
+
 * The `header` and `payload` limits of `jose_limits()` are exact in bytes
   for Base64url parts. Before, a limit of `n` let up to two more bytes
   through in a compact or JSON JWS and in a JWE ciphertext (#91).

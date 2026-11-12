@@ -524,3 +524,63 @@ test_that("b64 and crit are set through the b64 argument, not a header", {
     "{\"a\":1}"
   )
 })
+
+test_that("`limits$keys` counts the keys tried across all signatures", {
+  signers <- lapply(1:3, function(i) {
+    jws_signer(jwk_oct(as.raw(i + 0:31)), "HS256")
+  })
+  token <- jws_sign("x", signers, format = "general")
+  wrong <- jwk_set(
+    jwk_oct(as.raw(101:132)),
+    jwk_oct(as.raw(102:133)),
+    jwk_oct(as.raw(103:134))
+  )
+  verifies <- 0L
+  local_mocked_bindings(jws_verify_bytes = function(...) {
+    verifies <<- verifies + 1L
+    FALSE
+  })
+  expect_error(
+    jws_verify(
+      token,
+      wrong,
+      "HS256",
+      require = "any",
+      limits = jose_limits(keys = 3)
+    ),
+    class = "zujose_key_error"
+  )
+  expect_identical(verifies, 0L)
+  expect_error(
+    jws_verify(
+      token,
+      wrong,
+      "HS256",
+      require = "any",
+      limits = jose_limits(keys = 9)
+    ),
+    class = "zujose_signature_error"
+  )
+  expect_identical(verifies, 9L)
+})
+
+test_that("a general JWS verifies with keys within `limits$keys`", {
+  a <- jwk_oct(as.raw(1:32))
+  b <- jwk_oct(as.raw(2:33))
+  token <- jws_sign(
+    "x",
+    list(jws_signer(a, "HS256"), jws_signer(b, "HS256")),
+    format = "general"
+  )
+  set <- jwk_set(jwk_oct(as.raw(1:32)), jwk_oct(as.raw(2:33)))
+  expect_no_error(jws_verify(
+    token,
+    set,
+    "HS256",
+    limits = jose_limits(keys = 4)
+  ))
+  expect_error(
+    jws_verify(token, set, "HS256", limits = jose_limits(keys = 3)),
+    class = "zujose_key_error"
+  )
+})
