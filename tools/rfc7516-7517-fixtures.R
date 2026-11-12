@@ -130,7 +130,9 @@ write_values <- function(dir, rows, files, rfc_path, number) {
   )
 }
 
-value <- function(name, sec, value) list(name = name, section = sec, value = value)
+value <- function(name, sec, value) {
+  list(name = name, section = sec, value = value)
+}
 
 # RFC 7517 ---------------------------------------------------------------
 
