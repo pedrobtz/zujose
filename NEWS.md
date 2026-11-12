@@ -1,5 +1,8 @@
 # zujose 0.0.0.9000
 
+* Printing `jose_limits()` no longer warns in a session whose `OutDec` is
+  a comma (#137).
+
 * The default `token` limit of `jose_limits()` is 2 MiB, up from 1 MiB, so
   a token whose payload is at the default 1 MiB `payload` limit can be
   read. `token` bounds the encoded form, about 4/3 of the payload.

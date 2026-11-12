@@ -68,7 +68,9 @@ print.jose_limits <- function(x, ...) {
   cat("<jose_limits>\n")
   values <- vapply(
     unclass(x),
-    function(v) format(v, big.mark = ",", scientific = FALSE),
+    function(v) {
+      format(v, big.mark = ",", decimal.mark = ".", scientific = FALSE)
+    },
     ""
   )
   cat(sprintf("  %-10s %s\n", names(values), values), sep = "")

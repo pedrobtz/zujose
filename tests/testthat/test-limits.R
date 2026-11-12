@@ -114,3 +114,8 @@ test_that("a payload at the default limit fits the default token limit", {
   token <- jwe_encrypt(payload, key, alg = "dir", enc = "A256GCM")
   expect_identical(jwe_decrypt(token, key, "dir", "A256GCM")$plaintext, payload)
 })
+
+test_that("jose_limits() prints the same under a comma decimal mark", {
+  withr::local_options(OutDec = ",", warn = 2)
+  expect_snapshot(print(jose_limits(token = Inf)))
+})
