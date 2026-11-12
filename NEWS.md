@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `jwt_decode()` refuses a JWT with an unencoded payload (`b64: false`),
+  outer or nested, with `zujose_policy_error` before any key is tried
+  (RFC 7797 section 7). It returned the claims (#126).
+
 * `jwt_decode()` refuses an `exp`, `nbf` or `iat` beyond any time `POSIXct`
   can represent, such as `1e308`, with `zujose_parse_error`. It returned
   the claim as an `NA` time (#127).

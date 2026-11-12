@@ -99,6 +99,9 @@ numbers have no JSON form and are refused. \code{exp}, \code{nbf} and \code{iat}
 compared, and passed to a function, as the \code{POSIXct} times
 \code{jwt_decode()} returns; a number expects the same NumericDate.
 
+A JWT must not use the unencoded payload option, \code{b64: false} (RFC 7797
+section 7), and one that does is refused with \code{zujose_policy_error}.
+
 A JWT whose header has \code{cty: "JWT"} carries another JWT as its payload.
 That inner JWT is verified with the same \code{key} and \code{algorithms}, and its
 claims are checked. Deeper nesting is refused.

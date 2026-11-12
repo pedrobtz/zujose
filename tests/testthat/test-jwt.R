@@ -715,3 +715,48 @@ test_that("a NumericDate beyond what POSIXct holds is refused (#127)", {
   expect_false(is.na(format(claims$exp)))
   expect_identical(as.numeric(claims$exp), 1e16)
 })
+
+test_that("a JWT with an unencoded payload is refused, outer or nested (#126)", {
+  key <- jwk_oct(as.raw(1:32))
+  other <- jwk_oct(as.raw(32:1))
+  claims <- '{"exp":4000000000}'
+  unencoded <- jws_sign(
+    claims,
+    key,
+    "HS256",
+    header = list(typ = "JWT"),
+    b64 = FALSE
+  )
+  # Refused before the signature is checked, so even with the wrong key.
+  for (k in list(key, other)) {
+    expect_error(
+      jwt_decode(unencoded, k, "HS256"),
+      class = "zujose_policy_error"
+    )
+  }
+  nested <- jws_sign(unencoded, key, "HS256", header = list(cty = "JWT"))
+  expect_error(jwt_decode(nested, key, "HS256"), class = "zujose_policy_error")
+  kek <- jwk_oct(as.raw(1:16))
+  encrypted <- jwe_encrypt(
+    unencoded,
+    kek,
+    alg = "A128KW",
+    enc = "A128GCM",
+    header = list(cty = "JWT")
+  )
+  expect_error(
+    jwt_decode(
+      encrypted,
+      key,
+      "HS256",
+      decrypt = jwe_decryption(kek, "A128KW", "A128GCM")
+    ),
+    class = "zujose_policy_error"
+  )
+  # The same claims, Base64url-encoded, are accepted.
+  expect_no_error(jwt_decode(
+    jws_sign(claims, key, "HS256", header = list(typ = "JWT")),
+    key,
+    "HS256"
+  ))
+})

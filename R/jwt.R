@@ -119,6 +119,9 @@ jwt_encode <- function(
 #' compared, and passed to a function, as the `POSIXct` times
 #' `jwt_decode()` returns; a number expects the same NumericDate.
 #'
+#' A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
+#' section 7), and one that does is refused with `zujose_policy_error`.
+#'
 #' A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
 #' That inner JWT is verified with the same `key` and `algorithms`, and its
 #' claims are checked. Deeper nesting is refused.
@@ -257,6 +260,7 @@ jwt_decode <- function(
       list(header = opened$header, payload = opened$plaintext)
     }
   } else {
+    refuse_unencoded(token, limits, call)
     verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
     if (is_nested(verified$header)) {
       verified <- verify_inner(verified$payload, key, algorithms, limits, call)
@@ -624,6 +628,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
       call = call
     )
   }
+  refuse_unencoded(inner, limits, call)
   verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
   if (is_nested(verified$header)) {
     abort_zujose(
@@ -633,6 +638,20 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
     )
   }
   verified
+}
+
+# RFC 7797 §7: JWTs must not use the unencoded payload option. Decided on
+# the parsed header, before any key is tried (#126).
+refuse_unencoded <- function(token, limits, call) {
+  obj <- jose_parse(token, limits, call)
+  if (identical(obj$type, "JWS") && !obj$b64) {
+    abort_zujose(
+      "policy",
+      "A JWT must not use an unencoded payload (`b64: false`).",
+      call = call
+    )
+  }
+  invisible()
 }
 
 compact_parts <- function(token) {
