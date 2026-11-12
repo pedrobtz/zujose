@@ -215,7 +215,6 @@ test_that("zujose emits the tokens PyJWT verified", {
       )
     }
     public <- jwk_with_kid(oracle_key(row$key), row$key)
-    verified <- jws_verify(row$token, public, row$alg)
     if (row$kind == "jwt") {
       got <- jwt_decode(
         row$token,
@@ -229,6 +228,7 @@ test_that("zujose emits the tokens PyJWT verified", {
       expect_identical(got$name, claims$name, info = row$id)
       expect_identical(as.numeric(got$iat), 999999990, info = row$id)
     } else {
+      verified <- jws_verify(row$token, public, row$alg)
       expect_identical(rawToChar(verified$payload), payload, info = row$id)
     }
   }
