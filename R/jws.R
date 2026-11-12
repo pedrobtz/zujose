@@ -98,8 +98,12 @@ jws_sign <- function(
   payload_text <- if (b64) {
     b64url_encode(bytes)
   } else {
-    if (!isTRUE(zuutf::utf_valid(bytes))) {
-      abort_zujose("argument", "An unencoded payload must be valid UTF-8.")
+    # An R string cannot hold a NUL byte (#123).
+    if (!isTRUE(zuutf::utf_valid(bytes)) || any(bytes == as.raw(0))) {
+      abort_zujose(
+        "argument",
+        "An unencoded payload must be valid UTF-8 without NUL bytes."
+      )
     }
     text <- rawToChar(bytes)
     Encoding(text) <- "UTF-8"

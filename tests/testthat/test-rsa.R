@@ -337,3 +337,11 @@ test_that("an RSA JWK with `oth` is refused", {
   public <- c(jwk[c("kty", "n", "e")], list(oth = oth))
   expect_error(as_jwk(public), class = "zujose_key_error")
 })
+
+test_that("an RSA size that is not a whole number of bytes is refused (#123)", {
+  local_mocked_bindings(
+    crypt_rsa_keygen = function(...) stop("generated a key"),
+    .package = "zucrypt"
+  )
+  expect_error(jwk_generate("RSA", size = 2049), class = "zujose_key_error")
+})

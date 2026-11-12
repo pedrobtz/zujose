@@ -491,3 +491,38 @@ test_that("a named p2c or enc is written as its value (#120)", {
     expect_type(header$enc, "character")
   }
 })
+
+test_that("a p2c beyond 2^32 - 1 is a parse error at any limit (#123)", {
+  local_mocked_bindings(pbes2_kek = function(...) stop("derived a key"))
+  key <- jwk_oct(charToRaw("pw"))
+  for (bad in list(4294967296, 1e300)) {
+    expect_error(
+      jwe_decrypt(
+        pbes2_token(p2c = bad),
+        key,
+        "PBES2-HS256+A128KW",
+        "A128GCM",
+        limits = jose_limits(p2c = Inf)
+      ),
+      class = "zujose_parse_error"
+    )
+  }
+  token <- sub(
+    "^[^.]*",
+    b64url_encode(charToRaw(paste0(
+      "{\"alg\":\"PBES2-HS256+A128KW\",\"enc\":\"A128GCM\",",
+      "\"p2c\":1e400,\"p2s\":\"AQIDBAUGBwgJCgsMDQ4PEA\"}"
+    ))),
+    pbes2_token()
+  )
+  expect_error(
+    jwe_decrypt(
+      token,
+      key,
+      "PBES2-HS256+A128KW",
+      "A128GCM",
+      limits = jose_limits(p2c = Inf)
+    ),
+    class = "zujose_error"
+  )
+})

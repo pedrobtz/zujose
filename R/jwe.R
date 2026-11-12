@@ -837,12 +837,16 @@ kek_params <- function(alg, header, limits, call) {
       !is.numeric(p2c) ||
         length(p2c) != 1L ||
         is.na(p2c) ||
+        !is.finite(p2c) ||
         p2c != trunc(p2c) ||
-        p2c < 1
+        p2c < 1 ||
+        p2c > 4294967295
     ) {
+      # PBKDF2 counts to 2^32 - 1, as encryption does, whatever the limit
+      # (#123).
       abort_zujose(
         "parse",
-        "A PBES2 token needs a positive whole `p2c`.",
+        "A PBES2 token needs a whole `p2c` from 1 to 2^32 - 1.",
         call = call
       )
     }

@@ -699,3 +699,13 @@ test_that("a recipient header alg must agree with the algorithm (#129)", {
     expect_identical(jose_peek(token)$headers[[1]]$alg, "A128KW")
   }
 })
+
+test_that("`enc` must be one string (#123)", {
+  kek <- jwk_oct(as.raw(1:16))
+  for (enc in list(c("A128GCM", "A256GCM"), NA_character_, 1, NULL)) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", enc = enc),
+      class = "zujose_argument_error"
+    )
+  }
+})

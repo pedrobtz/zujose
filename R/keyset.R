@@ -85,6 +85,19 @@ as_jwk_set <- function(x) {
 `[[.jwk_set` <- function(x, i) {
   keys <- unclass(x)
   if (!is.character(i)) {
+    ok <- is.numeric(i) &&
+      length(i) == 1L &&
+      !is.na(i) &&
+      i == trunc(i) &&
+      i >= 1 &&
+      i <= length(keys)
+    if (!ok) {
+      abort_zujose(
+        "argument",
+        "Select a key with one index in the set, or a `kid`.",
+        call = sys.call()
+      )
+    }
     return(keys[[i]])
   }
   if (!is_string(i)) {

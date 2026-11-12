@@ -85,3 +85,12 @@ test_that("`[` refuses NA and out-of-range indices", {
   expect_length(set["z"], 0L)
   expect_output(print(set[0]), "0 keys")
 })
+
+test_that("[[ on a jwk_set refuses a bad index with a zujose error (#123)", {
+  set <- jwk_set(jwk_oct(as.raw(1:32), kid = "a"))
+  for (i in list(9, 0, -1, NA, 1.5, c(1, 1), TRUE, list(1))) {
+    expect_error(set[[i]], class = "zujose_argument_error")
+  }
+  expect_identical(set[[1]]$kid, "a")
+  expect_identical(set[[1L]]$kid, "a")
+})

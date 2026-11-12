@@ -1,5 +1,12 @@
 # zujose 0.0.0.9000
 
+* Errors that escaped as base R, zucrypt or zujson conditions are now
+  `zujose_error`s: an `enc` that is not one string in `jwe_encrypt()`, a
+  NUL byte in an unencoded (`b64 = FALSE`) payload, an RSA `size` that is
+  not a multiple of 8 in `jwk_generate()` (now documented), a bad index in
+  `[[` on a `jwk_set`, and a PBES2 `p2c` beyond 2^32 - 1, which is a parse
+  error even under `jose_limits(p2c = Inf)` (#123).
+
 * Names on R arguments no longer change the JSON zujose writes or the
   values it compares. A named `expires_in`, `not_before`, `exp`, `nbf`,
   `iat`, `p2c`, `alg`, `enc`, `kid`, `typ` or registered claim was written

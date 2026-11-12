@@ -225,13 +225,13 @@ jwk_oct <- function(
 #' `A256CBC-HS512`, and 128, 192 or 256 for `A128GCM`, `A192GCM` and
 #' `A256GCM`), or give `alg = "dir"` and its `size`.
 #'
-#' An `RSA` key's `size` is its modulus, 2048 bits by default and at most
-#' 4096, with public exponent 65537. Generating one takes a moment.
+#' An `RSA` key's `size` is its modulus, a multiple of 8 bits, 2048 by
+#' default and at most 4096, with public exponent 65537. Generating one takes a moment.
 #'
 #' @param kty The key type: `"oct"`, `"RSA"`, `"EC"` or `"OKP"`.
 #' @param size The key size in bits. For an `oct` key, a multiple of 8 and at
-#'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048
-#'   to 4096, and `NULL` is 2048.
+#'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, a
+#'   multiple of 8 from 2048 to 4096, and `NULL` is 2048.
 #' @param crv The curve: `"P-256"` (the default), `"P-384"` or `"P-521"`
 #'   for an `EC` key, `"X25519"` for an `OKP` key. Not used otherwise.
 #' @inheritParams jwk_oct
@@ -334,13 +334,13 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
   ok <- is.numeric(size) &&
     length(size) == 1L &&
     is.finite(size) &&
-    size == trunc(size) &&
+    size %% 8 == 0 &&
     size >= 2048 &&
     size <= 4096
   if (!ok) {
     abort_zujose(
       "key",
-      "`size` must be a whole number of bits from 2048 to 4096.",
+      "`size` must be a whole number of bytes, in bits, from 2048 to 4096.",
       call = call
     )
   }

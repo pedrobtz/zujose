@@ -665,3 +665,20 @@ test_that("a named list of signers writes `signatures` as an array (#120)", {
   ))
   expect_identical(jws_verify(token, key, "HS256")$alg, "HS256")
 })
+
+test_that("an unencoded payload with a NUL byte is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (format in c("compact", "flattened")) {
+    expect_error(
+      jws_sign(
+        as.raw(c(0x61, 0, 0x62)),
+        key,
+        "HS256",
+        b64 = FALSE,
+        detached = TRUE,
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+  }
+})

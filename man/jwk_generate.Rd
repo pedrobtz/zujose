@@ -18,8 +18,8 @@ jwk_generate(
 \item{kty}{The key type: \code{"oct"}, \code{"RSA"}, \code{"EC"} or \code{"OKP"}.}
 
 \item{size}{The key size in bits. For an \code{oct} key, a multiple of 8 and at
-least 128, and \code{NULL} takes the size \code{alg} needs; for an \code{RSA} key, 2048
-to 4096, and \code{NULL} is 2048.}
+least 128, and \code{NULL} takes the size \code{alg} needs; for an \code{RSA} key, a
+multiple of 8 from 2048 to 4096, and \code{NULL} is 2048.}
 
 \item{crv}{The curve: \code{"P-256"} (the default), \code{"P-384"} or \code{"P-521"}
 for an \code{EC} key, \code{"X25519"} for an \code{OKP} key. Not used otherwise.}
@@ -53,8 +53,8 @@ its content encryption, such as \code{alg = "A128GCM"}, to get its exact size
 \code{A256CBC-HS512}, and 128, 192 or 256 for \code{A128GCM}, \code{A192GCM} and
 \code{A256GCM}), or give \code{alg = "dir"} and its \code{size}.
 
-An \code{RSA} key's \code{size} is its modulus, 2048 bits by default and at most
-4096, with public exponent 65537. Generating one takes a moment.
+An \code{RSA} key's \code{size} is its modulus, a multiple of 8 bits, 2048 by
+default and at most 4096, with public exponent 65537. Generating one takes a moment.
 }
 \section{Secrets in memory}{
 
