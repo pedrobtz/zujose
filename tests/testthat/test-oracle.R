@@ -68,3 +68,71 @@ test_that("a PyJWT token is refused under an algorithm it was not given", {
     )
   }
 })
+
+# jwcrypto's known answers (tools/make-jwe-vectors.py): A192*, A*GCM and the
+# Concat KDF's second round, with fixed keys and ephemeral keys (#102).
+
+test_that("zujose decrypts every jwcrypto known-answer JWE", {
+  rows <- oracle_jwe_vectors()
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    out <- jwe_decrypt(row$token, as_jwk(row$key), row$alg, row$enc)
+    expect_identical(out$plaintext, hex(row$plaintext), info = row$id)
+  }
+})
+
+test_that("zujose encrypts dir, A192KW and A192GCMKW as jwcrypto did", {
+  # Their headers are the ones zujose writes, so at jwcrypto's CEK and IVs
+  # the whole token is reproduced.
+  rows <- oracle_jwe_vectors()
+  rows <- rows[rows$alg %in% c("dir", "A192KW", "A192GCMKW"), ]
+  expect_identical(nrow(rows), 7L)
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    parts <- strsplit(row$token, ".", fixed = TRUE)[[1]]
+    header <- zujson::json_parse(rawToChar(b64url_decode(parts[[1]], "h")))
+    fixed <- if (!is.null(header$iv)) {
+      list(kw_iv = b64url_decode(header$iv, "iv"))
+    }
+    ours <- encrypt_fixed(
+      hex(row$plaintext),
+      as_jwk(row$key),
+      row$alg,
+      row$enc,
+      cek = hex(row$cek),
+      iv = b64url_decode(parts[[3]], "iv"),
+      fixed = as.list(fixed)
+    )
+    expect_identical(ours, row$token, info = row$id)
+  }
+})
+
+test_that("ECDH-ES derives jwcrypto's keys, over 256 bits too", {
+  # With jwcrypto's ephemeral key, zujose's Concat KDF must give the CEK
+  # (direct) or the encrypted key (+A192KW) that jwcrypto's did.
+  rows <- oracle_jwe_vectors()
+  rows <- rows[startsWith(rows$alg, "ECDH-ES"), ]
+  expect_true(all(c("A192CBC-HS384", "A256CBC-HS512") %in% rows$enc))
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    parts <- strsplit(row$token, ".", fixed = TRUE)[[1]]
+    header <- zujson::json_parse(rawToChar(b64url_decode(parts[[1]], "h")))
+    got <- wrap_cek(
+      row$alg,
+      jwk_public(as_jwk(row$key)),
+      hex(row$cek),
+      fixed = list(epk = as_jwk(row$ephemeral)),
+      enc = row$enc
+    )
+    expect_identical(got$header$epk$x, header$epk$x, info = row$id)
+    if (row$alg == "ECDH-ES") {
+      expect_identical(got$cek, hex(row$cek), info = row$id)
+    } else {
+      expect_identical(
+        b64url_encode(got$encrypted_key),
+        parts[[2]],
+        info = row$id
+      )
+    }
+  }
+})

@@ -237,6 +237,40 @@ test_that("RSA moduli under 2048 bits are refused for use", {
   expect_s3_class(small, "jwk")
 })
 
+test_that("RFC 7516 A.1 (RSA-OAEP, A256GCM) decrypts and is reproduced", {
+  # A256GCM encryption had no known answer at check time (#102).
+  path <- test_path("fixtures", "rfc7516", "a1-key.json")
+  key <- as_jwk(readChar(path, file.size(path), useBytes = TRUE))
+  token <- rfc_value(7516, "token")
+  plaintext <- rfc_octets(7516, "plaintext")
+  out <- jwe_decrypt(token, key, "RSA-OAEP", "A256GCM")
+  expect_identical(out$plaintext, plaintext)
+  expect_identical(
+    recover_cek("RSA-OAEP", "A256GCM", key, rfc_octets(7516, "encrypted_key")),
+    rfc_octets(7516, "cek")
+  )
+
+  # RSA-OAEP is randomised, so every part but the encrypted key is the
+  # RFC's at its CEK and IV.
+  ours <- encrypt_fixed(
+    plaintext,
+    jwk_public(key),
+    "RSA-OAEP",
+    "A256GCM",
+    cek = rfc_octets(7516, "cek"),
+    iv = rfc_octets(7516, "iv")
+  )
+  parts <- strsplit(ours, ".", fixed = TRUE)[[1]]
+  expect_identical(
+    parts[-2],
+    strsplit(token, ".", fixed = TRUE)[[1]][-2]
+  )
+  expect_identical(
+    jwe_decrypt(ours, key, "RSA-OAEP", "A256GCM")$plaintext,
+    plaintext
+  )
+})
+
 test_that("PEM keys are read, and written back as PEM", {
   pem <- oracle_pem("rsa-2048")
   pub_pem <- oracle_pem("rsa-2048", public = TRUE)

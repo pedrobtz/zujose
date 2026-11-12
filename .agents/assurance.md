@@ -79,7 +79,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | Concat KDF, one round                     | RFC 7518 App. C derived key; RFC 7520 §5.4, §5.5                                        | tests/testthat/test-ec.R                                      |
 | A*CBC-HS*                                 | RFC 7518 App. B, all three sizes, ciphertext and tag; RFC 7516 A.3                      | tests/testthat/test-aes.R, test-jwe.R                         |
 | A*GCM decrypt                             | RFC 7520 §5.6, §5.8 (A128GCM) and §5.2 (A256GCM)                                        | tests/testthat/test-jwe-gcm-pbes2.R, test-rsa.R               |
-| PBES2-HS256, Concat KDF over 256 bits, A*GCM encrypt, A192* | RFC 7517 App. C, RFC 7516 A.1 and a committed jwcrypto fixture at check time | gap #102                                                        |
+| PBES2-HS256, Concat KDF over 256 bits, A*GCM encrypt, A192* | RFC 7517 App. C every step; RFC 7516 A.1 reproduced; jwcrypto tokens (`jwe-vectors.tsv`) decrypted, reproduced, KDF keys equal | tests/testthat/test-jwe-gcm-pbes2.R, test-rsa.R, test-oracle.R |
 | JWK import, every `kty`                   | RFC 7515, 7520 and 8037 keys give the RFCs' signatures, plaintexts and shared secrets   | tests/testthat/test-keys.R, test-rsa.R, test-ec.R             |
 | JWK export, every `kty`                   | round trip for every RFC 7520 key; jwcrypto, dev, reads the exported set                | tests/testthat/test-keys.R, tools/jwe-oracle/                 |
 | PEM import, RSA and EC                    | `cryptography`'s PEMs give keys that verify PyJWT's tokens                              | tests/testthat/test-oracle.R                                  |

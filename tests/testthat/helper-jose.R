@@ -561,3 +561,30 @@ local_pbes2_reached <- function(env = parent.frame()) {
 nested_json <- function(depth) {
   paste0('{"a":', strrep("[", depth - 1), strrep("]", depth - 1), "}")
 }
+
+# A value of RFC 7517 Appendix C or RFC 7516 A.1, as
+# tools/rfc7516-7517-fixtures.R extracted it: Base64url text for octets, or
+# the text of a header or token. `rfc` is 7516 or 7517.
+rfc_value <- function(rfc, name) {
+  v <- utils::read.delim(
+    test_path("fixtures", paste0("rfc", rfc), "VALUES.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+  stopifnot(sum(v$name == name) == 1L)
+  v$value[v$name == name]
+}
+
+# rfc_value(), decoded from Base64url.
+rfc_octets <- function(rfc, name) b64url_decode(rfc_value(rfc, name), name)
+
+# JWEs jwcrypto made with fixed keys and ephemeral keys
+# (tools/make-jwe-vectors.py): known answers for A192*, A*GCM and the
+# Concat KDF's second round.
+oracle_jwe_vectors <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "jwe-vectors.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
