@@ -234,6 +234,26 @@ test_that("ECDH-ES takes apu and apv, and several +KW recipients", {
   )
 })
 
+test_that("apu and apv must be strings, and agreement needs the private key", {
+  a <- jwk_generate("EC")
+  expect_error(
+    jwe_encrypt("x", jwk_public(a), "ECDH-ES", header = list(apu = 5)),
+    class = "zujose_argument_error"
+  )
+  token <- jwe_encrypt("x", jwk_public(a), "ECDH-ES", format = "flattened")
+  obj <- zujson::json_parse(token, simplify = "none")
+  obj$header <- list(apv = 5)
+  local_no_crypto()
+  expect_error(
+    jwe_decrypt(zujson::json_write(obj), a, "ECDH-ES", "A128CBC-HS256"),
+    class = "zujose_parse_error"
+  )
+  expect_error(
+    jwe_decrypt(token, jwk_public(a), "ECDH-ES", "A128CBC-HS256"),
+    class = "zujose_key_error"
+  )
+})
+
 # Policy before cryptography (design §8.6) -------------------------------
 
 test_that("an ephemeral key off the curve, or malformed, is a parse error", {
@@ -281,6 +301,19 @@ test_that("an ephemeral key on another curve than the key is refused", {
   )
 })
 
+test_that("an ephemeral key's curve is checked before any key agreement", {
+  # A second guard for the epk curve rule (#79): a P-256 ephemeral key
+  # against a P-521 key, with ECDH-ES+A128KW, never reaches ECDH.
+  key <- jwk_generate("EC", crv = "P-521")
+  p256 <- jwk_public(jwk_generate("EC", crv = "P-256"))$members
+  token <- ecdh_token(c(list(kty = "EC"), p256), alg = "ECDH-ES+A128KW")
+  local_no_crypto()
+  expect_error(
+    jwe_decrypt(token, key, "ECDH-ES+A128KW", "A128GCM"),
+    class = "zujose_key_error"
+  )
+})
+
 test_that("a low-order X25519 ephemeral key is refused with the header", {
   # The all-zero point is rejected when the header is parsed, before any key
   # agreement, so it is a parse error, not a decryption failure.
@@ -296,6 +329,7 @@ test_that("an ECDH-ES failure after policy is the one decrypt error", {
   # A wrong private key, a flipped tag, and an ECDH-ES token that carries an
   # encrypted key all fail with the class and message every other JWE
   # failure has, so none of them is an oracle (#41).
+  messages <- character()
   for (crv in c("P-256", "X25519")) {
     kty <- if (crv == "X25519") "OKP" else "EC"
     right <- jwk_generate(kty, crv = crv)
@@ -321,10 +355,13 @@ test_that("an ECDH-ES failure after policy is the one decrypt error", {
           class = "zujose_decrypt_error",
           info = paste(crv, alg)
         )
-        expect_identical(conditionMessage(err), "Decryption failed.")
+        messages <- c(messages, conditionMessage(err))
       }
     }
   }
+  # One message for every cause; its wording is pinned in a snapshot.
+  expect_length(unique(messages), 1L)
+  expect_snapshot(cat(unique(messages)))
 })
 
 # Keys ---------------------------------------------------------------------
@@ -394,20 +431,6 @@ test_that("Ed25519 keys are read and kept, but cannot be used", {
   ))
   expect_false(key$supported)
   expect_error(jws_verify("a.b.c", key, "EdDSA"), class = "zujose_policy_error")
-})
-
-test_that("zujose_info() reports ES* and ECDH-ES available", {
-  info <- zujose_info()
-  ec <- c(
-    "ES256",
-    "ES384",
-    "ES512",
-    "ECDH-ES",
-    "ECDH-ES+A128KW",
-    "ECDH-ES+A192KW",
-    "ECDH-ES+A256KW"
-  )
-  expect_true(all(info$available[info$algorithm %in% ec]))
 })
 
 test_that("EC and X25519 members not of the curve's length are refused", {

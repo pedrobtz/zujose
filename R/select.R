@@ -129,8 +129,7 @@ curve_fits <- function(key, alg) {
 # the content encryption instead, as RFC 7520 section 5.6's key does
 # ("alg": "A128GCM" for a `dir` token). `enc` is the token's.
 key_fits <- function(key, alg, operation, enc = NULL) {
-  key$kty %in%
-    alg_key_types(alg) &&
+  (key$kty %in% alg_key_types(alg)) &&
     curve_fits(key, alg) &&
     (is.null(key$alg) ||
       identical(key$alg, alg) ||

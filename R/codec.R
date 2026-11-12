@@ -6,7 +6,8 @@
 # A jose_object is a list:
 #
 # * JWS: `type`, `serialization`, `payload_b64` (as received, or NULL when
-#   detached, which in the compact serialization is an empty part), `payload` (raw, or NULL), `b64`, and `signatures`, a list of
+#   detached, which in the compact serialization is an empty part),
+#   `payload` (raw, or NULL), `b64`, and `signatures`, a list of
 #   `protected_b64` (as received), `protected`, `header` and `signature`.
 # * JWE: `type`, `serialization`, `protected_b64`, `protected`,
 #   `unprotected`, `aad_b64` and `aad` (NULL when absent), `iv`,
@@ -540,17 +541,8 @@ json_header <- function(obj, name, call) {
   value
 }
 
-# Exact member lookup: `$` would partially match.
-member <- function(x, name) {
-  if (name %in% names(x)) x[[name]] else NULL
-}
-
 is_json_object <- function(x) {
   is.list(x) && !is.null(names(x))
-}
-
-is_string <- function(x) {
-  is.character(x) && length(x) == 1L && !is.na(x)
 }
 
 # Level by level, not by recursion: zujson parses JSON nested 1000 deep,
@@ -567,10 +559,6 @@ has_repeated_names <- function(x) {
     level <- unlist(lapply(level, unname), recursive = FALSE)
   }
   FALSE
-}
-
-empty_object <- function() {
-  stats::setNames(list(), character())
 }
 
 new_jose_object <- function(...) {

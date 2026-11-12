@@ -1,3 +1,19 @@
+# a signed JWT inside a signed JWT is refused (#46)
+
+    Code
+      jwt_decode(outer, key, "HS256")
+    Condition
+      Error in `jwt_decode()`:
+      ! A signed JWT must not carry another JWT (`cty: "JWT"`); only a JWE may.
+
+# signature checks come first
+
+    Code
+      jwt_decode(jwt, key)
+    Condition
+      Error in `jwt_decode()`:
+      ! argument "algorithms" is missing, with no default
+
 # printing claims shows times in UTC
 
     Code

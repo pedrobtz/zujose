@@ -135,6 +135,14 @@ test_that("[[ on a jwk_set refuses a bad index with a zujose error (#123)", {
   expect_identical(set[[1L]]$kid, "a")
 })
 
+test_that("a parsed JWK Set must be an object without repeated names", {
+  expect_error(as_jwk_set(list(1, 2)), class = "zujose_key_error")
+  repeated <- zujson::json_parse('{"keys":[],"keys":[]}', simplify = "none")
+  expect_error(as_jwk_set(repeated), class = "zujose_key_error")
+  set <- jwk_set(jwk_oct(as.raw(1:16)))
+  expect_identical(as_jwk_set(set), set)
+})
+
 test_that("as_jwk_set() skips members of `keys` that are not JSON objects (#44)", {
   oct <- '{"kty":"oct","k":"AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA"}'
   pem <- rfc7520_key(3) |> as_jwk() |> jwk_pem()

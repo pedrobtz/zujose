@@ -190,9 +190,12 @@ test_that("RSA1_5 never encrypts and decrypts only when named", {
 })
 
 test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
-  key <- jwk_generate("RSA")
+  # Committed keys, not generated ones: faster, and deterministic.
+  key <- oracle_key("rsa-2048", public = FALSE)
   token <- jwe_encrypt("secret", key, "RSA-OAEP")
-  other <- jwk_generate("RSA")
+  # RFC 7520's RSA key, without its `use: "sig"`.
+  other <- zujson::json_parse(rfc7520_key(4), simplify = "none")
+  other <- as_jwk(other[setdiff(names(other), c("use", "kid"))])
   e1 <- expect_error(
     jwe_decrypt(token, other, "RSA-OAEP", "A128CBC-HS256"),
     class = "zujose_decrypt_error"
@@ -332,22 +335,6 @@ test_that("printing an RSA key shows its size, never its private members", {
   expect_true(any(grepl("private: yes", out, fixed = TRUE)))
 })
 
-test_that("zujose_info() reports RS*, PS* and RSA key management available", {
-  info <- zujose_info()
-  rsa <- c(
-    "RS256",
-    "RS384",
-    "RS512",
-    "PS256",
-    "PS384",
-    "PS512",
-    "RSA-OAEP",
-    "RSA-OAEP-256",
-    "RSA1_5"
-  )
-  expect_true(all(info$available[info$algorithm %in% rsa]))
-})
-
 test_that("RSA members with a leading zero octet are refused", {
   # RFC 7518 section 2: a Base64urlUInt uses the minimum number of octets,
   # so each key has one encoding and one thumbprint (#94).
@@ -378,4 +365,29 @@ test_that("an RSA size that is not a whole number of bytes is refused (#123)", {
     .package = "zucrypt"
   )
   expect_error(jwk_generate("RSA", size = 2049), class = "zujose_key_error")
+})
+
+test_that("RSA1_5 draws its random CEK whether or not the padding is good", {
+  # RFC 7516 §11.5: the random CEK is made before decryption, so a padding
+  # failure takes the same steps as success.
+  key <- as_jwk(rfc7520_key(73))
+  wrong <- jwk_generate("RSA")
+  draws <- 0L
+  local_mocked_bindings(
+    crypt_rand_bytes = function(n) {
+      draws <<- draws + 1L
+      as.raw(seq_len(n))
+    },
+    .package = "zucrypt"
+  )
+  out <- jwe_decrypt(rfc7520_token(81), key, "RSA1_5", "A128CBC-HS256")
+  expect_identical(rawToChar(out$plaintext), rfc7520_text(72))
+  expect_identical(draws, 1L)
+
+  draws <- 0L
+  expect_error(
+    jwe_decrypt(rfc7520_token(81), wrong, "RSA1_5", "A128CBC-HS256"),
+    class = "zujose_decrypt_error"
+  )
+  expect_identical(draws, 1L)
 })

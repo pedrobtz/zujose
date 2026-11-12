@@ -91,3 +91,11 @@ test_that("a key without its required members has no thumbprint", {
   )
   expect_error(jwk_thumbprint("x"), class = "zujose_argument_error")
 })
+
+test_that("a key RFC 7638 has no thumbprint for, or lacking a member, is refused", {
+  # Kept keys of an unknown type, or missing a member, read but have none.
+  for (json in c('{"kty":"foo","k":"AQID"}', '{"kty":"OKP","crv":"Ed25519"}')) {
+    key <- as_jwk(json)
+    expect_error(jwk_thumbprint(key), class = "zujose_key_error", info = json)
+  }
+})

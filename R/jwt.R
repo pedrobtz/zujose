@@ -29,8 +29,12 @@
 #' @export
 #' @examples
 #' key <- jwk_oct(as.raw(1:32), kid = "k1")
-#' jwt <- jwt_encode(list(sub = "u1", aud = "api"), key, "HS256",
-#'                        expires_in = 3600)
+#' jwt <- jwt_encode(
+#'   list(sub = "u1", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 3600
+#' )
 #' jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 jwt_encode <- function(
   claims,
@@ -142,17 +146,21 @@ jwt_encode <- function(
 #' A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
 #' section 7), and one that does is refused with `zujose_policy_error`.
 #'
-#' A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
-#' That inner JWT is verified with the same `key` and `algorithms`, and its
-#' claims are checked. Deeper nesting is refused.
-#'
 #' A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
 #' it, so a check meant for signed tokens never silently accepts encrypted
-#' ones. The JWE carries a signed JWT (`cty: "JWT"`), verified as above,
-#' or, when its key management is symmetric (`dir`, `A*KW`, `A*GCMKW` or
-#' `PBES2-*`), the claims themselves. With RSA or ECDH key management anyone
-#' holding the recipient's public key can encrypt a token, so the claims must
-#' be signed: an encrypted-only JWT is refused with `zujose_policy_error`.
+#' ones. Each layer has its own allow-list: `decrypt` for the JWE, and
+#' `key` and `algorithms` for the signature. The JWE's key management must
+#' be in `decrypt`'s algorithms, checked first. The JWE then carries a
+#' signed JWT (`cty: "JWT"`), verified as above, or, when its key
+#' management is symmetric (`dir`, `A*KW`, `A*GCMKW` or `PBES2-*`), the
+#' claims themselves. With RSA or ECDH key management anyone holding the
+#' recipient's public key can encrypt a token, so the claims must be signed:
+#' an encrypted-only JWT is refused with `zujose_policy_error`.
+#'
+#' Nesting is one level only, a signed JWT inside a JWE. A signed JWT whose
+#' header has `cty: "JWT"` is refused with `zujose_policy_error` before its
+#' signature is checked, whether it is the token or inside a JWE. To accept a
+#' signed JWT inside another, call [jws_verify()] on each.
 #'
 #' Each failed check raises a subclass of `zujose_claim_error` carrying the
 #' claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
@@ -182,10 +190,13 @@ jwt_encode <- function(
 #' @export
 #' @examples
 #' key <- jwk_oct(as.raw(1:32))
-#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-#'                        expires_in = 60)
-#' claims <- jwt_decode(jwt, key, "HS256", audience = "api",
-#'                           issuer = "me")
+#' jwt <- jwt_encode(
+#'   list(iss = "me", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 60
+#' )
+#' claims <- jwt_decode(jwt, key, "HS256", audience = "api", issuer = "me")
 #' claims$iss
 #'
 #' # Claim failures have classes of their own.
@@ -245,7 +256,9 @@ jwt_decode <- function(
     )
   }
 
-  if (compact_parts(token) == 5L) {
+  # Parsed once, so `limits` bound the token before any other work.
+  obj <- jose_parse(token, limits, call)
+  if (obj$type == "JWE") {
     if (is.null(decrypt)) {
       abort_zujose(
         "policy",
@@ -253,12 +266,21 @@ jwt_decode <- function(
         call = call
       )
     }
-    # An encrypted-only JWT is authentic only when the key management is
-    # symmetric: with RSA or ECDH, anyone holding the recipient's public key
-    # can make one. Its claims must then come inside a signed JWT (#34).
-    # Decided on the header, before any decryption.
-    outer <- jose_parse(token, limits, call)$protected
-    if (!is_nested(outer) && !identical(alg_key_types(outer[["alg"]]), "oct")) {
+    # Policy first, decided on the header before any decryption: the
+    # caller's allow-list, then the rule for encrypted-only JWTs. One of
+    # those is authentic only when the key management is symmetric: with
+    # RSA or ECDH, anyone holding the recipient's public key can make one,
+    # so its claims must come inside a signed JWT (design §8.5).
+    alg <- obj$protected[["alg"]]
+    if (!alg %in% decrypt$algorithms) {
+      abort_zujose(
+        "policy",
+        "The token's key management is not in `decrypt$algorithms`.",
+        call = call
+      )
+    }
+    public_key <- any(alg_key_types(alg) %in% c("RSA", "EC", "OKP"))
+    if (public_key && !is_nested(obj$protected)) {
       abort_zujose(
         "policy",
         paste0(
@@ -269,7 +291,7 @@ jwt_decode <- function(
       )
     }
     opened <- decrypt_jwe(
-      token,
+      obj,
       decrypt$key,
       decrypt$algorithms,
       decrypt$encryptions,
@@ -282,11 +304,8 @@ jwt_decode <- function(
       list(header = opened$header, payload = opened$plaintext)
     }
   } else {
-    refuse_unencoded(token, limits, call)
+    check_jws_header(obj, call)
     verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
-    if (is_nested(verified$header)) {
-      verified <- verify_inner(verified$payload, key, algorithms, limits, call)
-    }
   }
   header <- verified$header
   check_type(header, type, call)
@@ -331,8 +350,12 @@ jwt_decode <- function(
 #' @examples
 #' key <- jwk_oct(as.raw(1:32))
 #' check <- jwt_decoder(key, "HS256", audience = "api", issuer = "me")
-#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-#'                        expires_in = 60)
+#' jwt <- jwt_encode(
+#'   list(iss = "me", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 60
+#' )
 #' check(jwt)$iss
 jwt_decoder <- function(
   key,
@@ -392,24 +415,24 @@ jwt_decoder <- function(
 # Checks ------------------------------------------------------------------
 
 check_claims <- function(
-  cl,
+  payload,
   audience,
   issuer,
   subject,
   required,
-  spec,
+  expectations,
   validate,
   max_age,
   leeway,
   now,
   call
 ) {
-  present <- names(cl)
+  present <- names(payload)
 
   # RFC 7519 §4.1.4–§4.1.6: NumericDate, so a finite number. A string or a
   # null is a malformed token, never a skipped check.
   for (name in intersect(c("exp", "nbf", "iat"), present)) {
-    value <- cl[[name]]
+    value <- payload[[name]]
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
       abort_zujose(
         "parse",
@@ -428,7 +451,7 @@ check_claims <- function(
     }
   }
   for (name in intersect(c("iss", "sub"), present)) {
-    if (!is_string(cl[[name]])) {
+    if (!is_string(payload[[name]])) {
       abort_claim(
         if (name == "iss") "issuer" else "subject",
         sprintf("The `%s` claim must be a single string.", name),
@@ -439,7 +462,7 @@ check_claims <- function(
   }
   aud <- NULL
   if ("aud" %in% present) {
-    aud <- cl[["aud"]]
+    aud <- payload[["aud"]]
     if (
       is.list(aud) &&
         is.null(names(aud)) &&
@@ -464,11 +487,11 @@ check_claims <- function(
     }
   }
 
-  exp <- member(cl, "exp")
+  exp <- member(payload, "exp")
   if (!is.null(exp) && now >= exp + leeway) {
     abort_time("expired", "The token has expired.", "exp", exp, now, call)
   }
-  nbf <- member(cl, "nbf")
+  nbf <- member(payload, "nbf")
   if (!is.null(nbf) && now + leeway < nbf) {
     abort_time(
       "not_yet_valid",
@@ -479,7 +502,7 @@ check_claims <- function(
       call
     )
   }
-  iat <- member(cl, "iat")
+  iat <- member(payload, "iat")
   if (!is.null(iat) && iat > now + leeway) {
     abort_time(
       "not_yet_valid",
@@ -510,7 +533,7 @@ check_claims <- function(
     if (!"iss" %in% present) {
       abort_missing("iss", call)
     }
-    if (!identical(cl[["iss"]], issuer)) {
+    if (!identical(payload[["iss"]], issuer)) {
       abort_claim(
         "issuer",
         "The token's issuer is not `issuer`.",
@@ -523,7 +546,7 @@ check_claims <- function(
     if (!"sub" %in% present) {
       abort_missing("sub", call)
     }
-    if (!identical(cl[["sub"]], subject)) {
+    if (!identical(payload[["sub"]], subject)) {
       abort_claim(
         "subject",
         "The token's subject is not `subject`.",
@@ -555,12 +578,12 @@ check_claims <- function(
     }
   }
 
-  for (name in names(spec)) {
+  for (name in names(expectations)) {
     if (!name %in% present) {
       abort_missing(name, call)
     }
-    expected <- spec[[name]]
-    ok <- claim_matches(name, cl[[name]], expected)
+    expected <- expectations[[name]]
+    ok <- claim_matches(name, payload[[name]], expected)
     if (!ok) {
       abort_claim(
         NULL,
@@ -570,7 +593,7 @@ check_claims <- function(
       )
     }
   }
-  if (!is.null(validate) && !isTRUE(validate(cl))) {
+  if (!is.null(validate) && !isTRUE(validate(payload))) {
     abort_claim(
       NULL,
       "`validate` refused the claims.",
@@ -676,7 +699,7 @@ check_type <- function(header, type, call) {
   invisible()
 }
 
-# The JWT nested inside a JWS or JWE: a compact JWS, one level only.
+# The JWT nested inside a JWE: a compact JWS, one level only (design §8.5).
 verify_inner <- function(bytes, key, algorithms, limits, call) {
   inner <- if (!any(bytes == as.raw(0))) rawToChar(bytes) else ""
   Encoding(inner) <- "UTF-8"
@@ -687,26 +710,29 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
       call = call
     )
   }
-  refuse_unencoded(inner, limits, call)
-  verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
-  if (is_nested(verified$header)) {
-    abort_zujose(
-      "policy",
-      "A JWT nested more than one level deep is refused.",
-      call = call
-    )
-  }
-  verified
+  check_jws_header(jose_parse(inner, limits, call), call)
+  verify_jws(inner, key, algorithms, NULL, "all", limits, call)
 }
 
-# RFC 7797 §7: JWTs must not use the unencoded payload option. Decided on
-# the parsed header, before any key is tried (#126).
-refuse_unencoded <- function(token, limits, call) {
-  obj <- jose_parse(token, limits, call)
-  if (identical(obj$type, "JWS") && !obj$b64) {
+# The rules for a signed JWT's header, decided before any key is tried.
+# RFC 7797 §7: JWTs must not use the unencoded payload option. Design §8.5:
+# only a JWE may carry another JWT, so a signed JWT with `cty: "JWT"` is
+# refused, whether it is the token or nested inside a JWE.
+check_jws_header <- function(obj, call) {
+  if (!obj$b64) {
     abort_zujose(
       "policy",
       "A JWT must not use an unencoded payload (`b64: false`).",
+      call = call
+    )
+  }
+  if (is_nested(obj$signatures[[1]]$protected)) {
+    abort_zujose(
+      "policy",
+      paste0(
+        "A signed JWT must not carry another JWT (`cty: \"JWT\"`); ",
+        "only a JWE may."
+      ),
       call = call
     )
   }
@@ -746,15 +772,14 @@ check_decode_args <- function(
   ) {
     bad("`audience` must be NULL or a character vector.")
   }
-  for (arg in list(
-    list(issuer, "issuer"),
-    list(subject, "subject"),
-    list(type, "type")
-  )) {
-    if (!is.null(arg[[1]]) && !is_string(arg[[1]])) {
-      bad(sprintf("`%s` must be NULL or a single string.", arg[[2]]))
+  optional_string <- function(value, name) {
+    if (!is.null(value) && !is_string(value)) {
+      bad(sprintf("`%s` must be NULL or a single string.", name))
     }
   }
+  optional_string(issuer, "issuer")
+  optional_string(subject, "subject")
+  optional_string(type, "type")
   if (!is.character(required) || anyNA(required)) {
     bad("`required` must be a character vector.")
   }
@@ -786,23 +811,20 @@ check_decode_args <- function(
   if (!is.null(validate) && !is.function(validate)) {
     bad("`validate` must be NULL or a function.")
   }
-  for (arg in list(
-    list(max_age, "max_age", TRUE),
-    list(leeway, "leeway", FALSE)
-  )) {
-    value <- arg[[1]]
-    if (is.null(value) && arg[[3]]) {
-      next
-    }
+  seconds <- function(value, name) {
     if (
       !is.numeric(value) ||
         length(value) != 1L ||
         !is.finite(value) ||
         value < 0
     ) {
-      bad(sprintf("`%s` must be a number of seconds, at least 0.", arg[[2]]))
+      bad(sprintf("`%s` must be a number of seconds, at least 0.", name))
     }
   }
+  if (!is.null(max_age)) {
+    seconds(max_age, "max_age")
+  }
+  seconds(leeway, "leeway")
   if (!inherits(now, "POSIXct") || length(now) != 1L || is.na(now)) {
     bad("`now` must be a single POSIXct time.")
   }

@@ -43,8 +43,9 @@ are needed.
 }
 
 \examples{
-key <- as_jwk(
-  '{"kty":"oct","kid":"k1","alg":"HS256","k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'
-)
+key <- as_jwk(paste0(
+  '{"kty":"oct","kid":"k1","alg":"HS256",',
+  '"k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'
+))
 key
 }

@@ -1,5 +1,17 @@
 # zujose 0.0.0.9000
 
+* `jwt_decode()` unwraps one level of nesting only, a signed JWT inside a
+  JWE, with a separate allow-list for each layer: `decrypt` for the JWE,
+  and `key` and `algorithms` for the signature. A signed JWT inside a
+  signed JWT is now refused with `zujose_policy_error`, on its header and
+  before any signature is checked; call `jws_verify()` on each layer to
+  accept one (#46).
+
+* `jwt_decode()` checks a JWE's key management against `decrypt`'s
+  algorithms before the rule for encrypted-only JWTs, so an unknown or
+  disallowed `alg` gets the allow-list error. An unknown `alg` was refused
+  as an encrypted-only JWT with public-key key management (#77).
+
 * Every `zujose_argument_error` names the function the caller called, such
   as `jwt_encode()` rather than the `jws_sign()` it calls, and every
   argument is checked before the token is read: `jwt_decode()` reported a

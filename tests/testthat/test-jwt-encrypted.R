@@ -92,6 +92,58 @@ test_that("a decoder can carry decrypt", {
   outer <- encrypt_fixed(inner, kek, "A128KW", header = list(cty = "JWT"))
   expect_identical(check_token(outer)$sub, "u")
   expect_identical(check_token(inner)$sub, "u")
+  # The decoder's allow-list holds for the nested JWT too.
+  strong <- jwk_oct(as.raw(1:48))
+  hs384 <- jwt_encode(list(sub = "u", exp = 2e9), strong, "HS384")
+  outer <- encrypt_fixed(hs384, kek, "A128KW", header = list(cty = "JWT"))
+  expect_error(
+    jwt_decoder(
+      strong,
+      "HS256",
+      decrypt = jwe_decryption(kek, "A128KW", "A128CBC-HS256")
+    )(outer),
+    class = "zujose_policy_error"
+  )
+})
+
+test_that("the inner JWT's algorithm must be in `algorithms`", {
+  # The key fits HS512 as well as HS256, so only the allow-list can refuse
+  # an inner token signed with HS512 (#79).
+  signer <- jwk_oct(as.raw(1:64))
+  kek <- jwk_oct(as.raw(1:16))
+  decrypt <- jwe_decryption(kek, "A128KW", "A128CBC-HS256")
+  inner <- jwt_encode(list(sub = "u", exp = 2e9), signer, "HS512")
+  outer <- encrypt_fixed(inner, kek, "A128KW", header = list(cty = "JWT"))
+  expect_identical(
+    jwt_decode(outer, signer, "HS512", decrypt = decrypt)$sub,
+    "u"
+  )
+  local_mocked_bindings(jws_verify_bytes = function(...) stop("verified"))
+  expect_error(
+    jwt_decode(outer, signer, "HS256", decrypt = decrypt),
+    class = "zujose_policy_error"
+  )
+  check_token <- jwt_decoder(signer, "HS256", decrypt = decrypt)
+  expect_error(check_token(outer), class = "zujose_policy_error")
+})
+
+test_that("a decoder refuses an encrypted-only JWT with public-key key management", {
+  # A second guard for #34, through jwt_decoder() and without mocks: the
+  # token is otherwise valid, so only that rule keeps its claims out.
+  recipient <- jwk_generate("EC", crv = "P-384")
+  token <- jwe_encrypt(
+    '{"sub":"admin","exp":2000000000}',
+    jwk_public(recipient),
+    "ECDH-ES+A256KW",
+    "A256GCM",
+    header = list(typ = "JWT")
+  )
+  check_token <- jwt_decoder(
+    jwk_oct(as.raw(1:32)),
+    "HS256",
+    decrypt = jwe_decryption(recipient, "ECDH-ES+A256KW", "A256GCM")
+  )
+  expect_error(check_token(token), class = "zujose_policy_error")
 })
 
 test_that("an encrypted-only JWT with public-key key management is refused", {
@@ -136,4 +188,33 @@ test_that("a signed JWT inside a public-key JWE still decodes", {
     decrypt = jwe_decryption(recipient, "RSA-OAEP-256", "A128CBC-HS256")
   )
   expect_identical(claims$sub, "u")
+})
+
+test_that("a JWE's algorithm is checked against decrypt first (#77)", {
+  # A disallowed or unknown key management algorithm gets the allow-list
+  # error, not the rule for encrypted-only JWTs, and before any decryption.
+  kek <- jwk_oct(as.raw(1:16))
+  decrypt <- jwe_decryption(kek, "A128KW", "A128GCM")
+  rsa <- jwk_generate("RSA")
+  claims <- '{"sub":"admin","exp":2000000000}'
+  foo <- paste(
+    b64_json(list(alg = "foo", enc = "A128GCM")),
+    "",
+    "AAAAAAAAAAAAAAAA",
+    "AAAA",
+    "AAAAAAAAAAAAAAAAAAAAAA",
+    sep = "."
+  )
+  wrong <- jwe_encrypt(claims, jwk_public(rsa), "RSA-OAEP-256", "A128GCM")
+  local_mocked_bindings(decrypt_jwe = function(...) stop("decrypted"))
+  for (token in c(foo, wrong)) {
+    expect_error(
+      jwt_decode(token, kek, "HS256", decrypt = decrypt),
+      class = "zujose_policy_error"
+    )
+  }
+  expect_snapshot(error = TRUE, {
+    jwt_decode(foo, kek, "HS256", decrypt = decrypt)
+    jwt_decode(wrong, kek, "HS256", decrypt = decrypt)
+  })
 })

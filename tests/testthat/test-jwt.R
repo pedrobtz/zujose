@@ -348,34 +348,19 @@ test_that("claims must be a JSON object", {
 
 # Shape of the token ------------------------------------------------------
 
-test_that("a nested JWT is unwrapped one level", {
+test_that("a signed JWT inside a signed JWT is refused (#46)", {
+  # One level of nesting only, a signed JWT inside a JWE. A JWS carrying
+  # another JWT is refused on its header, before either signature is
+  # checked, so even with the wrong key.
   key <- jwk_oct(as.raw(1:32))
+  other <- jwk_oct(as.raw(32:1))
   inner <- jwt_encode(list(sub = "u", exp = 2e9), key, "HS256")
   outer <- jws_sign(inner, key, "HS256", header = list(cty = "JWT"))
-  expect_identical(jwt_decode(outer, key, "HS256")$sub, "u")
-
-  # The inner token must use an allowed algorithm too.
-  inner512 <- jwt_encode(
-    list(exp = 2e9),
-    jwk_oct(as.raw(1:64)),
-    "HS512"
-  )
-  outer <- jws_sign(inner512, key, "HS256", header = list(cty = "JWT"))
-  expect_error(
-    jwt_decode(outer, key, "HS256"),
-    class = "zujose_policy_error"
-  )
-
-  twice <- jws_sign(
-    jws_sign(inner, key, "HS256", header = list(cty = "JWT")),
-    key,
-    "HS256",
-    header = list(cty = "JWT")
-  )
-  expect_error(
-    jwt_decode(twice, key, "HS256"),
-    class = "zujose_policy_error"
-  )
+  local_mocked_bindings(verify_jws = function(...) stop("verified"))
+  for (k in list(key, other)) {
+    expect_error(jwt_decode(outer, k, "HS256"), class = "zujose_policy_error")
+  }
+  expect_snapshot(jwt_decode(outer, key, "HS256"), error = TRUE)
 })
 
 test_that("only the compact JWS serialization is a JWT", {
@@ -395,7 +380,7 @@ test_that("signature checks come first", {
     jwt_decode(jwt, key, "HS256"),
     class = "zujose_signature_error"
   )
-  expect_error(jwt_decode(jwt, key), "algorithms")
+  expect_snapshot(jwt_decode(jwt, key), error = TRUE)
 })
 
 test_that("jwt_decode() refuses bad arguments", {

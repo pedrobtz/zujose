@@ -207,11 +207,10 @@ test_that("dir with an encrypted key is a decryption failure", {
 
 test_that("algorithms and encryptions have no default and are checked", {
   v <- rfc7516_a3()
-  expect_error(jwe_decrypt(v$token, v$key), "algorithms")
-  expect_error(
-    jwe_decrypt(v$token, v$key, "A128KW"),
-    "encryptions"
-  )
+  expect_snapshot(error = TRUE, {
+    jwe_decrypt(v$token, v$key)
+    jwe_decrypt(v$token, v$key, "A128KW")
+  })
   for (bad in list("none", "HS256", "A128GCM", character(), NA_character_)) {
     expect_error(
       jwe_decrypt(v$token, v$key, bad, "A128CBC-HS256"),
@@ -389,6 +388,15 @@ test_that("encryption refuses inconsistent requests", {
   )
 })
 
+test_that("jwe_recipient() checks alg and refuses enc in its header", {
+  key <- jwk_oct(as.raw(1:16))
+  expect_error(jwe_recipient(key, alg = 1), class = "zujose_argument_error")
+  expect_error(
+    jwe_recipient(key, "A128KW", header = list(enc = "A128GCM")),
+    class = "zujose_argument_error"
+  )
+})
+
 test_that("printing shows the header, not the plaintext", {
   v <- rfc7516_a3()
   expect_snapshot(print(jwe_decrypt(
@@ -550,7 +558,9 @@ test_that("every key management fails with one class and one message", {
 
 test_that("jwk, x5c, jku and x5u in a JWE header are never used as keys", {
   # The attacker wraps the CEK with their own key and names it in the
-  # header; were it used, the token would decrypt (#43).
+  # header; were it used, the token would decrypt (#43). As for JWS, only
+  # the `jwk` case can catch a regression; zujose parses no certificates
+  # and fetches nothing.
   attacker <- jwk_oct(as.raw(101:116))
   caller <- jwk_oct(as.raw(1:16))
   named <- list(
@@ -579,6 +589,7 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
   # prefix, and a 4-byte tag can be forged in about 2^32 tries (RFC 8725;
   # design §10). Every truncation is the one decryption error (#73).
   kek <- jwk_oct(as.raw(1:16))
+  messages <- character()
   for (enc in c("A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM")) {
     token <- jwe_encrypt("attack at dawn", kek, "A128KW", enc = enc)
     parts <- strsplit(token, ".", fixed = TRUE)[[1]]
@@ -596,9 +607,12 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
         class = "zujose_decrypt_error",
         info = paste(enc, n)
       )
-      expect_identical(conditionMessage(err), "Decryption failed.")
+      messages <- c(messages, conditionMessage(err))
     }
   }
+  # One message for every truncation; its wording is pinned in a snapshot.
+  expect_length(unique(messages), 1L)
+  expect_snapshot(cat(unique(messages)))
 })
 
 test_that("JWE headers with repeated or empty names are refused (#119)", {

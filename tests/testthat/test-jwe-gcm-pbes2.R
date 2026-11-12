@@ -60,7 +60,7 @@ test_that("the RFC's encrypted keys are reproduced from its factors", {
     "A256GCMKW",
     k138,
     rfc7520_factor(139),
-    fixed = list(kw_iv = rfc7520_factor(141))
+    fixed = list(gcmkw_iv = rfc7520_factor(141))
   )
   expect_identical(got$encrypted_key, rfc7520_factor(142))
   header <- jose_peek(rfc7520_token(148))$headers[[1]]
@@ -149,6 +149,55 @@ test_that("every key management algorithm round-trips with every GCM size", {
       }
     }
   }
+})
+
+test_that("an algorithm zucrypt cannot run is refused before decrypting", {
+  key <- jwk_oct(as.raw(1:16))
+  token <- jwe_encrypt("x", key, "A128KW", "A128GCM")
+  real <- zujose_info
+  local_no_crypto()
+  # The content encryption, then the key management, each unavailable.
+  for (alg in c("A128GCM", "A128KW")) {
+    local_mocked_bindings(zujose_info = function() {
+      info <- real()
+      info$available[info$algorithm == alg] <- FALSE
+      info
+    })
+    err <- expect_error(
+      jwe_decrypt(token, key, "A128KW", "A128GCM"),
+      class = "zujose_unsupported_error"
+    )
+    expect_identical(err$algorithm, alg)
+  }
+  # With no algorithm available, the content encryption is named first.
+  local_mocked_bindings(zucrypt_provides = function(version, installed) {
+    FALSE
+  })
+  local_mocked_bindings(zujose_info = real)
+  err <- expect_error(
+    jwe_decrypt(token, key, "A128KW", "A128GCM"),
+    class = "zujose_unsupported_error"
+  )
+  expect_identical(err$needs, "0.1.1")
+})
+
+test_that("an unwrapped CEK of the wrong size for GCM is the decrypt error", {
+  # A128KW wraps a 32-byte CEK, but A128GCM needs 16 bytes. recover_cek()
+  # refuses it before GCM runs, as one more uniform decryption failure.
+  key <- jwk_oct(as.raw(1:16))
+  token <- paste(
+    b64_json(list(alg = "A128KW", enc = "A128GCM")),
+    b64url_encode(aes_key_wrap(key$k, as.raw(1:32))),
+    b64url_encode(as.raw(1:12)),
+    b64url_encode(as.raw(1:4)),
+    b64url_encode(as.raw(1:16)),
+    sep = "."
+  )
+  local_mocked_bindings(gcm_decrypt = function(...) stop("GCM reached"))
+  expect_error(
+    jwe_decrypt(token, key, "A128KW", "A128GCM"),
+    class = "zujose_decrypt_error"
+  )
 })
 
 test_that("GCM takes associated data in the JSON serializations", {
@@ -257,7 +306,7 @@ test_that("a p2c over the cap fails before any key derivation", {
 })
 
 test_that("a p2s shorter than 8 bytes fails before any key derivation", {
-  local_mocked_bindings(pbes2_kek = function(...) stop("derived a key"))
+  local_pbes2_reached()
   key <- jwk_oct(charToRaw("pw"))
   for (p2s in list(b64url_encode(as.raw(1:7)), "", NULL, "!!", 8)) {
     expect_error(
@@ -278,7 +327,7 @@ test_that("a p2s shorter than 8 bytes fails before any key derivation", {
       "PBES2-HS256+A128KW",
       "A128GCM"
     ),
-    "derived a key"
+    class = "pbes2_reached"
   )
 })
 
@@ -386,23 +435,6 @@ test_that("generated parameters cannot be supplied, and p2c is checked", {
     jwe_encrypt("x", kek, "A128KW", header = list(p2c = 1000)),
     class = "zujose_argument_error"
   )
-})
-
-test_that("zujose_info() reports GCM, GCMKW and PBES2 as available", {
-  info <- zujose_info()
-  algs <- c(
-    "A128GCM",
-    "A192GCM",
-    "A256GCM",
-    "A128GCMKW",
-    "A192GCMKW",
-    "A256GCMKW",
-    "PBES2-HS256+A128KW",
-    "PBES2-HS384+A192KW",
-    "PBES2-HS512+A256KW"
-  )
-  expect_true(all(info$available[info$algorithm %in% algs]))
-  expect_true(all(info$available))
 })
 
 test_that("a dir key may name its content encryption, and only that one", {

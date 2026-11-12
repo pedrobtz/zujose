@@ -54,7 +54,8 @@ its content encryption, such as \code{alg = "A128GCM"}, to get its exact size
 \code{A256GCM}), or give \code{alg = "dir"} and its \code{size}.
 
 An \code{RSA} key's \code{size} is its modulus, a multiple of 8 bits, 2048 by
-default and at most 4096, with public exponent 65537. Generating one takes a moment.
+default and at most 4096, with public exponent 65537. Generating one takes
+a moment.
 }
 \section{Secrets in memory}{
 

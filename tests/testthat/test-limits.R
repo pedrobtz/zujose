@@ -33,6 +33,16 @@ test_that("a token is checked against `limits` that are not jose_limits", {
   )
 })
 
+test_that("jwt_decode() applies limits$token before any other work", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- paste(rep(".", 100), collapse = "")
+  local_mocked_bindings(compact_parts = function(...) stop("counted"))
+  expect_error(
+    jwt_decode(token, key, "HS256", limits = jose_limits(token = 50)),
+    class = "zujose_parse_error"
+  )
+})
+
 test_that("the header and payload limits are exact in bytes", {
   key <- jwk_oct(as.raw(1:32))
   token <- jws_sign("abcdef", key, alg = "HS256")

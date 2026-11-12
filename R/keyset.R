@@ -43,10 +43,10 @@ combine_keys <- function(items, call) {
       )
     }
   }
-  new_jose_keyset(keys)
+  new_jwk_set(keys)
 }
 
-new_jose_keyset <- function(keys) {
+new_jwk_set <- function(keys) {
   structure(unname(keys), class = "jwk_set")
 }
 
@@ -85,7 +85,7 @@ as_jwk_set <- function(x) {
   if (!is.list(entries) || !is.null(names(entries))) {
     abort_zujose("key", "A JWK Set must have a `keys` array.", call = call)
   }
-  known <- c("oct", names(pending_key_types))
+  known <- c("oct", names(key_type_zucrypt))
   # RFC 7517 §5: each member of `keys` is a JWK object. A string is not
   # read as PEM or JWK text; it is skipped like any other bad entry (#44).
   keys <- lapply(entries, function(entry) {
@@ -98,7 +98,7 @@ as_jwk_set <- function(x) {
     )
     if (!is.null(key) && key$kty %in% known) key
   })
-  new_jose_keyset(Filter(Negate(is.null), keys))
+  new_jwk_set(Filter(Negate(is.null), keys))
 }
 
 #' @export
@@ -162,7 +162,7 @@ as_jwk_set <- function(x) {
       call = sys.call()
     )
   }
-  new_jose_keyset(out)
+  new_jwk_set(out)
 }
 
 #' @export
