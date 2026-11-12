@@ -389,6 +389,15 @@ test_that("encryption refuses inconsistent requests", {
   )
 })
 
+test_that("jwe_recipient() checks alg and refuses enc in its header", {
+  key <- jwk_oct(as.raw(1:16))
+  expect_error(jwe_recipient(key, alg = 1), class = "zujose_argument_error")
+  expect_error(
+    jwe_recipient(key, "A128KW", header = list(enc = "A128GCM")),
+    class = "zujose_argument_error"
+  )
+})
+
 test_that("printing shows the header, not the plaintext", {
   v <- rfc7516_a3()
   expect_snapshot(print(jwe_decrypt(

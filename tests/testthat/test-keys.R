@@ -222,6 +222,18 @@ test_that("jwk_generate() makes a random oct key", {
   )))
 })
 
+test_that("jwk_generate() refuses a crv or size the key type does not take", {
+  expect_error(
+    jwk_generate("oct", crv = "P-256"),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwk_generate("RSA", crv = "P-256"),
+    class = "zujose_argument_error"
+  )
+  expect_error(jwk_generate("EC", size = 256), class = "zujose_argument_error")
+})
+
 test_that("the default size follows alg", {
   sizes <- c(
     HS256 = 32L,

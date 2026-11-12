@@ -234,6 +234,26 @@ test_that("ECDH-ES takes apu and apv, and several +KW recipients", {
   )
 })
 
+test_that("apu and apv must be strings, and agreement needs the private key", {
+  a <- jwk_generate("EC")
+  expect_error(
+    jwe_encrypt("x", jwk_public(a), "ECDH-ES", header = list(apu = 5)),
+    class = "zujose_argument_error"
+  )
+  token <- jwe_encrypt("x", jwk_public(a), "ECDH-ES", format = "flattened")
+  obj <- zujson::json_parse(token, simplify = "none")
+  obj$header <- list(apv = 5)
+  local_no_crypto()
+  expect_error(
+    jwe_decrypt(zujson::json_write(obj), a, "ECDH-ES", "A128CBC-HS256"),
+    class = "zujose_parse_error"
+  )
+  expect_error(
+    jwe_decrypt(token, jwk_public(a), "ECDH-ES", "A128CBC-HS256"),
+    class = "zujose_key_error"
+  )
+})
+
 # Policy before cryptography (design §8.6) -------------------------------
 
 test_that("an ephemeral key off the curve, or malformed, is a parse error", {

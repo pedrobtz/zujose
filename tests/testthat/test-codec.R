@@ -182,6 +182,32 @@ test_that("recipients must agree on enc", {
   expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
 })
 
+test_that("general JWS signatures must agree on b64", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- jws_sign(
+    "x",
+    list(jws_signer(key, "HS256"), jws_signer(key, "HS256")),
+    format = "general"
+  )
+  obj <- zujson::json_parse(token, simplify = "none")
+  obj$signatures[[2]]$protected <- b64_json(
+    list(alg = "HS256", b64 = FALSE, crit = list("b64"))
+  )
+  bad <- zujson::json_write(obj)
+  expect_error(jose_parse(bad, jose_limits()), class = "zujose_parse_error")
+  local_no_crypto()
+  expect_error(jws_verify(bad, key, "HS256"), class = "zujose_parse_error")
+})
+
+test_that("a JWE recipient entry must be a JSON object", {
+  token <- paste0(
+    '{"recipients":[5],"protected":"',
+    b64_json(list(alg = "dir", enc = "A128GCM")),
+    '","iv":"aXY","ciphertext":"Y3Q","tag":"dGFn"}'
+  )
+  expect_error(jose_parse(token, jose_limits()), class = "zujose_parse_error")
+})
+
 # The malformed corpus (design §10) ---------------------------------------
 
 test_that("the malformed corpus fails with zujose_parse_error", {

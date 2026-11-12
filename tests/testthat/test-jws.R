@@ -421,6 +421,14 @@ test_that("jws_sign() refuses inconsistent requests", {
   expect_error(jws_sign("x", key, "ES256"), class = "zujose_policy_error")
 })
 
+test_that("signing with a public RSA or EC key is a key error", {
+  rsa <- jwk_public(as_jwk(rfc7520_key(4)))
+  ec <- jwk_public(as_jwk(rfc7520_key(2)))
+  expect_error(jws_sign("x", rsa, "RS256"), class = "zujose_key_error")
+  expect_error(jws_sign("x", rsa, "PS256"), class = "zujose_key_error")
+  expect_error(jws_sign("x", ec, "ES512"), class = "zujose_key_error")
+})
+
 test_that("the key's kid goes into the protected header unless one is given", {
   key <- jwk_oct(as.raw(1:32), kid = "k")
   peek <- jose_peek(jws_sign("x", key, "HS256"))

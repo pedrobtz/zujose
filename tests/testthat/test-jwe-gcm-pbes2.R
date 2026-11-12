@@ -181,6 +181,24 @@ test_that("an algorithm zucrypt cannot run is refused before decrypting", {
   expect_identical(err$needs, "0.1.1")
 })
 
+test_that("an unwrapped CEK of the wrong size for GCM is the decrypt error", {
+  # A128KW wraps a 32-byte CEK, but A128GCM needs 16 bytes.
+  key <- jwk_oct(as.raw(1:16))
+  token <- paste(
+    b64_json(list(alg = "A128KW", enc = "A128GCM")),
+    b64url_encode(aes_key_wrap(key$k, as.raw(1:32))),
+    b64url_encode(as.raw(1:12)),
+    b64url_encode(as.raw(1:4)),
+    b64url_encode(as.raw(1:16)),
+    sep = "."
+  )
+  local_mocked_bindings(gcm_decrypt = function(...) stop("GCM reached"))
+  expect_error(
+    jwe_decrypt(token, key, "A128KW", "A128GCM"),
+    class = "zujose_decrypt_error"
+  )
+})
+
 test_that("GCM takes associated data in the JSON serializations", {
   key <- jwk_oct(as.raw(1:16))
   token <- jwe_encrypt(
