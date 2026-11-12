@@ -9,6 +9,46 @@ test_that("a JWK Set of every RFC 7520 key reads", {
   expect_snapshot(print(set))
 })
 
+test_that("RFC 7517 A.1's public keys read member by member", {
+  # The RFC's own example sets, with mixed key types and `use` (#104).
+  set <- as_jwk_set(rfc7517_jwks("a1"))
+  expect_set_members(set, rfc7517_jwks("a1"))
+  expect_identical(vapply(unclass(set), `[[`, "", "kty"), c("EC", "RSA"))
+  expect_identical(set[["1"]]$use, "enc")
+  expect_identical(set[["1"]]$members$crv, "P-256")
+  expect_identical(set[["2011-04-29"]]$alg, "RS256")
+  expect_true(all(vapply(unclass(set), `[[`, TRUE, "supported")))
+  expect_identical(jwk_thumbprint(set[["2011-04-29"]]), rfc7638_thumbprint())
+})
+
+test_that("RFC 7517 A.2's private keys read, and their public halves are A.1", {
+  set <- as_jwk_set(rfc7517_jwks("a2"))
+  expect_set_members(set, rfc7517_jwks("a2"))
+  expect_true(all(
+    c("d", "p", "q", "dp", "dq", "qi") %in% names(set[[2]]$members)
+  ))
+  expect_identical(
+    set[[1]]$members$d,
+    "870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE"
+  )
+  expect_same_json(
+    jwk_json(jwk_public(set)),
+    jwk_json(as_jwk_set(rfc7517_jwks("a1")))
+  )
+})
+
+test_that("RFC 7517 A.3's symmetric keys read member by member", {
+  set <- as_jwk_set(rfc7517_jwks("a3"))
+  expect_set_members(set, rfc7517_jwks("a3"))
+  expect_identical(set[[1]]$alg, "A128KW")
+  expect_null(set[[1]]$kid)
+  expect_length(set[[1]]$k, 16L)
+  hmac <- set[["HMAC key used in JWS spec Appendix A.1 example"]]
+  expect_length(hmac$k, 64L)
+  # A.3's HMAC key is RFC 7515 A.1's.
+  expect_identical(hmac$k, rfc7515_key()$k)
+})
+
 test_that("[[ selects by kid or position; [ keeps a set", {
   set <- jwk_set(
     jwk_oct(as.raw(1), kid = "a"),

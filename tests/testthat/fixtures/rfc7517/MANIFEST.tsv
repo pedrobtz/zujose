@@ -1,0 +1,6 @@
+# RFC 7517 <https://www.rfc-editor.org/rfc/rfc7517.txt>, sha256 681c19b92a85068716b7e89c5815aa821bd3f11c755ff1c641b40ae9851bb33c, extracted by tools/rfc7516-7517-fixtures.R
+file
+jwks-a1.json
+jwks-a2.json
+jwks-a3.json
+VALUES.tsv

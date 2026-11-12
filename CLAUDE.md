@@ -158,7 +158,9 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   `oracle_pem()`, `oracle_key()` and `oracle_tokens()` read the PyJWT
   fixtures, and `oracle_now()` is a time before their `exp`.
   `oracle_thumbprints()` reads the jwcrypto thumbprints that
-  `tools/make-jwk-thumbprints.py` writes.
+  `tools/make-jwk-thumbprints.py` writes. `rfc7517_jwks()` reads the RFC
+  7517 Appendix A sets, which `tools/rfc7516-7517-fixtures.R` extracts,
+  and `expect_set_members()` holds a parsed set to one member by member.
   `rfc7520_text()` reads the §5 plaintexts and password, and
   `rfc7520_factor()` the generated factors (CEKs, IVs, salts, encrypted
   keys); `tools/rfc7520-fixtures.R` extracts both. `pbes2_token()` builds a
