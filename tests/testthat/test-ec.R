@@ -358,6 +358,23 @@ test_that("EC and X25519 keys are generated, read and written", {
   )
 })
 
+test_that("EC and X25519 PEM export is cryptography's, byte for byte", {
+  # tools/make-oracle-fixtures.py wrote each PKCS #8 and SPKI file with
+  # Python's `cryptography` (#103).
+  for (name in c("ec-p256", "ec-p384", "ec-p521", "x25519")) {
+    pem <- oracle_pem(name)
+    pub_pem <- oracle_pem(name, public = TRUE)
+    key <- as_jwk(pem)
+    expect_true(key$supported, info = name)
+    expect_identical(jwk_pem(key, private = TRUE), pem, info = name)
+    expect_identical(jwk_pem(key), pub_pem, info = name)
+    pub <- as_jwk(pub_pem)
+    expect_false("d" %in% names(pub$members), info = name)
+    expect_identical(pub$members$x, key$members$x, info = name)
+    expect_identical(jwk_pem(pub), pub_pem, info = name)
+  }
+})
+
 test_that("an EC JWK whose point is off the curve is a key error", {
   jwk <- zujson::json_parse(rfc7520_key(1), simplify = "none")
   y <- b64url_decode(jwk$y, "y")

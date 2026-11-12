@@ -561,3 +561,67 @@ local_pbes2_reached <- function(env = parent.frame()) {
 nested_json <- function(depth) {
   paste0('{"a":', strrep("[", depth - 1), strrep("]", depth - 1), "}")
 }
+
+# A value of RFC 7517 Appendix C or RFC 7516 A.1, as
+# tools/rfc7516-7517-fixtures.R extracted it: Base64url text for octets, or
+# the text of a header or token. `rfc` is 7516 or 7517.
+rfc_value <- function(rfc, name) {
+  v <- utils::read.delim(
+    test_path("fixtures", paste0("rfc", rfc), "VALUES.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+  stopifnot(sum(v$name == name) == 1L)
+  v$value[v$name == name]
+}
+
+# rfc_value(), decoded from Base64url.
+rfc_octets <- function(rfc, name) b64url_decode(rfc_value(rfc, name), name)
+
+# JWEs jwcrypto made with fixed keys and ephemeral keys
+# (tools/make-jwe-vectors.py): known answers for A192*, A*GCM and the
+# Concat KDF's second round.
+oracle_jwe_vectors <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "jwe-vectors.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
+
+# JWE JSON serializations jwcrypto made (tools/make-jwe-json.py): flattened
+# and general, one and three recipients, with and without `aad`.
+oracle_jwe_json <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "jwe-json.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
+
+# PyJWT's verdicts over a grid of claims, leeways, audiences, issuers and
+# subjects, at 1e9 (tools/make-claim-verdicts.py, #106).
+oracle_claims <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "claims.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
+
+# Wycheproof's cases (tools/make-wycheproof.py, #98, #99): the keys by id,
+# the signature verification cases and the JOSE cases.
+wycheproof_table <- function(name) {
+  utils::read.delim(
+    test_path("fixtures", "wycheproof", paste0(name, ".tsv")),
+    colClasses = "character",
+    quote = "",
+    na.strings = character()
+  )
+}
+
+# The Wycheproof key `id` as a jwk, or a jwk_set for a JWK Set.
+wycheproof_key <- function(keys, id) {
+  text <- keys$jwk[keys$id == id]
+  if (startsWith(text, '{"keys"')) as_jwk_set(text) else as_jwk(text)
+}

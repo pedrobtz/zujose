@@ -57,6 +57,17 @@ oracle_key <- function(name, public = TRUE) {
   )
 }
 
+# Tokens zujose signed, which PyJWT verifies (tools/make-zujose-tokens.R,
+# #100): a JWT and a JWS per algorithm.
+oracle_zujose_tokens <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "zujose-tokens.tsv"),
+    colClasses = "character",
+    quote = "",
+    encoding = "UTF-8"
+  )
+}
+
 # Before the oracle tokens' `exp`, 2000000000.
 oracle_now <- function() as.POSIXct(1e9, origin = "1970-01-01", tz = "UTC")
 
@@ -74,4 +85,46 @@ rsa_2040_jwk <- function() {
     "l10tni9gogpuln2Y9__x"
   )
   as_jwk(sprintf('{"kty":"RSA","n":"%s","e":"AQAB"}', n))
+}
+
+# RFC 7638 thumbprints jwcrypto computed (tools/make-jwk-thumbprints.py):
+# one row per key and hash, with the key as jwcrypto wrote it.
+oracle_thumbprints <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "thumbprints.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
+
+# An RFC 7517 Appendix A example JWK Set ("a1", "a2" or "a3"), as text
+# (tools/rfc7516-7517-fixtures.R).
+rfc7517_jwks <- function(appendix) {
+  path <- test_path("fixtures", "rfc7517", sprintf("jwks-%s.json", appendix))
+  readChar(path, file.size(path), useBytes = TRUE)
+}
+
+# Every member of each key in the JWK Set `json` is in the matching key of
+# `set`, with the same value, and `set` holds no other member.
+expect_set_members <- function(set, json) {
+  entries <- zujson::json_parse(json)$keys
+  expect_length(set, length(entries))
+  for (i in seq_along(entries)) {
+    entry <- entries[[i]]
+    key <- set[[i]]
+    for (name in c("kty", "kid", "use", "alg")) {
+      expect_identical(key[[name]], entry[[name]], info = paste(i, name))
+    }
+    rest <- entry[setdiff(names(entry), c("kty", "kid", "use", "alg"))]
+    if (entry$kty == "oct") {
+      expect_identical(b64url_encode(key$k), rest$k, info = i)
+      expect_identical(names(rest), "k", info = i)
+    } else {
+      expect_identical(
+        key$members[sort(names(key$members))],
+        rest[sort(names(rest))],
+        info = i
+      )
+    }
+  }
 }

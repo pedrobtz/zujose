@@ -157,6 +157,21 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   claims set and decodes it at a fixed time, for the claim-check tests.
   `oracle_pem()`, `oracle_key()` and `oracle_tokens()` read the PyJWT
   fixtures, and `oracle_now()` is a time before their `exp`.
+  `oracle_zujose_tokens()` reads the tokens zujose signed for PyJWT to
+  verify (`tools/make-zujose-tokens.R`), and `oracle_claims()` PyJWT's
+  claim verdicts (`tools/make-claim-verdicts.py`). `wycheproof_table()`
+  reads a Wycheproof fixture (`keys`, `signatures` or `jose`) and
+  `wycheproof_key()` one of its keys, both written by
+  `tools/make-wycheproof.py` from a pinned Wycheproof commit.
+  `oracle_thumbprints()` reads the jwcrypto thumbprints that
+  `tools/make-jwk-thumbprints.py` writes. `rfc7517_jwks()` reads the RFC
+  7517 Appendix A sets, which `tools/rfc7516-7517-fixtures.R` extracts,
+  and `expect_set_members()` holds a parsed set to one member by member.
+  `rfc_value()` and `rfc_octets()` read the RFC 7517 Appendix C and RFC
+  7516 A.1 values the same script extracts. `oracle_jwe_vectors()` reads
+  the jwcrypto known answers that `tools/make-jwe-vectors.py` writes with
+  fixed keys and ephemeral keys, and `oracle_jwe_json()` the jwcrypto
+  JWE JSON serializations that `tools/make-jwe-json.py` writes.
   `rfc7520_text()` reads the §5 plaintexts and password, and
   `rfc7520_factor()` the generated factors (CEKs, IVs, salts, encrypted
   keys); `tools/rfc7520-fixtures.R` extracts both. `pbes2_token()` builds a
@@ -234,7 +249,9 @@ because a hand-rolled one does not count as the pre-submission check. This packa
 calls `r-cmd-check.yml@v1` and `coverage.yml@v1`. `pkgdown.yaml` is the
 usethis workflow, not an r-actions one. `jwe-oracle.yaml` is bespoke, as
 r-actions has nothing like it: it runs `tools/jwe-oracle/`, where zujose
-and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair, on
+and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair,
+and flattened and general JSON serializations with `aad` and unprotected
+headers, on
 pull requests that touch `R/` or the oracle, and by hand. It is development-only
 and never part of R CMD check.
 

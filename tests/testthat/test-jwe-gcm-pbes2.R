@@ -80,6 +80,42 @@ test_that("the RFC's encrypted keys are reproduced from its factors", {
   expect_identical(got$header$p2c, 8192)
 })
 
+test_that("RFC 7517 Appendix C (PBES2-HS256+A128KW) decrypts, every step reproduced", {
+  # PBES2-HS256 had no known answer at check time (#102).
+  password <- jwk_oct(rfc_octets(7517, "password"))
+  alg <- "PBES2-HS256+A128KW"
+  out <- jwe_decrypt(rfc_value(7517, "token"), password, alg, "A128CBC-HS256")
+  expect_identical(out$plaintext, rfc_octets(7517, "plaintext"))
+  expect_identical(out$header$p2c, 4096L)
+  expect_identical(out$header$cty, "jwk+json")
+
+  p2s <- rfc_octets(7517, "p2s")
+  expect_identical(
+    pbes2_kek(alg, password$k, p2s, 4096),
+    rfc_octets(7517, "derived_key")
+  )
+  got <- wrap_cek(
+    alg,
+    password,
+    rfc_octets(7517, "cek"),
+    p2c = 4096,
+    fixed = list(p2s = p2s)
+  )
+  expect_identical(got$encrypted_key, rfc_octets(7517, "encrypted_key"))
+  expect_identical(got$header$p2s, rfc_value(7517, "p2s"))
+
+  # The content encryption, under the RFC's protected header bytes.
+  sealed <- content_encrypt(
+    "A128CBC-HS256",
+    rfc_octets(7517, "cek"),
+    rfc_octets(7517, "iv"),
+    rfc_octets(7517, "plaintext"),
+    charToRaw(b64url_encode(charToRaw(rfc_value(7517, "header"))))
+  )
+  expect_identical(sealed$ciphertext, rfc_octets(7517, "ciphertext"))
+  expect_identical(sealed$tag, rfc_octets(7517, "tag"))
+})
+
 # Round trips --------------------------------------------------------------
 
 test_that("every key management algorithm round-trips with every GCM size", {

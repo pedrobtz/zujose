@@ -1,0 +1,160 @@
+id	claims	leeway	audience	issuer	subject	required	token	verdict	pyjwt
+exp-61-l0	{"exp":999999939}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTkzOX0.15KrR30vPRakd15KVki3iplcEpA9f0qH1fdDpPOg7CI	reject	ExpiredSignatureError
+exp-61-l60	{"exp":999999939}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTkzOX0.15KrR30vPRakd15KVki3iplcEpA9f0qH1fdDpPOg7CI	reject	ExpiredSignatureError
+exp-60-l0	{"exp":999999940}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk0MH0.a9PYptxSHUlnDMhgQWDFfDDznD3VrlYbrnSJdkEWBRc	reject	ExpiredSignatureError
+exp-60-l60	{"exp":999999940}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk0MH0.a9PYptxSHUlnDMhgQWDFfDDznD3VrlYbrnSJdkEWBRc	reject	ExpiredSignatureError
+exp-59-l0	{"exp":999999941}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk0MX0.6btQavaoke209lSlaJrQFFwod1sHJUHGv45-tcCC6o8	reject	ExpiredSignatureError
+exp-59-l60	{"exp":999999941}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk0MX0.6btQavaoke209lSlaJrQFFwod1sHJUHGv45-tcCC6o8	accept	
+exp-1-l0	{"exp":999999999}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OX0.iaKsjiTr-IHOLcDSmecms7zHJGv722cSS6tVvYLg2Xc	reject	ExpiredSignatureError
+exp-1-l60	{"exp":999999999}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OX0.iaKsjiTr-IHOLcDSmecms7zHJGv722cSS6tVvYLg2Xc	accept	
+exp-0.5-l0	{"exp":999999999.5}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OS41fQ.hIYSyEeN8CtKpjbiZbYIqTe0qzsWXNkKjE6SR-GinYQ	reject	ExpiredSignatureError
+exp-0.5-l60	{"exp":999999999.5}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjk5OTk5OTk5OS41fQ.hIYSyEeN8CtKpjbiZbYIqTe0qzsWXNkKjE6SR-GinYQ	accept	
+exp+0-l0	{"exp":1000000000}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDB9.eWjQ5gMOwSK15RajGNFNifDPvwBmOHfLTpYUJlUrrEk	reject	ExpiredSignatureError
+exp+0-l60	{"exp":1000000000}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDB9.eWjQ5gMOwSK15RajGNFNifDPvwBmOHfLTpYUJlUrrEk	accept	
+exp+0.5-l0	{"exp":1000000000.5}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDAuNX0.6Fz6TeDSk4Uwbl6KSE7mX1AfymXKsiIN6-hSWnh5YPY	reject	ExpiredSignatureError
+exp+0.5-l60	{"exp":1000000000.5}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDAuNX0.6Fz6TeDSk4Uwbl6KSE7mX1AfymXKsiIN6-hSWnh5YPY	accept	
+exp+1-l0	{"exp":1000000001}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDF9.I8kXJ4_JoRTwAcgwXeI85qYrqlU1mKSQzIO1-fu8cyE	accept	
+exp+1-l60	{"exp":1000000001}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwMDF9.I8kXJ4_JoRTwAcgwXeI85qYrqlU1mKSQzIO1-fu8cyE	accept	
+exp+59-l0	{"exp":1000000059}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNTl9.R20USjh6tcbUfDKputryxch44wTCp-ch-wi6ShxvUAY	accept	
+exp+59-l60	{"exp":1000000059}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNTl9.R20USjh6tcbUfDKputryxch44wTCp-ch-wi6ShxvUAY	accept	
+exp+60-l0	{"exp":1000000060}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNjB9.o80_e_G_2WyYUnOwjEVqX324XgSkxgnC5hqRME_AC1w	accept	
+exp+60-l60	{"exp":1000000060}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNjB9.o80_e_G_2WyYUnOwjEVqX324XgSkxgnC5hqRME_AC1w	accept	
+exp+61-l0	{"exp":1000000061}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNjF9.02041qOYegbQrBYUwr09yYlnLEzN84Kqcmftqo0KPWQ	accept	
+exp+61-l60	{"exp":1000000061}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDAwNjF9.02041qOYegbQrBYUwr09yYlnLEzN84Kqcmftqo0KPWQ	accept	
+expstring-l0	{"exp":"1000000030"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxMDAwMDAwMDMwIn0.flWeEY0Zr9TMQj59pst-VrSMRaSqJcZoICjnzwx-6mE	accept	
+expstring-l60	{"exp":"1000000030"}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOiIxMDAwMDAwMDMwIn0.flWeEY0Zr9TMQj59pst-VrSMRaSqJcZoICjnzwx-6mE	accept	
+expnull-l0	{"exp":null}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOm51bGx9.NdgdnZmo1sdjps_K7WPilOPhz-v3i2Zab8TLeH5Hh6o	reject	MissingRequiredClaimError
+expnull-l60	{"exp":null}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOm51bGx9.NdgdnZmo1sdjps_K7WPilOPhz-v3i2Zab8TLeH5Hh6o	reject	MissingRequiredClaimError
+exptrue-l0	{"exp":true}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOnRydWV9.kr1i3H049Yy3Wrh4nn71nCzmc5JcB_0GMVt-qQaC4Sg	reject	ExpiredSignatureError
+exptrue-l60	{"exp":true}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOnRydWV9.kr1i3H049Yy3Wrh4nn71nCzmc5JcB_0GMVt-qQaC4Sg	reject	ExpiredSignatureError
+exphuge-l0	{"exp":1e+20}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjFlKzIwfQ.J6bUBhO22S0dDco-fppi8TIw0c1FKDd-bdi57y_jSmk	accept	
+exphuge-l60	{"exp":1e+20}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjFlKzIwfQ.J6bUBhO22S0dDco-fppi8TIw0c1FKDd-bdi57y_jSmk	accept	
+nbf-61-l0	{"nbf":999999939,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTkzOSwiZXhwIjoxMDAwMDAzNjAwfQ.10MuMEQG8jSYNiJxDy4ezJEV_BeQk-S7XzQ8s5hmgKE	accept	
+nbf-61-l60	{"nbf":999999939,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTkzOSwiZXhwIjoxMDAwMDAzNjAwfQ.10MuMEQG8jSYNiJxDy4ezJEV_BeQk-S7XzQ8s5hmgKE	accept	
+nbf-60-l0	{"nbf":999999940,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk0MCwiZXhwIjoxMDAwMDAzNjAwfQ.EAkA23yN_a5PFDaHeteAurpZT_DrAXmckbexNFxdE6g	accept	
+nbf-60-l60	{"nbf":999999940,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk0MCwiZXhwIjoxMDAwMDAzNjAwfQ.EAkA23yN_a5PFDaHeteAurpZT_DrAXmckbexNFxdE6g	accept	
+nbf-59-l0	{"nbf":999999941,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk0MSwiZXhwIjoxMDAwMDAzNjAwfQ.iFHSRkor5EF1u_ERqnDa_iv3QnuI60C_jEZMp3ZVf1c	accept	
+nbf-59-l60	{"nbf":999999941,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk0MSwiZXhwIjoxMDAwMDAzNjAwfQ.iFHSRkor5EF1u_ERqnDa_iv3QnuI60C_jEZMp3ZVf1c	accept	
+nbf-1-l0	{"nbf":999999999,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk5OSwiZXhwIjoxMDAwMDAzNjAwfQ.EHeoLvEbe7m-e-EhcE4b3AcNJeftLYQe1j4po3zarsY	accept	
+nbf-1-l60	{"nbf":999999999,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk5OSwiZXhwIjoxMDAwMDAzNjAwfQ.EHeoLvEbe7m-e-EhcE4b3AcNJeftLYQe1j4po3zarsY	accept	
+nbf-0.5-l0	{"nbf":999999999.5,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk5OS41LCJleHAiOjEwMDAwMDM2MDB9.SuBAmYTx4YT8oaleSAdWDzoFYdt20-JGbjW6k8nBLys	accept	
+nbf-0.5-l60	{"nbf":999999999.5,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjk5OTk5OTk5OS41LCJleHAiOjEwMDAwMDM2MDB9.SuBAmYTx4YT8oaleSAdWDzoFYdt20-JGbjW6k8nBLys	accept	
+nbf+0-l0	{"nbf":1000000000,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDAsImV4cCI6MTAwMDAwMzYwMH0.TbwNY50VDzIaSpWhVRLk5vYbFaCNffH3uHTfKfJwC9E	accept	
+nbf+0-l60	{"nbf":1000000000,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDAsImV4cCI6MTAwMDAwMzYwMH0.TbwNY50VDzIaSpWhVRLk5vYbFaCNffH3uHTfKfJwC9E	accept	
+nbf+0.5-l0	{"nbf":1000000000.5,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDAuNSwiZXhwIjoxMDAwMDAzNjAwfQ.VK8fHBTe5dmaVYzh2_2SoYSydwLcCVT4iZ4HRyFjP4I	accept	
+nbf+0.5-l60	{"nbf":1000000000.5,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDAuNSwiZXhwIjoxMDAwMDAzNjAwfQ.VK8fHBTe5dmaVYzh2_2SoYSydwLcCVT4iZ4HRyFjP4I	accept	
+nbf+1-l0	{"nbf":1000000001,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDEsImV4cCI6MTAwMDAwMzYwMH0.2dnrhRqQOJa2M-aDmF6hUjc9qWGxGWZkymL0qgzM0RE	reject	ImmatureSignatureError
+nbf+1-l60	{"nbf":1000000001,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwMDEsImV4cCI6MTAwMDAwMzYwMH0.2dnrhRqQOJa2M-aDmF6hUjc9qWGxGWZkymL0qgzM0RE	accept	
+nbf+59-l0	{"nbf":1000000059,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNTksImV4cCI6MTAwMDAwMzYwMH0.StNGsgHAvKMq7WO35HGqjJmBg3ZMrzS48UzvmAqfNdg	reject	ImmatureSignatureError
+nbf+59-l60	{"nbf":1000000059,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNTksImV4cCI6MTAwMDAwMzYwMH0.StNGsgHAvKMq7WO35HGqjJmBg3ZMrzS48UzvmAqfNdg	accept	
+nbf+60-l0	{"nbf":1000000060,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNjAsImV4cCI6MTAwMDAwMzYwMH0.9Fd-iIeU3Ldq1-7utw9UH33HDuL3eXGle7Kn6zz3DrI	reject	ImmatureSignatureError
+nbf+60-l60	{"nbf":1000000060,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNjAsImV4cCI6MTAwMDAwMzYwMH0.9Fd-iIeU3Ldq1-7utw9UH33HDuL3eXGle7Kn6zz3DrI	accept	
+nbf+61-l0	{"nbf":1000000061,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNjEsImV4cCI6MTAwMDAwMzYwMH0.ZP377DxMv3f_WJExkNjt9U4iQjHbV6iXwSUiIrdiAMs	reject	ImmatureSignatureError
+nbf+61-l60	{"nbf":1000000061,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjEwMDAwMDAwNjEsImV4cCI6MTAwMDAwMzYwMH0.ZP377DxMv3f_WJExkNjt9U4iQjHbV6iXwSUiIrdiAMs	reject	ImmatureSignatureError
+nbfstring-l0	{"nbf":"1000000030","exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOiIxMDAwMDAwMDMwIiwiZXhwIjoxMDAwMDAzNjAwfQ.c6ryK_gm3mB4my-8UAADbFm5zuS6kxPu_nfFWmhLjqI	reject	ImmatureSignatureError
+nbfstring-l60	{"nbf":"1000000030","exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOiIxMDAwMDAwMDMwIiwiZXhwIjoxMDAwMDAzNjAwfQ.c6ryK_gm3mB4my-8UAADbFm5zuS6kxPu_nfFWmhLjqI	accept	
+nbfnull-l0	{"nbf":null,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOm51bGwsImV4cCI6MTAwMDAwMzYwMH0.Ij-xI850D0Xerc7tGwJBqZBWB1JMLZiGqvv3aVD12GQ	reject	DecodeError
+nbfnull-l60	{"nbf":null,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOm51bGwsImV4cCI6MTAwMDAwMzYwMH0.Ij-xI850D0Xerc7tGwJBqZBWB1JMLZiGqvv3aVD12GQ	reject	DecodeError
+nbftrue-l0	{"nbf":true,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOnRydWUsImV4cCI6MTAwMDAwMzYwMH0.bs9mp443mkMQObJp86OI-BePV4qqZCO4q7JqrAlbyOg	accept	
+nbftrue-l60	{"nbf":true,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOnRydWUsImV4cCI6MTAwMDAwMzYwMH0.bs9mp443mkMQObJp86OI-BePV4qqZCO4q7JqrAlbyOg	accept	
+nbfhuge-l0	{"nbf":1e+20,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjFlKzIwLCJleHAiOjEwMDAwMDM2MDB9.m_0JobkylA23AzGqAn21P0HQ-tEYTp6pH4KldcFwzA4	reject	ImmatureSignatureError
+nbfhuge-l60	{"nbf":1e+20,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjFlKzIwLCJleHAiOjEwMDAwMDM2MDB9.m_0JobkylA23AzGqAn21P0HQ-tEYTp6pH4KldcFwzA4	reject	ImmatureSignatureError
+iat-61-l0	{"iat":999999939,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTkzOSwiZXhwIjoxMDAwMDAzNjAwfQ.vmj0L08KNqYTw-khI-eFdJX4_ErvcXILHCNUZ18n6k8	accept	
+iat-61-l60	{"iat":999999939,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTkzOSwiZXhwIjoxMDAwMDAzNjAwfQ.vmj0L08KNqYTw-khI-eFdJX4_ErvcXILHCNUZ18n6k8	accept	
+iat-60-l0	{"iat":999999940,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk0MCwiZXhwIjoxMDAwMDAzNjAwfQ.HWsmmoEfm4CszOB8Bx7tS8njNbrp36fkdU1hnNVQ9uU	accept	
+iat-60-l60	{"iat":999999940,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk0MCwiZXhwIjoxMDAwMDAzNjAwfQ.HWsmmoEfm4CszOB8Bx7tS8njNbrp36fkdU1hnNVQ9uU	accept	
+iat-59-l0	{"iat":999999941,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk0MSwiZXhwIjoxMDAwMDAzNjAwfQ.c3oSzrQpMnUyL4ruQb298KC9aCZO5EXc2nebHrEqnA0	accept	
+iat-59-l60	{"iat":999999941,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk0MSwiZXhwIjoxMDAwMDAzNjAwfQ.c3oSzrQpMnUyL4ruQb298KC9aCZO5EXc2nebHrEqnA0	accept	
+iat-1-l0	{"iat":999999999,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk5OSwiZXhwIjoxMDAwMDAzNjAwfQ.trQ6lwTZYVj5_veARu7WnqcmbAWxol3hNxQN1CgdCYM	accept	
+iat-1-l60	{"iat":999999999,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk5OSwiZXhwIjoxMDAwMDAzNjAwfQ.trQ6lwTZYVj5_veARu7WnqcmbAWxol3hNxQN1CgdCYM	accept	
+iat-0.5-l0	{"iat":999999999.5,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk5OS41LCJleHAiOjEwMDAwMDM2MDB9.HXXpVfOKwfLGKMdKzKdu-6KXCgicRUCmYqBiCsQ0aMU	accept	
+iat-0.5-l60	{"iat":999999999.5,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjk5OTk5OTk5OS41LCJleHAiOjEwMDAwMDM2MDB9.HXXpVfOKwfLGKMdKzKdu-6KXCgicRUCmYqBiCsQ0aMU	accept	
+iat+0-l0	{"iat":1000000000,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDAsImV4cCI6MTAwMDAwMzYwMH0.jq0Y3lJXkXh1w2czj6ZFrydxUNldgL7wXSe0gSRmjb0	accept	
+iat+0-l60	{"iat":1000000000,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDAsImV4cCI6MTAwMDAwMzYwMH0.jq0Y3lJXkXh1w2czj6ZFrydxUNldgL7wXSe0gSRmjb0	accept	
+iat+0.5-l0	{"iat":1000000000.5,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDAuNSwiZXhwIjoxMDAwMDAzNjAwfQ.gQJLESPPoiaEg7DiKTve78y6PQtobKBlWe61RvuK53g	accept	
+iat+0.5-l60	{"iat":1000000000.5,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDAuNSwiZXhwIjoxMDAwMDAzNjAwfQ.gQJLESPPoiaEg7DiKTve78y6PQtobKBlWe61RvuK53g	accept	
+iat+1-l0	{"iat":1000000001,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDEsImV4cCI6MTAwMDAwMzYwMH0.4OfKbEMnMu72_-htpeoRBfseSUx-8UA6L_B8gxrVN-8	reject	ImmatureSignatureError
+iat+1-l60	{"iat":1000000001,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwMDEsImV4cCI6MTAwMDAwMzYwMH0.4OfKbEMnMu72_-htpeoRBfseSUx-8UA6L_B8gxrVN-8	accept	
+iat+59-l0	{"iat":1000000059,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNTksImV4cCI6MTAwMDAwMzYwMH0.2iNEMWxWHBC12OPc2XRWY-63LWJ0Aqb7Lh1rtUXhqw0	reject	ImmatureSignatureError
+iat+59-l60	{"iat":1000000059,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNTksImV4cCI6MTAwMDAwMzYwMH0.2iNEMWxWHBC12OPc2XRWY-63LWJ0Aqb7Lh1rtUXhqw0	accept	
+iat+60-l0	{"iat":1000000060,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNjAsImV4cCI6MTAwMDAwMzYwMH0.PXqKzPgvQYqC__NTgEGE3A7rTeiBlOvTv05piHFhiXk	reject	ImmatureSignatureError
+iat+60-l60	{"iat":1000000060,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNjAsImV4cCI6MTAwMDAwMzYwMH0.PXqKzPgvQYqC__NTgEGE3A7rTeiBlOvTv05piHFhiXk	accept	
+iat+61-l0	{"iat":1000000061,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNjEsImV4cCI6MTAwMDAwMzYwMH0.rqk7u0j6oITJShJYYCzbtQvNF109InAQl2WODq3X06Q	reject	ImmatureSignatureError
+iat+61-l60	{"iat":1000000061,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjEwMDAwMDAwNjEsImV4cCI6MTAwMDAwMzYwMH0.rqk7u0j6oITJShJYYCzbtQvNF109InAQl2WODq3X06Q	reject	ImmatureSignatureError
+iatstring-l0	{"iat":"1000000030","exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxMDAwMDAwMDMwIiwiZXhwIjoxMDAwMDAzNjAwfQ.oqyT7WUy90Ughruh5GDi-5zT7rqu9vJtLzOOmZnShZE	reject	ImmatureSignatureError
+iatstring-l60	{"iat":"1000000030","exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOiIxMDAwMDAwMDMwIiwiZXhwIjoxMDAwMDAzNjAwfQ.oqyT7WUy90Ughruh5GDi-5zT7rqu9vJtLzOOmZnShZE	accept	
+iatnull-l0	{"iat":null,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOm51bGwsImV4cCI6MTAwMDAwMzYwMH0.cdJGQC2CU3QDtAOABsxOu6RjVhr0UrQevVa7wy5XBio	reject	InvalidIssuedAtError
+iatnull-l60	{"iat":null,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOm51bGwsImV4cCI6MTAwMDAwMzYwMH0.cdJGQC2CU3QDtAOABsxOu6RjVhr0UrQevVa7wy5XBio	reject	InvalidIssuedAtError
+iattrue-l0	{"iat":true,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOnRydWUsImV4cCI6MTAwMDAwMzYwMH0.HvXxLANw431d_zvHPU1gYtYjq1CtcWqwRnRg8h5bCtE	accept	
+iattrue-l60	{"iat":true,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOnRydWUsImV4cCI6MTAwMDAwMzYwMH0.HvXxLANw431d_zvHPU1gYtYjq1CtcWqwRnRg8h5bCtE	accept	
+iathuge-l0	{"iat":1e+20,"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjFlKzIwLCJleHAiOjEwMDAwMDM2MDB9.m_wWV2lCZ2I2ioaEYVkYIVV6O1vMYKPRN7Iaj6Zxx5k	reject	ImmatureSignatureError
+iathuge-l60	{"iat":1e+20,"exp":1000003600}	60				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjFlKzIwLCJleHAiOjEwMDAwMDM2MDB9.m_wWV2lCZ2I2ioaEYVkYIVV6O1vMYKPRN7Iaj6Zxx5k	reject	ImmatureSignatureError
+required-default-exp	{"exp":1000003600}	0				default	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+required-exp-exp	{"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+required-none-exp	{"exp":1000003600}	0				[]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+required-default-no-exp	{"sub":"u"}	0				default	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1In0.f9soRd46PdUUekwEqtYVyZZ7GTFBNIFDYTmHgZ8xMuY	accept	
+required-exp-no-exp	{"sub":"u"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1In0.f9soRd46PdUUekwEqtYVyZZ7GTFBNIFDYTmHgZ8xMuY	reject	MissingRequiredClaimError
+required-none-no-exp	{"sub":"u"}	0				[]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1In0.f9soRd46PdUUekwEqtYVyZZ7GTFBNIFDYTmHgZ8xMuY	accept	
+aud-absent-none	{"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+aud-absent-api	{"exp":1000003600}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	reject	MissingRequiredClaimError
+aud-absent-two	{"exp":1000003600}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	reject	MissingRequiredClaimError
+aud-api-none	{"exp":1000003600,"aud":"api"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ImFwaSJ9.-5GSzt8ZUXlu8IjvcLwHKnbM_qZEXzTPTXPc02hB54M	reject	InvalidAudienceError
+aud-api-api	{"exp":1000003600,"aud":"api"}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ImFwaSJ9.-5GSzt8ZUXlu8IjvcLwHKnbM_qZEXzTPTXPc02hB54M	accept	
+aud-api-two	{"exp":1000003600,"aud":"api"}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ImFwaSJ9.-5GSzt8ZUXlu8IjvcLwHKnbM_qZEXzTPTXPc02hB54M	accept	
+aud-other-none	{"exp":1000003600,"aud":"x"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IngifQ.dNeLKiQIv2h9UhX1VhVKfFX47KLhm0TUlkQ3_AebUmk	reject	InvalidAudienceError
+aud-other-api	{"exp":1000003600,"aud":"x"}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IngifQ.dNeLKiQIv2h9UhX1VhVKfFX47KLhm0TUlkQ3_AebUmk	reject	InvalidAudienceError
+aud-other-two	{"exp":1000003600,"aud":"x"}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IngifQ.dNeLKiQIv2h9UhX1VhVKfFX47KLhm0TUlkQ3_AebUmk	reject	InvalidAudienceError
+aud-array-api-none	{"exp":1000003600,"aud":["api"]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiXX0.KSBHltyjl7PC462oNrZ3UkdZu60o0EXzxB0psi4YEKY	reject	InvalidAudienceError
+aud-array-api-api	{"exp":1000003600,"aud":["api"]}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiXX0.KSBHltyjl7PC462oNrZ3UkdZu60o0EXzxB0psi4YEKY	accept	
+aud-array-api-two	{"exp":1000003600,"aud":["api"]}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiXX0.KSBHltyjl7PC462oNrZ3UkdZu60o0EXzxB0psi4YEKY	accept	
+aud-array-both-none	{"exp":1000003600,"aud":["x","api"]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4IiwiYXBpIl19.jqHfApSS17VBSXcDWddHz6vShwmyJvFYbnwlpZLfbjQ	reject	InvalidAudienceError
+aud-array-both-api	{"exp":1000003600,"aud":["x","api"]}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4IiwiYXBpIl19.jqHfApSS17VBSXcDWddHz6vShwmyJvFYbnwlpZLfbjQ	accept	
+aud-array-both-two	{"exp":1000003600,"aud":["x","api"]}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4IiwiYXBpIl19.jqHfApSS17VBSXcDWddHz6vShwmyJvFYbnwlpZLfbjQ	accept	
+aud-array-other-none	{"exp":1000003600,"aud":["x"]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4Il19.EkE0zuD-lJNPs7cnCEx4RMO9DRoQiFGdWE1k7tcstv4	reject	InvalidAudienceError
+aud-array-other-api	{"exp":1000003600,"aud":["x"]}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4Il19.EkE0zuD-lJNPs7cnCEx4RMO9DRoQiFGdWE1k7tcstv4	reject	InvalidAudienceError
+aud-array-other-two	{"exp":1000003600,"aud":["x"]}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJ4Il19.EkE0zuD-lJNPs7cnCEx4RMO9DRoQiFGdWE1k7tcstv4	reject	InvalidAudienceError
+aud-array-empty-none	{"exp":1000003600,"aud":[]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6W119.rns_s0B_87PKVVo5fYCL7puMkz9wMXCGUhQFFby2kLw	accept	
+aud-array-empty-api	{"exp":1000003600,"aud":[]}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6W119.rns_s0B_87PKVVo5fYCL7puMkz9wMXCGUhQFFby2kLw	reject	MissingRequiredClaimError
+aud-array-empty-two	{"exp":1000003600,"aud":[]}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6W119.rns_s0B_87PKVVo5fYCL7puMkz9wMXCGUhQFFby2kLw	reject	MissingRequiredClaimError
+aud-empty-none	{"exp":1000003600,"aud":""}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IiJ9.VpQeVc4iUlkIwHcfGQ1VCbbPY1WOBeW9xDFb68c_g68	accept	
+aud-empty-api	{"exp":1000003600,"aud":""}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IiJ9.VpQeVc4iUlkIwHcfGQ1VCbbPY1WOBeW9xDFb68c_g68	reject	MissingRequiredClaimError
+aud-empty-two	{"exp":1000003600,"aud":""}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6IiJ9.VpQeVc4iUlkIwHcfGQ1VCbbPY1WOBeW9xDFb68c_g68	reject	MissingRequiredClaimError
+aud-null-none	{"exp":1000003600,"aud":null}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6bnVsbH0.OGhn1nxUCumaXJZrGMI8gh-zHeNqM7yandWIpY2ROFE	accept	
+aud-null-api	{"exp":1000003600,"aud":null}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6bnVsbH0.OGhn1nxUCumaXJZrGMI8gh-zHeNqM7yandWIpY2ROFE	reject	MissingRequiredClaimError
+aud-null-two	{"exp":1000003600,"aud":null}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6bnVsbH0.OGhn1nxUCumaXJZrGMI8gh-zHeNqM7yandWIpY2ROFE	reject	MissingRequiredClaimError
+aud-zero-none	{"exp":1000003600,"aud":0}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MH0.AFQWDjEd17BqzZerH3V3DuPYEbtKT0aSaRASAEVvxS0	accept	
+aud-zero-api	{"exp":1000003600,"aud":0}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MH0.AFQWDjEd17BqzZerH3V3DuPYEbtKT0aSaRASAEVvxS0	reject	MissingRequiredClaimError
+aud-zero-two	{"exp":1000003600,"aud":0}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MH0.AFQWDjEd17BqzZerH3V3DuPYEbtKT0aSaRASAEVvxS0	reject	MissingRequiredClaimError
+aud-false-none	{"exp":1000003600,"aud":false}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ZmFsc2V9.nlw0uyum1UNbV4-x63A76O7Pa0Ku8ybxfpE3scHeCQg	accept	
+aud-false-api	{"exp":1000003600,"aud":false}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ZmFsc2V9.nlw0uyum1UNbV4-x63A76O7Pa0Ku8ybxfpE3scHeCQg	reject	MissingRequiredClaimError
+aud-false-two	{"exp":1000003600,"aud":false}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6ZmFsc2V9.nlw0uyum1UNbV4-x63A76O7Pa0Ku8ybxfpE3scHeCQg	reject	MissingRequiredClaimError
+aud-one-none	{"exp":1000003600,"aud":1}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MX0.b3ak8hiilkWtaU2Vf8DuiIcQyDYDKZJSb1ndFtZYwSw	reject	InvalidAudienceError
+aud-one-api	{"exp":1000003600,"aud":1}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MX0.b3ak8hiilkWtaU2Vf8DuiIcQyDYDKZJSb1ndFtZYwSw	reject	InvalidAudienceError
+aud-one-two	{"exp":1000003600,"aud":1}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6MX0.b3ak8hiilkWtaU2Vf8DuiIcQyDYDKZJSb1ndFtZYwSw	reject	InvalidAudienceError
+aud-array-mixed-none	{"exp":1000003600,"aud":["api",1]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiLDFdfQ.FdZN7lRow3juNWY0BMZalf2yUK6Q35WZ6M1Qd8aBwms	reject	InvalidAudienceError
+aud-array-mixed-api	{"exp":1000003600,"aud":["api",1]}	0	"api"			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiLDFdfQ.FdZN7lRow3juNWY0BMZalf2yUK6Q35WZ6M1Qd8aBwms	reject	InvalidAudienceError
+aud-array-mixed-two	{"exp":1000003600,"aud":["api",1]}	0	["api","b"]			["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImF1ZCI6WyJhcGkiLDFdfQ.FdZN7lRow3juNWY0BMZalf2yUK6Q35WZ6M1Qd8aBwms	reject	InvalidAudienceError
+iss-absent-none	{"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+iss-absent-me	{"exp":1000003600}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	reject	MissingRequiredClaimError
+iss-match-none	{"exp":1000003600,"iss":"me"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6Im1lIn0.AKrzvtRx6qbvrbQUvtTSHBco4U3X0n1MVh9TpN4j2ew	accept	
+iss-match-me	{"exp":1000003600,"iss":"me"}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6Im1lIn0.AKrzvtRx6qbvrbQUvtTSHBco4U3X0n1MVh9TpN4j2ew	accept	
+iss-other-none	{"exp":1000003600,"iss":"x"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6IngifQ.UIWzL5gsghRb7l-RME_K7iOAJAr3EDQHKNHrPpL1RbE	accept	
+iss-other-me	{"exp":1000003600,"iss":"x"}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6IngifQ.UIWzL5gsghRb7l-RME_K7iOAJAr3EDQHKNHrPpL1RbE	reject	InvalidIssuerError
+iss-number-none	{"exp":1000003600,"iss":1}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6MX0.n5TOfvaK-yM5PbZhBw1K0wW0nHMe7TSATi3iQIOPemw	accept	
+iss-number-me	{"exp":1000003600,"iss":1}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6MX0.n5TOfvaK-yM5PbZhBw1K0wW0nHMe7TSATi3iQIOPemw	reject	InvalidIssuerError
+iss-null-none	{"exp":1000003600,"iss":null}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6bnVsbH0.JtJGhPmGsjnz7Gudm-EH2Anps6a7gG6Tn8m5b1LvjVA	accept	
+iss-null-me	{"exp":1000003600,"iss":null}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6bnVsbH0.JtJGhPmGsjnz7Gudm-EH2Anps6a7gG6Tn8m5b1LvjVA	reject	InvalidIssuerError
+iss-array-none	{"exp":1000003600,"iss":["me"]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6WyJtZSJdfQ.YI1bPCvpq9VWfXZ2PRhjjh-sQVjEundGus-WGBCbc-0	accept	
+iss-array-me	{"exp":1000003600,"iss":["me"]}	0		"me"		["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsImlzcyI6WyJtZSJdfQ.YI1bPCvpq9VWfXZ2PRhjjh-sQVjEundGus-WGBCbc-0	reject	InvalidIssuerError
+sub-absent-none	{"exp":1000003600}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+sub-absent-me	{"exp":1000003600}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDB9.LVg8gaHhvSWvptmc9LgVgOf_hDm4LC53Kq0ge27RnvQ	accept	
+sub-match-none	{"exp":1000003600,"sub":"me"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6Im1lIn0.q0VH8JHC0qSSHVQ44fNemSXKMuohRPL_mWgzKUHMtmE	accept	
+sub-match-me	{"exp":1000003600,"sub":"me"}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6Im1lIn0.q0VH8JHC0qSSHVQ44fNemSXKMuohRPL_mWgzKUHMtmE	accept	
+sub-other-none	{"exp":1000003600,"sub":"x"}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6IngifQ.nJacwAducPYUP5YKNN1maEQtmB-3JrzD49_Reu3hC80	accept	
+sub-other-me	{"exp":1000003600,"sub":"x"}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6IngifQ.nJacwAducPYUP5YKNN1maEQtmB-3JrzD49_Reu3hC80	reject	InvalidSubjectError
+sub-number-none	{"exp":1000003600,"sub":1}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6MX0.oKnejiWLdRBcWltJgkw-ghfNI53RwdoJQyWgkIK65js	reject	InvalidSubjectError
+sub-number-me	{"exp":1000003600,"sub":1}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6MX0.oKnejiWLdRBcWltJgkw-ghfNI53RwdoJQyWgkIK65js	reject	InvalidSubjectError
+sub-null-none	{"exp":1000003600,"sub":null}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6bnVsbH0.2OwygI9d444NZyRYdNByaQPULqj7r7E97PBBmTTJTbI	reject	InvalidSubjectError
+sub-null-me	{"exp":1000003600,"sub":null}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6bnVsbH0.2OwygI9d444NZyRYdNByaQPULqj7r7E97PBBmTTJTbI	reject	InvalidSubjectError
+sub-array-none	{"exp":1000003600,"sub":["me"]}	0				["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6WyJtZSJdfQ.5YnRCCHmI3FCJizFRj9o_nkkbpeQ_pEqTnBWBx9Pae4	reject	InvalidSubjectError
+sub-array-me	{"exp":1000003600,"sub":["me"]}	0			"me"	["exp"]	eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjEwMDAwMDM2MDAsInN1YiI6WyJtZSJdfQ.5YnRCCHmI3FCJizFRj9o_nkkbpeQ_pEqTnBWBx9Pae4	reject	InvalidSubjectError

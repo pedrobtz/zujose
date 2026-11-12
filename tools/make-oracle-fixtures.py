@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Write, or check, the oracle fixtures: JWTs and PEM keys made by Python.
 
-    python3 tools/make-oracle-fixtures.py           write the fixtures
-    python3 tools/make-oracle-fixtures.py --check   check them
+    python3 tools/make-oracle-fixtures.py              write the fixtures
+    python3 tools/make-oracle-fixtures.py --keys ID..  write only these keys
+    python3 tools/make-oracle-fixtures.py --check      check them
 
 Maintainer tooling, never run at check time. Needs `PyJWT` and
 `cryptography`, for example in a virtual environment:
@@ -13,18 +14,31 @@ PyJWT is an independent JOSE implementation, so its tokens are the oracle
 for zujose's JWS and JWT code (design section 10). Writes, under
 tests/testthat/fixtures/oracle/:
 
-  - keys: `rsa-2048`, `rsa-1024`, `ec-p256`, `ec-p384` and `ec-p521`, each
-    as a PKCS #8 private key (`<id>.pem`) and an SPKI public key
-    (`<id>.pub.pem`), written by `cryptography`;
+  - keys: `rsa-2048`, `rsa-1024`, `ec-p256`, `ec-p384`, `ec-p521` and
+    `x25519`, each as a PKCS #8 private key (`<id>.pem`) and an SPKI
+    public key (`<id>.pub.pem`), written by `cryptography`. They are the
+    oracle for zujose's PEM export too: `jwk_pem()` of a key read back
+    must give the file's bytes;
   - tokens.tsv: one JWT per row, signed by PyJWT with the HMAC secret
     bytes 1..64 (`hmac`), the same reversed (`hmac-wrong`), or one of the
     keys. Claims are fixed, with `exp` = 2000000000, so tests decode them
     at a fixed time;
-  - MANIFEST.tsv: every file, with the library versions that wrote it.
+  - MANIFEST.tsv: a row for every file, with the library versions that
+    wrote it. Rows of files other tools write are kept.
 
 Keys and the randomised signatures (PS*, ES*) change on every write.
+`--keys` writes only the named keys, and no tokens, so a key added later
+does not rewrite the others: `x25519` was added that way.
 --check does not regenerate: it verifies every token with PyJWT against
-its key, and exits non-zero on the first failure.
+its key, checks that `cryptography` reads every key and writes each one's
+two files back byte for byte, and exits non-zero on the first failure.
+
+--check also verifies zujose-tokens.tsv, which tools/make-zujose-tokens.R
+writes with zujose (#100): every JWT with PyJWT's jwt.decode(), with
+`exp`, `nbf`, `iat`, `aud` and `iss` checked, and every JWS with
+jws.decode(). The claims must equal ZUJOSE_CLAIMS, types included, so a
+NumericDate written as a string or a float fails; the header must be
+exactly `alg`, `kid` and, for a JWT, `typ: "JWT"`.
 """
 import csv
 import os
@@ -33,7 +47,7 @@ import sys
 import cryptography
 import jwt
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ec, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa, x25519
 
 OUT = os.path.join("tests", "testthat", "fixtures", "oracle")
 GENERATOR = "tools/make-oracle-fixtures.py"
@@ -41,6 +55,15 @@ SECRET = bytes(range(1, 65))
 CLAIMS = {"sub": "u2", "aud": "api", "exp": 2000000000, "n": 42}
 CURVES = {"ec-p256": ec.SECP256R1, "ec-p384": ec.SECP384R1,
           "ec-p521": ec.SECP521R1}
+KEYS = ["rsa-2048", "rsa-1024", *CURVES, "x25519"]
+# What tools/make-zujose-tokens.R signs; keep the two in step.
+ZUJOSE_CLAIMS = {
+    "iss": "https://issuer.example", "sub": "u2", "aud": ["api", "other"],
+    "exp": 2000000000, "nbf": 999999000, "iat": 999999990, "n": 42,
+    "x": 1.5, "ok": True, "none": None, "name": "Zo\u00eb \u65e5\u672c",
+    "roles": ["a", "b"], "ctx": {"tenant": "t1", "depth": {"level": 2}},
+}
+ZUJOSE_PAYLOAD = "zujose \u2192 PyJWT: not JSON".encode()
 TOKENS = [
     ("hs256", "HS256", "hmac"), ("hs384", "HS384", "hmac"),
     ("hs512", "HS512", "hmac"), ("hs256-wrong", "HS256", "hmac-wrong"),
@@ -65,24 +88,56 @@ def signing_key(name, keys):
     return keys[name]
 
 
-def write():
-    os.makedirs(OUT, exist_ok=True)
-    keys = {"rsa-2048": rsa.generate_private_key(65537, 2048),
-            "rsa-1024": rsa.generate_private_key(65537, 1024)}
-    keys.update({k: ec.generate_private_key(c()) for k, c in CURVES.items()})
+def generate(name):
+    if name.startswith("rsa-"):
+        return rsa.generate_private_key(65537, int(name[4:]))
+    if name == "x25519":
+        return x25519.X25519PrivateKey.generate()
+    return ec.generate_private_key(CURVES[name]())
 
-    files = []
-    for name, key in keys.items():
-        private = key.private_bytes(serialization.Encoding.PEM,
-                                    serialization.PrivateFormat.PKCS8,
-                                    serialization.NoEncryption())
-        public = key.public_key().public_bytes(
-            serialization.Encoding.PEM,
-            serialization.PublicFormat.SubjectPublicKeyInfo)
-        for suffix, data in ((".pem", private), (".pub.pem", public)):
+
+def pem_files(key):
+    private = key.private_bytes(serialization.Encoding.PEM,
+                                serialization.PrivateFormat.PKCS8,
+                                serialization.NoEncryption())
+    public = key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo)
+    return {".pem": private, ".pub.pem": public}
+
+
+def write_keys(names):
+    keys, files = {}, []
+    for name in names:
+        keys[name] = generate(name)
+        for suffix, data in pem_files(keys[name]).items():
             with open(os.path.join(OUT, name + suffix), "wb") as f:
                 f.write(data)
             files.append(name + suffix)
+    return keys, files
+
+
+def write_manifest(files):
+    path = os.path.join(OUT, "MANIFEST.tsv")
+    rows = []
+    if os.path.exists(path):
+        with open(path) as f:
+            rows = [r for r in csv.DictReader(f, delimiter="\t")
+                    if r["file"] not in files]
+    by_file = {r["file"]: r for r in rows}
+    for name in files:
+        by_file[name] = {"file": name, "source": source(),
+                         "generator": GENERATOR}
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, ["file", "source", "generator"], delimiter="\t",
+                           lineterminator="\n")
+        w.writeheader()
+        w.writerows(by_file.values())
+
+
+def write():
+    os.makedirs(OUT, exist_ok=True)
+    keys, files = write_keys(KEYS)
 
     rows = [{"id": tid, "alg": alg, "key": kname,
              "token": jwt.encode(CLAIMS, signing_key(kname, keys),
@@ -94,20 +149,21 @@ def write():
         w.writeheader()
         w.writerows(rows)
     files.append("tokens.tsv")
-
-    with open(os.path.join(OUT, "MANIFEST.tsv"), "w", newline="") as f:
-        w = csv.writer(f, delimiter="\t", lineterminator="\n")
-        w.writerow(["file", "source", "generator"])
-        for name in files:
-            w.writerow([name, source(), GENERATOR])
+    write_manifest(files)
     print("wrote %d keys and %d tokens" % (len(keys), len(rows)))
 
 
 def check():
     keys = {}
-    for name in ["rsa-2048", "rsa-1024", *CURVES]:
-        with open(os.path.join(OUT, name + ".pub.pem"), "rb") as f:
-            keys[name] = serialization.load_pem_public_key(f.read())
+    for name in KEYS:
+        files = {}
+        for suffix in (".pem", ".pub.pem"):
+            with open(os.path.join(OUT, name + suffix), "rb") as f:
+                files[suffix] = f.read()
+        private = serialization.load_pem_private_key(files[".pem"], None)
+        if pem_files(private) != files:
+            sys.exit("make-oracle-fixtures: FAILED key " + name)
+        keys[name] = private.public_key()
     n = 0
     with open(os.path.join(OUT, "tokens.tsv")) as f:
         for row in csv.DictReader(f, delimiter="\t"):
@@ -117,12 +173,57 @@ def check():
             if claims != CLAIMS:
                 sys.exit("make-oracle-fixtures: FAILED " + row["id"])
             n += 1
-    print("make-oracle-fixtures: %d tokens verify with %s." % (n, source()))
+    m = check_zujose(keys)
+    print("make-oracle-fixtures: %d keys, %d tokens and %d zujose tokens "
+          "check with %s." % (len(keys), n, m, source()))
+
+
+def same_json(a, b):
+    """Equal as JSON values, types included: 1 is not 1.0 nor True."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(same_json(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(map(same_json, a, b))
+    return a == b
+
+
+def check_zujose(keys):
+    path = os.path.join(OUT, "zujose-tokens.tsv")
+    n = 0
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
+            key = signing_key(row["key"], keys)
+            header = jwt.get_unverified_header(row["token"])
+            want = {"alg": row["alg"], "kid": row["key"]}
+            if row["kind"] == "jwt":
+                want["typ"] = "JWT"
+                got = jwt.decode(row["token"], key, algorithms=[row["alg"]],
+                                 audience="api",
+                                 issuer="https://issuer.example",
+                                 options={"require": ["exp", "nbf", "iat"]})
+                ok = same_json(got, ZUJOSE_CLAIMS)
+            else:
+                got = jwt.api_jws.decode(row["token"], key,
+                                         algorithms=[row["alg"]])
+                ok = got == ZUJOSE_PAYLOAD
+            if not ok or header != want:
+                sys.exit("make-oracle-fixtures: FAILED zujose " + row["id"])
+            n += 1
+    return n
 
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["--check"]:
         check()
+    elif sys.argv[1:2] == ["--keys"] and sys.argv[2:]:
+        unknown = set(sys.argv[2:]) - set(KEYS)
+        if unknown:
+            sys.exit("make-oracle-fixtures: unknown keys " + str(unknown))
+        _, files = write_keys(sys.argv[2:])
+        write_manifest(files)
+        print("wrote %d keys" % len(sys.argv[2:]))
     elif not sys.argv[1:]:
         write()
     else:
