@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `[` on a `jwk_set` refuses an NA or out-of-range index with
+  `zujose_argument_error`, instead of making a set that holds `NULL` and
+  cannot be printed (#135).
+
 * `jwk_public()`, and so `jwk_json()` without `private`, maps a private
   key's `key_ops` to its public half's: `sign` to `verify`, `decrypt` to
   `encrypt` and `unwrapKey` to `wrapKey`. The public half of a signing key

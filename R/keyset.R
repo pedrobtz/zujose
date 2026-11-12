@@ -109,11 +109,23 @@ as_jwk_set <- function(x) {
 #' @export
 `[.jwk_set` <- function(x, i) {
   keys <- unclass(x)
+  if (missing(i)) {
+    return(x)
+  }
   if (is.character(i)) {
     kids <- vapply(keys, function(key) key$kid %||% NA_character_, "")
     i <- which(kids %in% i)
   }
-  new_jose_keyset(keys[i])
+  # An NA or out-of-range index would put NULL in the set (#135).
+  out <- if (!anyNA(i)) keys[i]
+  if (anyNA(i) || any(vapply(out, is.null, logical(1)))) {
+    abort_zujose(
+      "argument",
+      "Select keys with indices or `kid`s in the set, without NA.",
+      call = sys.call()
+    )
+  }
+  new_jose_keyset(out)
 }
 
 #' @export

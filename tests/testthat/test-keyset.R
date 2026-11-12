@@ -73,3 +73,15 @@ test_that("jwk_public() and jwk_json() drop oct keys from a set", {
   expect_length(written$keys, length(public))
   expect_identical(as_jwk_set(jwk_json(set, private = TRUE)), set)
 })
+
+test_that("`[` refuses NA and out-of-range indices", {
+  # #135: a jwk_set holds keys only, never NULL.
+  set <- jwk_set(jwk_oct(as.raw(1), kid = "a"), jwk_oct(as.raw(2), kid = "b"))
+  for (i in list(NA, NA_integer_, 10, c(1, NA), c(TRUE, TRUE, TRUE))) {
+    expect_error(set[i], class = "zujose_argument_error")
+  }
+  expect_length(set[-1], 1L)
+  expect_length(set[], 2L)
+  expect_length(set["z"], 0L)
+  expect_output(print(set[0]), "0 keys")
+})
