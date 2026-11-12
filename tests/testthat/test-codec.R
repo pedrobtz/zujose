@@ -230,6 +230,60 @@ test_that("the malformed corpus fails with zujose_parse_error", {
   expect_gt(n, 500L)
 })
 
+test_that("non-zero trailing bits in any part fail at token level", {
+  manifest <- rfc7520_manifest()
+  compact <- manifest$figure[manifest$serialization == "compact"]
+  n <- 0L
+  for (figure in compact) {
+    parts <- strsplit(rfc7520_token(figure), ".", fixed = TRUE)[[1]]
+    for (i in seq_along(parts)) {
+      bad <- trailing_bits(parts[[i]])
+      if (is.null(bad)) {
+        next
+      }
+      n <- n + 1L
+      # The mutation changes only the trailing bits, not the length.
+      expect_identical(nchar(bad), nchar(parts[[i]]))
+      expect_false(identical(bad, parts[[i]]))
+      token <- paste(replace(parts, i, bad), collapse = ".")
+      expect_error(
+        jose_parse(token, jose_limits()),
+        class = "zujose_parse_error",
+        info = sprintf("Figure %d, part %d", figure, i)
+      )
+    }
+  }
+  expect_gt(n, 20L)
+  # The refusal is the part's Base64url check, naming the part.
+  parts <- strsplit(rfc7520_token(34), ".", fixed = TRUE)[[1]]
+  token <- paste(replace(parts, 2L, trailing_bits(parts[[2]])), collapse = ".")
+  expect_snapshot(jose_parse(token, jose_limits()), error = TRUE)
+})
+
+test_that("the malformed corpus fails in jws_verify() and jwe_decrypt()", {
+  # Parsing comes first, so no key is looked up and no cryptography runs.
+  local_no_crypto()
+  cases <- list(
+    list(34, function(t) jws_verify(t, as_jwk(rfc7520_key(5)), "HS256")),
+    list(81, function(t) {
+      jwe_decrypt(t, jwk_oct(as.raw(1:16)), "A128KW", "A128CBC-HS256")
+    })
+  )
+  for (case in cases) {
+    corpus <- Filter(
+      Negate(is.null),
+      malformed_corpus(rfc7520_token(case[[1]]))
+    )
+    for (i in seq_along(corpus)) {
+      expect_error(
+        case[[2]](corpus[[i]]),
+        class = "zujose_parse_error",
+        info = sprintf("Figure %d, mutation %d", case[[1]], i)
+      )
+    }
+  }
+})
+
 test_that("malformed JSON serializations fail with zujose_parse_error", {
   general <- zujson::json_parse(rfc7520_token(14), simplify = "none")
   jwe <- zujson::json_parse(rfc7520_token(82), simplify = "none")

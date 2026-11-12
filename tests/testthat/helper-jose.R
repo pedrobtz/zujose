@@ -60,7 +60,10 @@ malformed_corpus <- function(token) {
   }
   each_part <- function(f) {
     lapply(seq_along(parts), function(i) {
-      if (nzchar(parts[[i]])) rebuild(i, f(parts[[i]]))
+      if (nzchar(parts[[i]])) {
+        value <- f(parts[[i]])
+        if (!is.null(value)) rebuild(i, value)
+      }
     })
   }
   header <- function(bytes) rebuild(1L, b64url_encode(bytes))
@@ -91,8 +94,22 @@ malformed_corpus <- function(token) {
       }
       p
     }),
-    each_part(function(p) paste0(p, "é"))
+    each_part(function(p) paste0(p, "é")),
+    each_part(trailing_bits)
   )
+}
+
+# A Base64url part with non-zero trailing bits: the same length, and the
+# same bytes under a forgiving decoder, but not the canonical encoding.
+# NULL for a part whose length is 0 mod 4, which has no trailing bits.
+trailing_bits <- function(p) {
+  if (!nchar(p) %% 4L %in% 2:3) {
+    return(NULL)
+  }
+  alphabet <- c(LETTERS, letters, 0:9, "-", "_")
+  n <- nchar(p)
+  last <- match(substr(p, n, n), alphabet) - 1L
+  paste0(substr(p, 1L, n - 1L), alphabet[[bitwOr(last, 1L) + 1L]])
 }
 
 # A b64url_decode() that fails the test if it is ever reached for `what`.
