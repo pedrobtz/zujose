@@ -1,0 +1,37 @@
+# Deliberate divergences from the references, read by tools/fuzz/replay.R.
+# zujose is stricter than a reference in a way its design or documentation
+# records, or the reference is wrong; every row gives the reason.
+#
+# A row matches a case by `reference` and `kind` (either may be `*`), and
+# by Perl regular expressions over the case's seed name (`seed`) and its
+# ";"-joined mutation labels (`mutation`, from tools/fuzz/gen.py). It
+# excuses a disagreement where zujose's verdict is `zujose` and the
+# reference's is `verdict`. A `strict` row is also a rule: zujose must give
+# its `zujose` verdict on every case it matches, whatever the references
+# say, so a loosened check fails the run even where a reference agrees.
+reference	kind	seed	mutation	zujose	verdict	strict	reason
+*	*	.	(^|;)b64:	reject	accept	yes	Base64url is strict and canonical: padding, whitespace, the standard alphabet, a one-character final quantum and non-zero trailing bits are refused, so every token has one encoding (design §8.1 and D6). jwcrypto and PyJWT pad and decode with Python's non-validating decoder.
+*	*	.	edit:flip-(b64char|space)	reject	accept	no	A flip to `+`, `/`, `=` or whitespace usually lands in a Base64url part, which the same rule refuses (design §8.1 and D6); it may also land in JSON whitespace or a header value, so zujose need not refuse every such case.
+*	*	.	header:p2s-noncanonical	reject	accept	no	The same canonical Base64url rule, applied to the `p2s` member (design §8.1 and D6).
+*	*	.	header:dup-|json:header-dup|payload:dup-claim	reject	accept	yes	Decoded headers, and every JSON object zujose reads, must have no repeated member name: rejection rather than last wins (design §8.1; RFC 8725 §3.4). Python's json module keeps the last.
+*	*	.	json:both-shapes	reject	accept	yes	A token that mixes the general and flattened JSON serializations is refused (RFC 7515 §7.2.2 and RFC 7516 §7.2.2: the flattened syntax must not have `signatures` or `recipients`; ?jose_peek reads "the compact, flattened or general" form, one at a time). jwcrypto reads whichever member it looks for first.
+jwcrypto	*	.	json:type-	reject	accept	no	A member of a JSON serialization that is not a string is a parse error. jwcrypto calls str() on it and decodes the result with Python's non-validating Base64 decoder, which drops the brackets and quotes.
+*	*	.	header:crit-(empty|registered|repeat|string)	reject	accept	yes	`crit` must be a non-empty array of names that zujose implements, with no repeat and no registered header (design §8.1; RFC 7515 §4.1.11).
+*	*	.	header:b64-false-no-crit	reject	accept	yes	`b64: false` needs `crit: ["b64"]` (design §8.4; RFC 7797 §6).
+*	jwe	.	header:b64-jwe	reject	accept	yes	`b64` applies only to a JWS (RFC 7797 §3; design §8.4). jwcrypto ignores it in a JWE.
+*	*	.	header:(kid|typ|cty)-number|json:header-unprotected-(alg|enc|kid)-(list|bool)	reject	accept	yes	The `alg`, `enc`, `kid`, `typ` and `cty` headers must be strings (RFC 7515 §4.1, RFC 7516 §4.1); zujose refuses any other value with `zujose_parse_error`, as it refuses every malformed header (design §9).
+*	*	^rfc7520-17[012]$	.	reject	accept	yes	RFC 7520 §5.9 compresses its content, and `zip` in any header is refused (design §8.6; RFC 8725 §3.6; ?jwe_decrypt).
+*	jwe	.	header:zip-	reject	accept	yes	`zip` in any JWE header is refused (design §8.6; RFC 8725 §3.6; ?jwe_decrypt).
+*	jwe	.	header:p2s-(empty|short|7)	reject	accept	no	PBES2 rejects a `p2s` shorter than 8 bytes (design §8.6; RFC 7518 §4.8.1.1).
+jwcrypto	jwe	.	header:p2c-(16385|600000)	accept	reject	no	zujose caps `p2c` at `jose_limits()$p2c`, 600 000 by default (design §8.6); jwcrypto caps it at 16 384, as ?jwe_encrypt documents (#140).
+jwcrypto	jwe	.	plaintext-empty	accept	reject	no	A jwcrypto bug: JWE.decrypt() tests `if not self.plaintext`, so an empty plaintext reads as a failed decryption (jwcrypto 1.5.6, jwe.py). RFC 7516 allows an empty plaintext.
+*	jws	.	header:(b64-false-crit|crit-b64)	accept	reject	no	RFC 7797 §5.2 allows an unencoded payload in the compact serialization, which jws_sign(b64 = FALSE) writes (design §8.4). jwcrypto Base64url-decodes every compact payload, and PyJWT reads `b64: false` only with a detached payload.
+jwcrypto	jws	.	payload:empty|json:missing-payload	accept	reject	no	A JWS without a payload is detached, and without a `payload` argument jws_verify() verifies it over the empty payload, so a signature over the empty payload verifies (tests/testthat/test-jws.R, RFC 7520 §4.5: "without the payload, the empty payload does not verify"). jwcrypto refuses a detached token without its payload.
+pyjwt	jwt	.	header:cty-jwt	reject	accept	yes	A JWT with `cty: "JWT"` carries a nested JWT, which jwt_decode() verifies (?jwt_decode; design §8.5). PyJWT ignores `cty` and returns the outer claims.
+*	*	.	header:cross-dup	reject	accept	yes	A member name may appear in only one of the protected, shared and per-recipient (or per-signature) headers (design §8.1; RFC 7515 §7.2.1, RFC 7516 §7.2.1). jwcrypto merges them.
+*	*	.	json:header-unprotected-(b64|crit)-	reject	accept	yes	`crit` and `b64` must be in the protected header (design §8.1; RFC 7515 §4.1.11, RFC 7797 §3). jwcrypto reads them anywhere.
+*	*	.	header:b64-string	reject	accept	yes	`b64` must be a JSON boolean (RFC 7797 §3); zujose refuses a malformed header with `zujose_parse_error` (design §9). PyJWT tests only `b64 is False`.
+jwcrypto	*	^(rfc7520-(71|221)|json-general-three.*)$	edit:flip	reject	accept	no	These seeds have three signatures or recipients. A flip that breaks an entry the key does not open leaves jwcrypto one it can use, but zujose parses the whole token first and refuses any malformed entry: only an entry whose algorithm is not in `algorithms` is skipped (?jws_verify `require`, ?jwe_decrypt).
+*	jwt	.	payload:exp-string	reject	accept	yes	`exp`, `nbf` and `iat` must be finite numbers; a string is a malformed token, not a skipped check (design §8.5). PyJWT converts it with int().
+*	*	^rfc7520-(3[4-6]|49|50|54|55|1[3-9][0-9]|20[01])$	header:alg-(family|other)	reject	accept	yes	The RFC 7520 keys carry `alg` (§3.5 `HS256`, §5 `A128KW`, `A256GCMKW` and `A128GCM`), and a JWK's own `alg` must agree with the token's (design §8.2); an HMAC key must also be at least the hash size. The references ignore a key's `alg`.
+*	*	.	json:recipients-(string|null)-entry	reject	accept	yes	Every entry of `signatures` and `recipients` must be a JSON object (RFC 7515 §7.2.1, RFC 7516 §7.2.1), and a malformed token is refused whole with `zujose_parse_error` (design §9). jwcrypto skips the entry.
