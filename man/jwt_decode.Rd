@@ -40,8 +40,8 @@ returning one.}
 
 \item{required}{Names of claims that must be present.}
 
-\item{claims}{Further expectations, as a named list of values or
-functions.}
+\item{claims}{Further expectations, as a list of values or functions
+with unique names.}
 
 \item{validate}{A function of the claims list that must return \code{TRUE}, or
 \code{NULL}.}
@@ -88,6 +88,15 @@ must equal, or a function of the claim that must return \code{TRUE}.
 \code{validate} is a function of the whole claims list, for checks across
 claims.
 }
+
+A value in \code{claims} is compared with the claim as JSON values, the value
+taken as \code{\link[=jwt_encode]{jwt_encode()}} would write it. Object members may come in any
+order, and \code{3L} equals \code{3}. A vector of length one is a scalar and a
+longer one an array, so \code{"a"} does not match \verb{["a"]}; write \code{list("a")}
+for an array of one. \code{NULL} matches a JSON \code{null}. \code{NA} and non-finite
+numbers have no JSON form and are refused. \code{exp}, \code{nbf} and \code{iat} are
+compared, and passed to a function, as the \code{POSIXct} times
+\code{jwt_decode()} returns; a number expects the same NumericDate.
 
 A JWT whose header has \code{cty: "JWT"} carries another JWT as its payload.
 That inner JWT is verified with the same \code{key} and \code{algorithms}, and its

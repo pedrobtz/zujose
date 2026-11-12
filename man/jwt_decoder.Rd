@@ -36,8 +36,8 @@ returning one.}
 
 \item{required}{Names of claims that must be present.}
 
-\item{claims}{Further expectations, as a named list of values or
-functions.}
+\item{claims}{Further expectations, as a list of values or functions
+with unique names.}
 
 \item{validate}{A function of the claims list that must return \code{TRUE}, or
 \code{NULL}.}

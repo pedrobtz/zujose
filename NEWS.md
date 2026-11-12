@@ -1,5 +1,16 @@
 # zujose 0.0.0.9000
 
+* `jwt_decode()` and `jwt_decoder()` refuse repeated, `NA` or empty names
+  in `claims` with `zujose_argument_error`. Only the first of two
+  expectations for one claim was checked (#118).
+
+* Expectations in `jwt_decode(claims = )` compare JSON values, not JSON
+  text: object members may come in any order. `NA` and non-finite numbers
+  are refused rather than matching `null`, and `NULL` expects `null`.
+  `exp`, `nbf` and `iat` are compared, and passed to a function, as the
+  `POSIXct` times `jwt_decode()` returns. `?jwt_decode` says how vectors
+  and arrays match (#128).
+
 * `jose_peek()` gives `NULL` for `payload` and `signing_input` on a compact
   detached JWS, as it does for a flattened one. It gave `raw(0)` and the
   header followed by `"."` (#131).

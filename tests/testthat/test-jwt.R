@@ -593,3 +593,106 @@ test_that("jwt_encode() takes one key, not a list of signers (#130)", {
   )
   expect_error(jwt_encode(list(a = 1), "key"), class = "zujose_key_error")
 })
+
+test_that("claims refuses repeated or empty names before decoding (#118)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(scope = "read", scope = "write"),
+    list(scope = function(x) TRUE, scope = function(x) FALSE),
+    stats::setNames(list(1), NA_character_),
+    stats::setNames(list(1, 2), c("a", ""))
+  )
+  for (claims in bad) {
+    expect_error(
+      jwt_decode("not a token", key, "HS256", claims = claims),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwt_decoder(key, "HS256", claims = claims),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("claims compares values, not JSON text (#128)", {
+  # Object members in any order.
+  expect_no_error(decode_at_1000(
+    list(o = list(a = 1, b = list(c = 2, d = 3))),
+    claims = list(o = list(b = list(d = 3, c = 2), a = 1))
+  ))
+  expect_no_error(decode_at_1000(
+    list(o = list(list(a = 1, b = 2))),
+    claims = list(o = list(list(b = 2, a = 1)))
+  ))
+  expect_error(
+    decode_at_1000(
+      list(o = list(a = 1, b = 2)),
+      claims = list(o = list(a = 1))
+    ),
+    class = "zujose_claim_error"
+  )
+  # A vector longer than one is an array, a vector of one is a scalar, and
+  # a list of one is an array of one.
+  expect_no_error(decode_at_1000(list(s = "a"), claims = list(s = "a")))
+  expect_no_error(decode_at_1000(
+    list(s = list("a")),
+    claims = list(s = list("a"))
+  ))
+  expect_error(
+    decode_at_1000(list(s = list("a")), claims = list(s = "a")),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode_at_1000(list(s = "a"), claims = list(s = list("a"))),
+    class = "zujose_claim_error"
+  )
+  expect_no_error(decode_at_1000(
+    list(s = c("a", "b")),
+    claims = list(s = list("a", "b"))
+  ))
+  # NULL expects a JSON null; NA has no JSON form and is refused.
+  expect_no_error(decode_at_1000(list(x = NULL), claims = list(x = NULL)))
+  expect_error(
+    decode_at_1000(list(x = 1), claims = list(x = NULL)),
+    class = "zujose_claim_error"
+  )
+  for (expected in list(NA, NA_character_, list(1, NA), Inf)) {
+    expect_error(
+      decode_at_1000(list(x = NULL), claims = list(x = expected)),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("claims compares exp, nbf and iat as the times returned (#128)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(list(exp = 1100, nbf = 900, iat = 950), key, "HS256")
+  decode <- function(...) {
+    jwt_decode(jwt, key, "HS256", now = as_posixct(1000), ...)
+  }
+  claims <- decode()
+  expect_no_error(decode(
+    claims = list(
+      exp = claims$exp,
+      nbf = claims$nbf,
+      iat = claims$iat
+    )
+  ))
+  expect_no_error(decode(claims = list(exp = 1100)))
+  expect_error(
+    decode(claims = list(exp = claims$exp + 1)),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode(claims = list(exp = "1100")),
+    class = "zujose_claim_error"
+  )
+  seen <- NULL
+  decode(
+    claims = list(exp = function(x) {
+      seen <<- x
+      TRUE
+    })
+  )
+  expect_identical(seen, claims$exp)
+})

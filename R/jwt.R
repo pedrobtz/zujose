@@ -109,6 +109,15 @@ jwt_encode <- function(
 #'   `validate` is a function of the whole claims list, for checks across
 #'   claims.
 #'
+#' A value in `claims` is compared with the claim as JSON values, the value
+#' taken as [jwt_encode()] would write it. Object members may come in any
+#' order, and `3L` equals `3`. A vector of length one is a scalar and a
+#' longer one an array, so `"a"` does not match `["a"]`; write `list("a")`
+#' for an array of one. `NULL` matches a JSON `null`. `NA` and non-finite
+#' numbers have no JSON form and are refused. `exp`, `nbf` and `iat` are
+#' compared, and passed to a function, as the `POSIXct` times
+#' `jwt_decode()` returns; a number expects the same NumericDate.
+#'
 #' A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
 #' That inner JWT is verified with the same `key` and `algorithms`, and its
 #' claims are checked. Deeper nesting is refused.
@@ -133,8 +142,8 @@ jwt_encode <- function(
 #' @param subject The subject this caller accepts, or `NULL`.
 #' @param type The expected `typ`, or `NULL` to skip the check.
 #' @param required Names of claims that must be present.
-#' @param claims Further expectations, as a named list of values or
-#'   functions.
+#' @param claims Further expectations, as a list of values or functions
+#'   with unique names.
 #' @param validate A function of the claims list that must return `TRUE`, or
 #'   `NULL`.
 #' @param max_age The greatest age, in seconds, of `iat`, or `NULL`.
@@ -514,11 +523,7 @@ check_claims <- function(
       abort_missing(name, call)
     }
     expected <- spec[[name]]
-    ok <- if (is.function(expected)) {
-      isTRUE(expected(cl[[name]]))
-    } else {
-      identical(zujson::json_write(cl[[name]]), zujson::json_write(expected))
-    }
+    ok <- claim_matches(name, cl[[name]], expected)
     if (!ok) {
       abort_claim(
         NULL,
@@ -537,6 +542,45 @@ check_claims <- function(
     )
   }
   invisible()
+}
+
+# Whether a claim meets its expectation in `claims` (#128). Time claims
+# are compared, and passed to a function, as the POSIXct jwt_decode()
+# returns. Other values are compared as parsed JSON, the expectation as
+# jwt_encode() would write it: object members in any order, and integers
+# equal to the same doubles.
+claim_matches <- function(name, value, expected) {
+  time <- name %in% c("exp", "nbf", "iat")
+  if (time) {
+    value <- as_posixct(value)
+  }
+  if (is.function(expected)) {
+    return(isTRUE(expected(value)))
+  }
+  if (time) {
+    return(
+      (is.numeric(expected) || inherits(expected, "POSIXct")) &&
+        length(expected) == 1L &&
+        identical(as.numeric(expected), as.numeric(value))
+    )
+  }
+  expected <- zujson::json_parse(
+    zujson::json_write(expected),
+    simplify = "none"
+  )
+  identical(canonical_json(value), canonical_json(expected))
+}
+
+# A parsed JSON value with object members sorted by name and numbers as
+# doubles, so equal JSON values are identical().
+canonical_json <- function(x) {
+  if (is.list(x)) {
+    if (!is.null(names(x))) {
+      x <- x[order(names(x), method = "radix")]
+    }
+    return(lapply(x, canonical_json))
+  }
+  if (is.numeric(x)) as.double(x) else x
 }
 
 # RFC 7515 §4.1.9: compare media types without case and without an
@@ -625,12 +669,30 @@ check_decode_args <- function(
   if (!is.character(required) || anyNA(required)) {
     bad("`required` must be a character vector.")
   }
+  # One expectation per claim: a repeated name would go unchecked (#118).
+  nms <- names(claims)
   if (
     !is.list(claims) ||
       (length(claims) > 0L &&
-        (is.null(names(claims)) || !all(nzchar(names(claims)))))
+        (is.null(nms) || anyNA(nms) || !all(nzchar(nms)) || anyDuplicated(nms)))
   ) {
-    bad("`claims` must be a named list.")
+    bad("`claims` must be a list with unique, non-empty names.")
+  }
+  # NA and non-finite numbers would be written as JSON null (#128).
+  for (expected in claims) {
+    if (is.function(expected)) {
+      next
+    }
+    values <- unlist(expected)
+    if (
+      !is.null(json_arg_problem(expected)) ||
+        anyNA(values) ||
+        (is.numeric(values) && !all(is.finite(values)))
+    ) {
+      bad(
+        "Each expectation in `claims` must be a function or a JSON value."
+      )
+    }
   }
   if (!is.null(validate) && !is.function(validate)) {
     bad("`validate` must be NULL or a function.")
