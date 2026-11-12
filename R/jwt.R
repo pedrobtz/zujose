@@ -256,7 +256,9 @@ jwt_decode <- function(
     )
   }
 
-  if (compact_parts(token) == 5L) {
+  # Parsed once, so `limits` bound the token before any other work.
+  obj <- jose_parse(token, limits, call)
+  if (obj$type == "JWE") {
     if (is.null(decrypt)) {
       abort_zujose(
         "policy",
@@ -269,7 +271,6 @@ jwt_decode <- function(
     # those is authentic only when the key management is symmetric: with
     # RSA or ECDH, anyone holding the recipient's public key can make one,
     # so its claims must come inside a signed JWT (design §8.5).
-    obj <- jose_parse(token, limits, call)
     alg <- obj$protected[["alg"]]
     if (!alg %in% decrypt$algorithms) {
       abort_zujose(
@@ -303,7 +304,7 @@ jwt_decode <- function(
       list(header = opened$header, payload = opened$plaintext)
     }
   } else {
-    check_jws_header(token, limits, call)
+    check_jws_header(obj, call)
     verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
   }
   header <- verified$header
@@ -709,7 +710,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
       call = call
     )
   }
-  check_jws_header(inner, limits, call)
+  check_jws_header(jose_parse(inner, limits, call), call)
   verify_jws(inner, key, algorithms, NULL, "all", limits, call)
 }
 
@@ -717,11 +718,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
 # RFC 7797 §7: JWTs must not use the unencoded payload option. Design §8.5:
 # only a JWE may carry another JWT, so a signed JWT with `cty: "JWT"` is
 # refused, whether it is the token or nested inside a JWE.
-check_jws_header <- function(token, limits, call) {
-  obj <- jose_parse(token, limits, call)
-  if (!identical(obj$type, "JWS")) {
-    return(invisible())
-  }
+check_jws_header <- function(obj, call) {
   if (!obj$b64) {
     abort_zujose(
       "policy",
