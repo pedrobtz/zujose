@@ -75,41 +75,41 @@ is not raises <code>zujose_unsupported_error</code>.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">info</span> <span class="op">&lt;-</span> <span class="fu">zujose_info</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">info</span><span class="op">[</span><span class="va">info</span><span class="op">$</span><span class="va">available</span>, <span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             algorithm               kind available zucrypt</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1               HS256          signature      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2               HS384          signature      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3               HS512          signature      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4               RS256          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5               RS384          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6               RS512          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7               PS256          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8               PS384          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9               PS512          signature      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10              ES256          signature      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11              ES384          signature      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12              ES512          signature      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13                dir     key management      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14             A128KW     key management      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15             A192KW     key management      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16             A256KW     key management      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17          A128GCMKW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18          A192GCMKW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19          A256GCMKW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20 PBES2-HS256+A128KW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21 PBES2-HS384+A192KW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 22 PBES2-HS512+A256KW     key management      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23           RSA-OAEP     key management      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24       RSA-OAEP-256     key management      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25             RSA1_5     key management      TRUE   0.4.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26            ECDH-ES     key management      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27     ECDH-ES+A128KW     key management      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 28     ECDH-ES+A192KW     key management      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29     ECDH-ES+A256KW     key management      TRUE   0.5.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30      A128CBC-HS256 content encryption      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31      A192CBC-HS384 content encryption      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32      A256CBC-HS512 content encryption      TRUE   0.1.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33            A128GCM content encryption      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34            A192GCM content encryption      TRUE   0.3.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35            A256GCM content encryption      TRUE   0.3.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1               HS256          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               HS384          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               HS512          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4               RS256          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5               RS384          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6               RS512          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7               PS256          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8               PS384          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9               PS512          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10              ES256          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11              ES384          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12              ES512          signature      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13                dir     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14             A128KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15             A192KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16             A256KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17          A128GCMKW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18          A192GCMKW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19          A256GCMKW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 PBES2-HS256+A128KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 PBES2-HS384+A192KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 PBES2-HS512+A256KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23           RSA-OAEP     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24       RSA-OAEP-256     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25             RSA1_5     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26            ECDH-ES     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27     ECDH-ES+A128KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28     ECDH-ES+A192KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29     ECDH-ES+A256KW     key management      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30      A128CBC-HS256 content encryption      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31      A192CBC-HS384 content encryption      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32      A256CBC-HS512 content encryption      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33            A128GCM content encryption      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34            A192GCM content encryption      TRUE   0.1.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35            A256GCM content encryption      TRUE   0.1.1</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
