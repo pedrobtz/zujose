@@ -51,8 +51,7 @@ jwa_table <- function() {
   )
 }
 
-# The identifiers this version of zujose has code for. Each stage adds its
-# own.
+# The identifiers this version of zujose has code for.
 implemented_algorithms <- c(
   "HS256",
   "HS384",

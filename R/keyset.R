@@ -85,7 +85,7 @@ as_jwk_set <- function(x) {
   if (!is.list(entries) || !is.null(names(entries))) {
     abort_zujose("key", "A JWK Set must have a `keys` array.", call = call)
   }
-  known <- c("oct", names(pending_key_types))
+  known <- c("oct", names(key_type_zucrypt))
   # RFC 7517 §5: each member of `keys` is a JWK object. A string is not
   # read as PEM or JWK text; it is skipped like any other bad entry (#44).
   keys <- lapply(entries, function(entry) {

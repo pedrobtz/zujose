@@ -6,8 +6,8 @@
 #   when absent;
 # * `k`: for an oct key, the secret as a raw vector;
 # * `members`: every other member as read, so that a key zujose cannot use
-#   yet (RSA, EC, OKP before their stages) can still be listed, selected,
-#   written and thumbprinted;
+#   (such as Ed25519, or a key type the installed zucrypt lacks) can still
+#   be listed, selected, written and thumbprinted;
 # * `supported`: whether the installed zujose can use the key, and `needs`,
 #   the zucrypt version that would make it usable.
 
@@ -28,9 +28,9 @@ private_members <- c("d", "p", "q", "dp", "dq", "qi", "oth", "k")
 
 # The zucrypt release each asymmetric key type needs. A type is usable when
 # this version of zujose implements it and the installed zucrypt provides it
-# (zucrypt_provides(), algorithms.R); until then it is read and kept, but
-# not used.
-pending_key_types <- c(RSA = "0.1.1", EC = "0.1.1", OKP = "0.1.1")
+# (zucrypt_provides(), algorithms.R); otherwise it is read and kept, but not
+# used.
+key_type_zucrypt <- c(RSA = "0.1.1", EC = "0.1.1", OKP = "0.1.1")
 implemented_key_types <- c("oct", "RSA", "EC", "OKP")
 
 # The curves zujose uses: EC on the three NIST curves, OKP for X25519 only
@@ -46,12 +46,12 @@ key_type_usable <- function(kty, crv = NULL) {
   }
   kty %in%
     implemented_key_types &&
-    zucrypt_provides(pending_key_types[[kty]], utils::packageVersion("zucrypt"))
+    zucrypt_provides(key_type_zucrypt[[kty]], utils::packageVersion("zucrypt"))
 }
 
-# RSA (Stage 8). The JWK members hold the key; a zucrypt key object is
-# built from them for each operation, so that a jwk stays an ordinary
-# R object that survives saveRDS().
+# RSA. The JWK members hold the key; a zucrypt key object is built from
+# them for each operation, so that a jwk stays an ordinary R object that
+# survives saveRDS().
 rsa_private_members <- c("d", "p", "q", "dp", "dq", "qi")
 
 rsa_member_raw <- function(key, name) {
@@ -66,7 +66,7 @@ has_private <- function(key) {
   }
 }
 
-# EC and X25519 (Stage 9): the zucrypt key from the JWK members, private
+# EC and X25519: the zucrypt key from the JWK members, private
 # when asked and present.
 ec_crypt_key <- function(key, private) {
   m <- function(name) b64url_decode(key$members[[name]], "EC key member")
@@ -261,7 +261,7 @@ jwk_generate <- function(
   key_ops = NULL
 ) {
   call <- sys.call()
-  if (!is_string(kty) || !kty %in% c("oct", names(pending_key_types))) {
+  if (!is_string(kty) || !kty %in% c("oct", names(key_type_zucrypt))) {
     abort_zujose(
       "argument",
       "`kty` must be \"oct\", \"RSA\", \"EC\" or \"OKP\".",
@@ -277,7 +277,7 @@ jwk_generate <- function(
     return(generate_ec(kty, size, crv, alg, kid, use, key_ops, call))
   }
   if (kty != "oct") {
-    abort_unsupported(kty, pending_key_types[[kty]], call = call)
+    abort_unsupported(kty, key_type_zucrypt[[kty]], call = call)
   }
   if (!is.null(crv)) {
     abort_zujose("argument", "An `oct` key has no `crv`.", call = call)
@@ -419,7 +419,6 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
   )
 }
 
-# The size an oct key for `alg` needs, in bits, and whether it is exact.
 # The default size of an `oct` key for `alg`, the least it may be, and
 # whether it must be exactly that.
 oct_key_bits <- function(alg, call) {
@@ -493,10 +492,10 @@ new_jwk <- function(
   # An unknown key type waits on no zucrypt version either (#136).
   needs <- if (
     kty %in%
-      names(pending_key_types) &&
+      names(key_type_zucrypt) &&
       !(kty == "OKP" && !identical(members[["crv"]], "X25519"))
   ) {
-    unname(pending_key_types[[kty]])
+    unname(key_type_zucrypt[[kty]])
   }
   structure(
     list(
@@ -813,7 +812,7 @@ check_ec_jwk <- function(kty, members, call) {
 # A PEM key, through zucrypt: private first, then public.
 pem_to_key <- function(x, call) {
   if (!key_type_usable("RSA")) {
-    abort_unsupported("PEM", pending_key_types[["RSA"]], call = call)
+    abort_unsupported("PEM", key_type_zucrypt[["RSA"]], call = call)
   }
   ck <- tryCatch(zucrypt::crypt_read_key(x), zucrypt_error = function(e) {
     tryCatch(zucrypt::crypt_read_pubkey(x), zucrypt_error = function(e) e)
@@ -1043,7 +1042,7 @@ format.jwk <- function(x, ...) {
   if (!x$supported) {
     lines <- c(
       lines,
-      if (!x$kty %in% c("oct", names(pending_key_types))) {
+      if (!x$kty %in% c("oct", names(key_type_zucrypt))) {
         "  ! not usable: unknown key type"
       } else if (is.null(x$needs)) {
         sprintf(
