@@ -37,129 +37,6 @@ implemented_key_types <- c("oct", "RSA", "EC", "OKP")
 # (there is no Ed25519 in zucrypt), with their sizes in bits.
 ec_curves <- c("P-256" = 256L, "P-384" = 384L, "P-521" = 521L)
 
-key_type_usable <- function(kty, crv = NULL) {
-  if (kty == "oct") {
-    return(TRUE)
-  }
-  if (kty == "OKP" && !identical(crv, "X25519")) {
-    return(FALSE)
-  }
-  kty %in%
-    implemented_key_types &&
-    zucrypt_provides(key_type_zucrypt[[kty]], utils::packageVersion("zucrypt"))
-}
-
-# RSA. The JWK members hold the key; a zucrypt key object is built from
-# them for each operation, so that a jwk stays an ordinary R object that
-# survives saveRDS().
-rsa_private_members <- c("d", "p", "q", "dp", "dq", "qi")
-
-rsa_member_raw <- function(key, name) {
-  b64url_decode(key$members[[name]], "RSA key member")
-}
-
-has_private <- function(key) {
-  if (key$kty == "RSA") {
-    all(rsa_private_members %in% names(key$members))
-  } else {
-    key$kty %in% c("EC", "OKP") && "d" %in% names(key$members)
-  }
-}
-
-# EC and X25519: the zucrypt key from the JWK members, private
-# when asked and present.
-ec_crypt_key <- function(key, private) {
-  m <- function(name) b64url_decode(key$members[[name]], "EC key member")
-  if (key$kty == "OKP") {
-    return(
-      if (private) {
-        zucrypt::crypt_read_x25519_key(m("d"))
-      } else {
-        zucrypt::crypt_read_x25519_pubkey(m("x"))
-      }
-    )
-  }
-  zucrypt::crypt_ec_key(
-    key$members[["crv"]],
-    m("x"),
-    m("y"),
-    if (private) m("d")
-  )
-}
-
-# JWK members from a zucrypt EC or X25519 key.
-ec_members <- function(ck) {
-  data <- as.list(ck)$data
-  if (inherits(ck, "crypt_x25519")) {
-    out <- list(crv = "X25519", x = b64url_encode(data$x))
-    if (!is.null(data$d)) out$d <- b64url_encode(data$d)
-  } else {
-    out <- list(
-      crv = data$curve,
-      x = b64url_encode(data$x),
-      y = b64url_encode(data$y)
-    )
-    if (!is.null(data$secret)) out$d <- b64url_encode(data$secret)
-  }
-  out
-}
-
-# A jwk's type, members and size, from any zucrypt key.
-crypt_key_members <- function(ck) {
-  if (inherits(ck, "crypt_rsa")) {
-    list(
-      kty = "RSA",
-      members = rsa_members(ck),
-      bits = as.integer(as.list(ck)$size)
-    )
-  } else if (inherits(ck, "crypt_x25519")) {
-    list(kty = "OKP", members = ec_members(ck), bits = 255L)
-  } else {
-    m <- ec_members(ck)
-    list(kty = "EC", members = m, bits = unname(ec_curves[[m[["crv"]]]]))
-  }
-}
-
-# The zucrypt key for `key`: the private key when asked and present,
-# otherwise the public one.
-rsa_crypt_key <- function(key, private) {
-  parts <- lapply(c("n", "e"), function(n) rsa_member_raw(key, n))
-  if (private) {
-    parts <- c(
-      parts,
-      lapply(rsa_private_members, function(n) rsa_member_raw(key, n))
-    )
-  }
-  do.call(zucrypt::crypt_rsa_key, parts)
-}
-
-# JWK members (Base64url strings) from a zucrypt RSA key.
-rsa_members <- function(ck) {
-  data <- as.list(ck)$data
-  names <- intersect(c("n", "e", rsa_private_members), names(data))
-  stats::setNames(lapply(data[names], b64url_encode), names)
-}
-
-# RFC 7518 §3.3: at least 2048 bits, for any use.
-rsa_min_bits <- 2048L
-
-rsa_key_strong <- function(key) {
-  (key$bits %||% 0) >= rsa_min_bits
-}
-
-check_rsa_size <- function(key, call) {
-  if (!rsa_key_strong(key)) {
-    abort_zujose(
-      "key",
-      sprintf(
-        "An RSA key must be at least %d bits (RFC 7518 section 3.3).",
-        rsa_min_bits
-      ),
-      call = call
-    )
-  }
-}
-
 #' Make a symmetric key
 #'
 #' `jwk_oct()` wraps a secret as a JSON Web Key of type `oct` (RFC 7518
@@ -240,7 +117,8 @@ oct_key <- function(secret, alg, kid, use, key_ops, call) {
 #' `A256GCM`), or give `alg = "dir"` and its `size`.
 #'
 #' An `RSA` key's `size` is its modulus, a multiple of 8 bits, 2048 by
-#' default and at most 4096, with public exponent 65537. Generating one takes a moment.
+#' default and at most 4096, with public exponent 65537. Generating one takes
+#' a moment.
 #'
 #' @param kty The key type: `"oct"`, `"RSA"`, `"EC"` or `"OKP"`.
 #' @param size The key size in bits. For an `oct` key, a multiple of 8 and at
@@ -500,8 +378,7 @@ new_jwk <- function(
   # version: the bundled library has none of them.
   # An unknown key type waits on no zucrypt version either (#136).
   needs <- if (
-    kty %in%
-      names(key_type_zucrypt) &&
+    (kty %in% names(key_type_zucrypt)) &&
       !(kty == "OKP" && !identical(members[["crv"]], "X25519"))
   ) {
     unname(key_type_zucrypt[[kty]])
@@ -546,9 +423,10 @@ new_jwk <- function(
 #' @returns A `jwk`.
 #' @export
 #' @examples
-#' key <- as_jwk(
-#'   '{"kty":"oct","kid":"k1","alg":"HS256","k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'
-#' )
+#' key <- as_jwk(paste0(
+#'   '{"kty":"oct","kid":"k1","alg":"HS256",',
+#'   '"k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'
+#' ))
 #' key
 as_jwk <- function(x, ...) {
   UseMethod("as_jwk")
@@ -1072,4 +950,126 @@ print.jwk <- function(x, ...) {
   invisible(x)
 }
 
-`%||%` <- function(x, y) if (is.null(x)) y else x
+# zucrypt keys ------------------------------------------------------------
+
+key_type_usable <- function(kty, crv = NULL) {
+  if (kty == "oct") {
+    return(TRUE)
+  }
+  if (kty == "OKP" && !identical(crv, "X25519")) {
+    return(FALSE)
+  }
+  installed <- utils::packageVersion("zucrypt")
+  (kty %in% implemented_key_types) &&
+    zucrypt_provides(key_type_zucrypt[[kty]], installed)
+}
+
+# RSA. The JWK members hold the key; a zucrypt key object is built from
+# them for each operation, so that a jwk stays an ordinary R object that
+# survives saveRDS().
+rsa_private_members <- c("d", "p", "q", "dp", "dq", "qi")
+
+rsa_member_raw <- function(key, name) {
+  b64url_decode(key$members[[name]], "RSA key member")
+}
+
+has_private <- function(key) {
+  if (key$kty == "RSA") {
+    all(rsa_private_members %in% names(key$members))
+  } else {
+    key$kty %in% c("EC", "OKP") && "d" %in% names(key$members)
+  }
+}
+
+# EC and X25519: the zucrypt key from the JWK members, private
+# when asked and present.
+ec_crypt_key <- function(key, private) {
+  member_raw <- function(name) {
+    b64url_decode(key$members[[name]], "EC key member")
+  }
+  if (key$kty == "OKP" && private) {
+    return(zucrypt::crypt_read_x25519_key(member_raw("d")))
+  }
+  if (key$kty == "OKP") {
+    return(zucrypt::crypt_read_x25519_pubkey(member_raw("x")))
+  }
+  zucrypt::crypt_ec_key(
+    key$members[["crv"]],
+    member_raw("x"),
+    member_raw("y"),
+    if (private) member_raw("d")
+  )
+}
+
+# JWK members from a zucrypt EC or X25519 key.
+ec_members <- function(ck) {
+  data <- as.list(ck)$data
+  if (inherits(ck, "crypt_x25519")) {
+    out <- list(crv = "X25519", x = b64url_encode(data$x))
+    if (!is.null(data$d)) out$d <- b64url_encode(data$d)
+  } else {
+    out <- list(
+      crv = data$curve,
+      x = b64url_encode(data$x),
+      y = b64url_encode(data$y)
+    )
+    if (!is.null(data$secret)) out$d <- b64url_encode(data$secret)
+  }
+  out
+}
+
+# A jwk's type, members and size, from any zucrypt key.
+crypt_key_members <- function(ck) {
+  if (inherits(ck, "crypt_rsa")) {
+    list(
+      kty = "RSA",
+      members = rsa_members(ck),
+      bits = as.integer(as.list(ck)$size)
+    )
+  } else if (inherits(ck, "crypt_x25519")) {
+    list(kty = "OKP", members = ec_members(ck), bits = 255L)
+  } else {
+    m <- ec_members(ck)
+    list(kty = "EC", members = m, bits = unname(ec_curves[[m[["crv"]]]]))
+  }
+}
+
+# The zucrypt key for `key`: the private key when asked and present,
+# otherwise the public one.
+rsa_crypt_key <- function(key, private) {
+  parts <- lapply(c("n", "e"), function(n) rsa_member_raw(key, n))
+  if (private) {
+    parts <- c(
+      parts,
+      lapply(rsa_private_members, function(n) rsa_member_raw(key, n))
+    )
+  }
+  do.call(zucrypt::crypt_rsa_key, parts)
+}
+
+# JWK members (Base64url strings) from a zucrypt RSA key.
+rsa_members <- function(ck) {
+  data <- as.list(ck)$data
+  names <- intersect(c("n", "e", rsa_private_members), names(data))
+  stats::setNames(lapply(data[names], b64url_encode), names)
+}
+
+# RFC 7518 §3.3: at least 2048 bits, for any use.
+rsa_min_bits <- 2048L
+
+rsa_key_strong <- function(key) {
+  (key$bits %||% 0) >= rsa_min_bits
+}
+
+check_rsa_size <- function(key, call) {
+  if (!rsa_key_strong(key)) {
+    abort_zujose(
+      "key",
+      sprintf(
+        "An RSA key must be at least %d bits (RFC 7518 section 3.3).",
+        rsa_min_bits
+      ),
+      call = call
+    )
+  }
+}

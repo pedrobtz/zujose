@@ -415,24 +415,24 @@ jwt_decoder <- function(
 # Checks ------------------------------------------------------------------
 
 check_claims <- function(
-  cl,
+  payload,
   audience,
   issuer,
   subject,
   required,
-  spec,
+  expectations,
   validate,
   max_age,
   leeway,
   now,
   call
 ) {
-  present <- names(cl)
+  present <- names(payload)
 
   # RFC 7519 §4.1.4–§4.1.6: NumericDate, so a finite number. A string or a
   # null is a malformed token, never a skipped check.
   for (name in intersect(c("exp", "nbf", "iat"), present)) {
-    value <- cl[[name]]
+    value <- payload[[name]]
     if (!is.numeric(value) || length(value) != 1L || !is.finite(value)) {
       abort_zujose(
         "parse",
@@ -451,7 +451,7 @@ check_claims <- function(
     }
   }
   for (name in intersect(c("iss", "sub"), present)) {
-    if (!is_string(cl[[name]])) {
+    if (!is_string(payload[[name]])) {
       abort_claim(
         if (name == "iss") "issuer" else "subject",
         sprintf("The `%s` claim must be a single string.", name),
@@ -462,7 +462,7 @@ check_claims <- function(
   }
   aud <- NULL
   if ("aud" %in% present) {
-    aud <- cl[["aud"]]
+    aud <- payload[["aud"]]
     if (
       is.list(aud) &&
         is.null(names(aud)) &&
@@ -487,11 +487,11 @@ check_claims <- function(
     }
   }
 
-  exp <- member(cl, "exp")
+  exp <- member(payload, "exp")
   if (!is.null(exp) && now >= exp + leeway) {
     abort_time("expired", "The token has expired.", "exp", exp, now, call)
   }
-  nbf <- member(cl, "nbf")
+  nbf <- member(payload, "nbf")
   if (!is.null(nbf) && now + leeway < nbf) {
     abort_time(
       "not_yet_valid",
@@ -502,7 +502,7 @@ check_claims <- function(
       call
     )
   }
-  iat <- member(cl, "iat")
+  iat <- member(payload, "iat")
   if (!is.null(iat) && iat > now + leeway) {
     abort_time(
       "not_yet_valid",
@@ -533,7 +533,7 @@ check_claims <- function(
     if (!"iss" %in% present) {
       abort_missing("iss", call)
     }
-    if (!identical(cl[["iss"]], issuer)) {
+    if (!identical(payload[["iss"]], issuer)) {
       abort_claim(
         "issuer",
         "The token's issuer is not `issuer`.",
@@ -546,7 +546,7 @@ check_claims <- function(
     if (!"sub" %in% present) {
       abort_missing("sub", call)
     }
-    if (!identical(cl[["sub"]], subject)) {
+    if (!identical(payload[["sub"]], subject)) {
       abort_claim(
         "subject",
         "The token's subject is not `subject`.",
@@ -578,12 +578,12 @@ check_claims <- function(
     }
   }
 
-  for (name in names(spec)) {
+  for (name in names(expectations)) {
     if (!name %in% present) {
       abort_missing(name, call)
     }
-    expected <- spec[[name]]
-    ok <- claim_matches(name, cl[[name]], expected)
+    expected <- expectations[[name]]
+    ok <- claim_matches(name, payload[[name]], expected)
     if (!ok) {
       abort_claim(
         NULL,
@@ -593,7 +593,7 @@ check_claims <- function(
       )
     }
   }
-  if (!is.null(validate) && !isTRUE(validate(cl))) {
+  if (!is.null(validate) && !isTRUE(validate(payload))) {
     abort_claim(
       NULL,
       "`validate` refused the claims.",
@@ -772,15 +772,14 @@ check_decode_args <- function(
   ) {
     bad("`audience` must be NULL or a character vector.")
   }
-  for (arg in list(
-    list(issuer, "issuer"),
-    list(subject, "subject"),
-    list(type, "type")
-  )) {
-    if (!is.null(arg[[1]]) && !is_string(arg[[1]])) {
-      bad(sprintf("`%s` must be NULL or a single string.", arg[[2]]))
+  optional_string <- function(value, name) {
+    if (!is.null(value) && !is_string(value)) {
+      bad(sprintf("`%s` must be NULL or a single string.", name))
     }
   }
+  optional_string(issuer, "issuer")
+  optional_string(subject, "subject")
+  optional_string(type, "type")
   if (!is.character(required) || anyNA(required)) {
     bad("`required` must be a character vector.")
   }
@@ -812,23 +811,20 @@ check_decode_args <- function(
   if (!is.null(validate) && !is.function(validate)) {
     bad("`validate` must be NULL or a function.")
   }
-  for (arg in list(
-    list(max_age, "max_age", TRUE),
-    list(leeway, "leeway", FALSE)
-  )) {
-    value <- arg[[1]]
-    if (is.null(value) && arg[[3]]) {
-      next
-    }
+  seconds <- function(value, name) {
     if (
       !is.numeric(value) ||
         length(value) != 1L ||
         !is.finite(value) ||
         value < 0
     ) {
-      bad(sprintf("`%s` must be a number of seconds, at least 0.", arg[[2]]))
+      bad(sprintf("`%s` must be a number of seconds, at least 0.", name))
     }
   }
+  if (!is.null(max_age)) {
+    seconds(max_age, "max_age")
+  }
+  seconds(leeway, "leeway")
   if (!inherits(now, "POSIXct") || length(now) != 1L || is.na(now)) {
     bad("`now` must be a single POSIXct time.")
   }

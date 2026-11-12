@@ -1,8 +1,5 @@
 # JWE: encryption and decryption (design §7.4, §8.6).
 
-# Key sizes, in bytes, that each key management algorithm needs.
-kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
-
 #' Encrypt a payload as a JWE
 #'
 #' `jwe_encrypt()` encrypts `plaintext` to one recipient, or to several
@@ -189,28 +186,7 @@ encrypt_jwe <- function(
     aad <- as_payload_bytes(aad, call, "aad")
   }
 
-  recipients <- if (inherits(key, "jwk")) {
-    list(new_recipient(key, alg, NULL, call))
-  } else if (
-    is.list(key) &&
-      length(key) > 0L &&
-      all(vapply(key, inherits, logical(1), "jwe_recipient"))
-  ) {
-    if (!is.null(alg)) {
-      abort_zujose(
-        "argument",
-        "With several recipients, give `alg` to each jwe_recipient().",
-        call = call
-      )
-    }
-    unname(key)
-  } else {
-    abort_zujose(
-      "argument",
-      "`key` must be a jwk or a list of jwe_recipient() objects.",
-      call = call
-    )
-  }
+  recipients <- as_recipients(key, alg, call)
   general <- format == "general"
   if (length(recipients) > 1L && !general) {
     abort_zujose(
@@ -258,48 +234,7 @@ encrypt_jwe <- function(
     )
   }
 
-  algs <- vapply(
-    recipients,
-    function(r) {
-      alg <- r$alg %||% r$key$alg
-      if (is.null(alg)) {
-        abort_zujose(
-          "policy",
-          "Give `alg`, or a key whose own `alg` is set.",
-          call = call
-        )
-      }
-      check_algorithms(alg, "key management", "alg", call)
-      check_available(alg, call)
-      if (alg == "RSA1_5") {
-        abort_zujose(
-          "policy",
-          paste0(
-            "RSA1_5 is accepted for decryption only; it never ",
-            "encrypts (RFC 8725 section 3.2). Use RSA-OAEP-256."
-          ),
-          call = call
-        )
-      }
-      operation <- if (alg == "dir") {
-        "encrypt"
-      } else if (is_ecdh(alg)) {
-        "deriveKey"
-      } else {
-        "wrapKey"
-      }
-      if (!key_fits(r$key, alg, operation, enc)) {
-        abort_zujose(
-          "policy",
-          "The key does not fit the algorithm or its intended use.",
-          call = call
-        )
-      }
-      check_kek(alg, enc, r$key, call)
-      alg
-    },
-    ""
-  )
+  algs <- vapply(recipients, recipient_alg, "", enc = enc, call = call)
   # A recipient's own `alg` header must name its algorithm, which is
   # written once, as jws_sign() requires of `header$alg` (#129).
   for (i in seq_along(recipients)) {
@@ -329,26 +264,7 @@ encrypt_jwe <- function(
     value <- recipients[[i]]$header[[name]] %||%
       header[[name]] %||%
       unprotected[[name]]
-    if (is.null(value)) {
-      return(raw())
-    }
-    if (!is_string(value)) {
-      abort_zujose(
-        "argument",
-        sprintf("`%s` must be a Base64url string.", name),
-        call = call
-      )
-    }
-    tryCatch(
-      b64url_decode(value, name, call),
-      zujose_parse_error = function(e) {
-        abort_zujose(
-          "argument",
-          sprintf("`%s` must be a Base64url string.", name),
-          call = call
-        )
-      }
-    )
+    party_info(value, name, call)
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
     p2c <- recipients[[i]]$header[["p2c"]] %||%
@@ -453,8 +369,114 @@ encrypt_jwe <- function(
     aad_input <- c(aad_input, charToRaw("."), charToRaw(aad_b64))
   }
   sealed <- content_encrypt(enc, cek, iv, bytes, aad_input)
-  encrypted_keys <- lapply(wrapped, `[[`, "encrypted_key")
+  write_jwe(
+    format,
+    protected_b64,
+    unprotected,
+    recipient_headers,
+    lapply(wrapped, `[[`, "encrypted_key"),
+    aad_b64,
+    iv,
+    sealed
+  )
+}
 
+# The recipients of jwe_encrypt()'s `key`: one jwk, or jwe_recipient()s.
+as_recipients <- function(key, alg, call) {
+  if (inherits(key, "jwk")) {
+    list(new_recipient(key, alg, NULL, call))
+  } else if (
+    is.list(key) &&
+      length(key) > 0L &&
+      all(vapply(key, inherits, logical(1), "jwe_recipient"))
+  ) {
+    if (!is.null(alg)) {
+      abort_zujose(
+        "argument",
+        "With several recipients, give `alg` to each jwe_recipient().",
+        call = call
+      )
+    }
+    unname(key)
+  } else {
+    abort_zujose(
+      "argument",
+      "`key` must be a jwk or a list of jwe_recipient() objects.",
+      call = call
+    )
+  }
+}
+
+# A recipient's key management algorithm, checked against its key and
+# `enc` before anything is encrypted.
+recipient_alg <- function(r, enc, call) {
+  alg <- r$alg %||% r$key$alg
+  if (is.null(alg)) {
+    abort_zujose(
+      "policy",
+      "Give `alg`, or a key whose own `alg` is set.",
+      call = call
+    )
+  }
+  check_algorithms(alg, "key management", "alg", call)
+  check_available(alg, call)
+  if (alg == "RSA1_5") {
+    abort_zujose(
+      "policy",
+      paste0(
+        "RSA1_5 is accepted for decryption only; it never ",
+        "encrypts (RFC 8725 section 3.2). Use RSA-OAEP-256."
+      ),
+      call = call
+    )
+  }
+  operation <- if (alg == "dir") {
+    "encrypt"
+  } else if (is_ecdh(alg)) {
+    "deriveKey"
+  } else {
+    "wrapKey"
+  }
+  if (!key_fits(r$key, alg, operation, enc)) {
+    abort_zujose(
+      "policy",
+      "The key does not fit the algorithm or its intended use.",
+      call = call
+    )
+  }
+  check_kek(alg, enc, r$key, call)
+  alg
+}
+
+# An `apu` or `apv` header value as bytes, empty when absent.
+party_info <- function(value, name, call) {
+  if (is.null(value)) {
+    return(raw())
+  }
+  bad <- function(e = NULL) {
+    abort_zujose(
+      "argument",
+      sprintf("`%s` must be a Base64url string.", name),
+      call = call
+    )
+  }
+  if (!is_string(value)) {
+    bad()
+  }
+  tryCatch(b64url_decode(value, name, call), zujose_parse_error = bad)
+}
+
+# The JWE in `format`, from its encoded protected header and its parts.
+write_jwe <- function(
+  format,
+  protected_b64,
+  unprotected,
+  recipient_headers,
+  encrypted_keys,
+  aad_b64,
+  iv,
+  sealed
+) {
   if (format == "compact") {
     return(paste(
       protected_b64,
@@ -465,7 +487,7 @@ encrypt_jwe <- function(
       sep = "."
     ))
   }
-  entries <- lapply(seq_along(recipients), function(i) {
+  entries <- lapply(seq_along(recipient_headers), function(i) {
     Filter(
       length,
       list(
@@ -480,7 +502,7 @@ encrypt_jwe <- function(
     protected = protected_b64,
     unprotected = if (length(unprotected)) unprotected
   )
-  out <- if (general) {
+  out <- if (format == "general") {
     c(
       out,
       list(
@@ -745,6 +767,8 @@ decrypt_jwe <- function(obj, key, algorithms, encryptions, limits, call) {
 
 # Key management (RFC 7518 §4) -----------------------------------------
 
+# Key sizes, in bytes, that the A*KW and A*GCMKW algorithms need.
+kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 gcmkw_key_bytes <- c(A128GCMKW = 16L, A192GCMKW = 24L, A256GCMKW = 32L)
 
 # PBES2 (RFC 7518 §4.8): the HMAC digest of the PBKDF2 and the AES key wrap
@@ -932,14 +956,25 @@ kek_params <- function(alg, header, limits, call) {
 
 # The CEK, or NULL on any failure (D5).
 recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
-  cek <- if (alg == "dir") {
+  cek <- unwrap_cek(alg, enc, key, encrypted_key, params)
+  if (is.null(cek) || length(cek) != cek_bytes(enc)) {
+    return(NULL)
+  }
+  cek
+}
+
+# The CEK `encrypted_key` holds for `alg`, or NULL, of any length.
+unwrap_cek <- function(alg, enc, key, encrypted_key, params) {
+  if (alg == "dir") {
     if (length(encrypted_key) != 0L) {
       return(NULL)
     }
-    key$k
-  } else if (alg %in% names(kw_key_bytes)) {
-    aes_key_unwrap(key$k, encrypted_key)
-  } else if (is_ecdh(alg)) {
+    return(key$k)
+  }
+  if (alg %in% names(kw_key_bytes)) {
+    return(aes_key_unwrap(key$k, encrypted_key))
+  }
+  if (is_ecdh(alg)) {
     z <- tryCatch(
       ecdh_secret(key, params$epk),
       zujose_error = function(e) NULL,
@@ -952,25 +987,29 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
       if (length(encrypted_key) != 0L) {
         return(NULL)
       }
-      concat_kdf(z, 8L * cek_bytes(enc), enc, params$apu, params$apv)
-    } else {
-      kek <- concat_kdf(z, 8L * ecdh_kw[[alg]], alg, params$apu, params$apv)
-      aes_key_unwrap(kek, encrypted_key)
+      return(concat_kdf(z, 8L * cek_bytes(enc), enc, params$apu, params$apv))
     }
-  } else if (alg == "RSA1_5") {
+    kek <- concat_kdf(z, 8L * ecdh_kw[[alg]], alg, params$apu, params$apv)
+    return(aes_key_unwrap(kek, encrypted_key))
+  }
+  if (alg == "RSA1_5") {
     # RFC 7516 section 11.5 and RFC 3218: a padding failure must not be
     # distinguishable from any later one, so it is replaced by a random CEK
     # of the right length and decryption goes on, to fail at the tag like
     # any other wrong key. The random CEK is drawn first, whatever the
     # outcome, so a failure takes the same steps as success.
     random <- zucrypt::crypt_rand_bytes(cek_bytes(enc))
-    cek <- tryCatch(
+    decrypted <- tryCatch(
       zucrypt::crypt_rsa_decrypt(encrypted_key, rsa_crypt_key(key, TRUE)),
       zucrypt_error = function(e) NULL
     )
-    if (is.null(cek) || length(cek) != cek_bytes(enc)) random else cek
-  } else if (is_rsa_kem(alg)) {
-    tryCatch(
+    if (is.null(decrypted) || length(decrypted) != cek_bytes(enc)) {
+      return(random)
+    }
+    return(decrypted)
+  }
+  if (is_rsa_kem(alg)) {
+    return(tryCatch(
       zucrypt::crypt_rsa_decrypt(
         encrypted_key,
         rsa_crypt_key(key, TRUE),
@@ -978,17 +1017,13 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
         oaep_hash = rsa_kem[[alg]]
       ),
       zucrypt_error = function(e) NULL
-    )
-  } else if (alg %in% names(gcmkw_key_bytes)) {
-    gcm_decrypt(key$k, params$gcmkw_iv, encrypted_key, params$tag, NULL)
-  } else {
-    kek <- pbes2_kek(alg, key$k, params$p2s, params$p2c)
-    aes_key_unwrap(kek, encrypted_key)
+    ))
   }
-  if (is.null(cek) || length(cek) != cek_bytes(enc)) {
-    return(NULL)
+  if (alg %in% names(gcmkw_key_bytes)) {
+    return(gcm_decrypt(key$k, params$gcmkw_iv, encrypted_key, params$tag, NULL))
   }
-  cek
+  kek <- pbes2_kek(alg, key$k, params$p2s, params$p2c)
+  aes_key_unwrap(kek, encrypted_key)
 }
 
 # Design §8.2: AES-KW, A*GCMKW and dir keys of exactly the size the

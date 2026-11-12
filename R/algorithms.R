@@ -158,8 +158,8 @@ zucrypt_provides <- function(version, installed) {
 zujose_info <- function() {
   table <- jwa_table()
   installed <- utils::packageVersion("zucrypt")
-  table$available <- table$algorithm %in%
-    implemented_algorithms &
+  implemented <- table$algorithm %in% implemented_algorithms
+  table$available <- implemented &
     vapply(
       table$zucrypt,
       zucrypt_provides,
@@ -183,7 +183,10 @@ check_algorithms <- function(algorithms, kind, arg = "algorithms", call) {
     abort_zujose(
       "policy",
       sprintf(
-        "`%s` must name %s algorithms from RFC 7518; \"none\" is never allowed.",
+        paste0(
+          "`%s` must name %s algorithms from RFC 7518; ",
+          "\"none\" is never allowed."
+        ),
         arg,
         paste(kind, collapse = " or ")
       ),

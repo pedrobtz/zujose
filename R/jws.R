@@ -140,7 +140,10 @@ sign_jws <- function(
   ) {
     abort_zujose(
       "argument",
-      "An unencoded payload containing \".\" must be detached in the compact serialization.",
+      paste(
+        "An unencoded payload containing \".\" must be detached in the",
+        "compact serialization."
+      ),
       call = call
     )
   }
