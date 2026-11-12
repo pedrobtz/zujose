@@ -151,6 +151,36 @@ test_that("every key management algorithm round-trips with every GCM size", {
   }
 })
 
+test_that("an algorithm zucrypt cannot run is refused before decrypting", {
+  key <- jwk_oct(as.raw(1:16))
+  token <- jwe_encrypt("x", key, "A128KW", "A128GCM")
+  real <- zujose_info
+  local_no_crypto()
+  # The content encryption, then the key management, each unavailable.
+  for (alg in c("A128GCM", "A128KW")) {
+    local_mocked_bindings(zujose_info = function() {
+      info <- real()
+      info$available[info$algorithm == alg] <- FALSE
+      info
+    })
+    err <- expect_error(
+      jwe_decrypt(token, key, "A128KW", "A128GCM"),
+      class = "zujose_unsupported_error"
+    )
+    expect_identical(err$algorithm, alg)
+  }
+  # With no algorithm available, the content encryption is named first.
+  local_mocked_bindings(zucrypt_provides = function(version, installed) {
+    FALSE
+  })
+  local_mocked_bindings(zujose_info = real)
+  err <- expect_error(
+    jwe_decrypt(token, key, "A128KW", "A128GCM"),
+    class = "zujose_unsupported_error"
+  )
+  expect_identical(err$needs, "0.1.1")
+})
+
 test_that("GCM takes associated data in the JSON serializations", {
   key <- jwk_oct(as.raw(1:16))
   token <- jwe_encrypt(

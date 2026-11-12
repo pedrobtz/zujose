@@ -463,6 +463,21 @@ test_that("zujose_info() reports what this installation can do", {
   expect_false("none" %in% info$algorithm)
 })
 
+test_that("an algorithm zucrypt cannot run is refused before verifying", {
+  v <- rfc7515_a3()
+  key <- jwk_public(as_jwk(v$key))
+  local_mocked_bindings(zucrypt_provides = function(version, installed) {
+    FALSE
+  })
+  local_no_crypto()
+  err <- expect_error(
+    jws_verify(v$token, key, "ES256"),
+    class = "zujose_unsupported_error"
+  )
+  expect_identical(err$algorithm, "ES256")
+  expect_identical(err$needs, "0.1.1")
+})
+
 test_that("printing a verified JWS shows the header, not the payload", {
   key <- jwk_oct(as.raw(1:32), kid = "k")
   expect_snapshot(print(jws_verify(
