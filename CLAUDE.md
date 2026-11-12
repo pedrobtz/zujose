@@ -168,6 +168,15 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   `tools/rfc7518-cbc-vectors.R`.
 - **Keep the suite inside the CRAN time budget.** No suite yet.
 
+## Assurance
+
+@.claude/shared/assurance.md
+
+`.agents/assurance.md` records how zujose meets that standard: its kinds,
+the oracle behind each boundary and the straddle of each limit. A change
+that adds a boundary or a limit adds its row, and CI (`assurance.yaml`)
+checks the file. A gap is written `gap #<issue>`.
+
 ## Definition of done
 
 `devtools::document()` and `devtools::check()` clean, meaning 0 errors, 0

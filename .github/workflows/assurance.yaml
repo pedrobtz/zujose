@@ -1,0 +1,17 @@
+# Holds .agents/assurance.md to the portfolio's assurance standard
+# (.claude/shared/assurance.md). A tracked gap passes; a claim no workflow
+# backs, or a gap with no issue, fails.
+on:
+  # No `push:`: a pull request already checks its merge with main
+  # (r-actions README, "Pushes to main").
+  pull_request:
+  workflow_dispatch:
+
+name: assurance
+
+permissions:
+  contents: read
+
+jobs:
+  assurance:
+    uses: pedrobtz/r-actions/.github/workflows/assurance.yml@v1
