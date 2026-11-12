@@ -30,11 +30,11 @@ A `jwk_set`.
 
 `as_jwk_set()` reads a JWK Set from its JSON text or from a parsed list.
 Following RFC 7517 section 5, a member of `keys` that is not a
-well-formed JWK is ignored rather than failing the whole set, as is a
-key of a type zujose does not know. A key of a known type that zujose
-cannot use, such as an Ed25519 `OKP` key, is kept: it can be listed,
-selected and thumbprinted, and using it raises
-`zujose_unsupported_error`.
+well-formed JWK object is ignored rather than failing the whole set, as
+is a key of a type zujose does not know. A string member is not read as
+JWK text or PEM. A key of a known type that zujose cannot use, such as
+an Ed25519 `OKP` key, is kept: it can be listed, selected and
+thumbprinted, and using it raises `zujose_unsupported_error`.
 
 ## Examples
 

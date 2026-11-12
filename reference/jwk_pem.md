@@ -47,12 +47,12 @@ which reads PEM.
 key <- jwk_generate("RSA")
 cat(jwk_pem(key))
 #> -----BEGIN PUBLIC KEY-----
-#> MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvqo4mcTGaVCHEdIU/aJj
-#> hscGnmrbaO34mhrhbgb8SIvMMxbTbGbXRIZYCBxanPU8hYvPZwwv4/1Cd4UpUt8v
-#> 1oWP6R54hzTjerh6kbB1S2B1j1qfReIFX2SZFiJaPqdmpTUGuSgFI77oBu02+4o7
-#> c13hE4UzzOwTtyuHLf0bUosjWC+Aj/D9NJi3bWIbQP8AThgcMp1Qh41g9WdVSSvy
-#> oUMt1lDS1S+Ckx7QK8Qa/x2Kpezc6e2cvQV7hpsoxj74qyMfwSeN4HdS9H01KcTI
-#> kFA2BZggcEtp+h096AyNO3fDQIFQl9+obVCHvrRN4fCYTNZ4zgsf/0iES2wqSVRz
-#> EwIDAQAB
+#> MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsPsCxDurRVJNwRuojPP5
+#> 0qVQMOIlu6LCbDdlQXCdEumcxtyJ8nyd9uUqRcn5M/KAx0I81fRn8iRbmdt9cW2K
+#> ZjP372GPbU3Liqvegr5IzjTcyvlGuzB3GVhCJZafcW42vzPV2LRGAv/tqvN7F4lJ
+#> 8lSHSlZeJpDOE3yjuiIFgGu2/cuTni7W+VxFnmehWHYTJA/auM6qkTvbnD2Kk81w
+#> HTRnjD4M5hTtoPEMO+mvX7iqaqtkm+6oQpOdo9JRNCr9COzKuuccV7H9zQvuyC6a
+#> ibhMYbY2QphOQvf4e/R3cHmzdTJMBO8Sm41O+ilZFzhReWCqpHz0lvFAQzKxCD2d
+#> MwIDAQAB
 #> -----END PUBLIC KEY-----
 ```

@@ -76,8 +76,9 @@ c() or jwk_set()."></head><body>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>as_jwk_set()</code> reads a JWK Set from its JSON text or from a parsed
 list. Following RFC 7517 section 5, a member of <code>keys</code> that is not a
-well-formed JWK is ignored rather than failing the whole set, as is a key
-of a type zujose does not know. A key of a known type that zujose cannot
+well-formed JWK object is ignored rather than failing the whole set, as
+is a key of a type zujose does not know. A string member is not read as
+JWK text or PEM. A key of a known type that zujose cannot
 use, such as an Ed25519 <code>OKP</code> key, is kept: it can be listed, selected
 and thumbprinted, and using it raises <code>zujose_unsupported_error</code>.</p>
     </div>
