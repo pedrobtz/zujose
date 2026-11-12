@@ -134,3 +134,12 @@ test_that("[[ on a jwk_set refuses a bad index with a zujose error (#123)", {
   expect_identical(set[[1]]$kid, "a")
   expect_identical(set[[1L]]$kid, "a")
 })
+
+test_that("as_jwk_set() skips members of `keys` that are not JSON objects (#44)", {
+  oct <- '{"kty":"oct","k":"AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA"}'
+  pem <- rfc7520_key(3) |> as_jwk() |> jwk_pem()
+  set <- as_jwk_set(list(keys = list(pem, oct, 5)))
+  expect_length(set, 0L)
+  text <- sprintf('{"keys":[%s,%s,%s]}', encodeString(oct, quote = '"'), oct, 5)
+  expect_length(as_jwk_set(text), 1L)
+})

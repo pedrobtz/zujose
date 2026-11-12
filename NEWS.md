@@ -6,6 +6,16 @@
   AES-CBC, randomness and SHA-2 included. They named 0.3.0, 0.4.0 and
   0.5.0, which will not carry them.
 
+* `as_jwk_set()` skips a member of `keys` that is not a JSON object, as
+  RFC 7517 section 5 has it. A string member was read as JWK text or as
+  PEM (#44).
+
+* A JSON `null` in a JWS or JWE JSON serialization is no longer read as
+  an absent member. A `null` `header`, `unprotected`, `protected` or
+  `encrypted_key`, or a `null` `kid`, `typ` or `cty` header, let a token
+  verify or decrypt; each is now a `zujose_parse_error`. Found by the
+  differential fuzzer in `tools/fuzz/` (#144).
+
 * A header, JWS JSON token or claims set nested more than about 800
   levels deep, which zujson parses up to 1000, no longer exhausts the C
   stack: the check for repeated member names and the `claims` comparison

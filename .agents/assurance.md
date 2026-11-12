@@ -27,10 +27,10 @@ columns as they are.
 check. Add `(own)` when that workflow is the package's own rather than a
 call to r-actions.
 
-| Check      | Status | Where |
-| ---------- | ------ | ----- |
-| fuzz       | gap #96 |       |
-| fuzz-reach | gap #97 |       |
+| Check      | Status | Where           |
+| ---------- | ------ | --------------- |
+| fuzz       | done   | fuzz.yaml (own) |
+| fuzz-reach | done   | fuzz.yaml (own) |
 
 ## Boundaries
 

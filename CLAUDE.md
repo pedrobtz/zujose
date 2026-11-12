@@ -258,6 +258,15 @@ headers, on
 pull requests that touch `R/` or the oracle, and by hand. It is development-only
 and never part of R CMD check.
 
+`fuzz.yaml` is bespoke too, as r-actions' `fuzz.yml` fuzzes C and zujose
+is pure R. It runs `tools/fuzz/` weekly and by hand, never on pull
+requests: `gen.py` mutates the RFC 7520 and oracle tokens and records
+jwcrypto's and PyJWT's verdicts, `replay.R` fails on a disagreement with
+zujose that `allow.tsv` does not list with its reason, and `reach.R`
+fails when the cases reach less of `R/` than `floor.txt`. Cases that once
+disagreed go in `tools/fuzz/corpus/`, which every run replays. It is
+development-only and never part of R CMD check.
+
 The articles live in `vignettes/articles/`, which `.Rbuildignore` keeps
 out of the tarball: they are pkgdown-only, need no `Suggests`, and are
 built against the installed package.
