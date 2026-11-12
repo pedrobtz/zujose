@@ -547,7 +547,9 @@ algorithm available, so an older `zucrypt` fails the ordinary check.
 **Goal.** Only the submission itself is left.
 
 **Entry.** The release gate of design §11.2 holds: `zuutf` is on CRAN and
-`Remotes:` is dropped; `zucrypt` (>= 0.5.0) is on CRAN; zero vectors skip.
+`Remotes:` is dropped; `zucrypt` (>= 0.1.1) is on CRAN, which
+`zucrypt`'s 2026-11-12 re-plan makes the release carrying every
+primitive zujose uses; zero vectors skip.
 
 **Work.**
 

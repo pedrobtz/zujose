@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* `zujose_info()` and `zujose_unsupported_error` name zucrypt 0.1.1 as
+  the version every algorithm needs. zucrypt re-planned its releases, and
+  0.1.1 now carries all the primitives zujose uses beyond HMAC and
+  AES-CBC, randomness and SHA-2 included. They named 0.3.0, 0.4.0 and
+  0.5.0, which will not carry them.
+
 * `as_jwk_set()` skips a member of `keys` that is not a JSON object, as
   RFC 7517 section 5 has it. A string member was read as JWK text or as
   PEM (#44).

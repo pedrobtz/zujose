@@ -432,7 +432,9 @@ test_that("zujose_info() reports what this installation can do", {
   ]))
   # Every algorithm zujose knows is available with the zucrypt it requires.
   expect_true(all(info$available))
-  expect_identical(info$zucrypt[info$algorithm == "ES256"], "0.5.0")
+  # zucrypt 0.1.1 adds every primitive beyond HMAC and AES-CBC, randomness
+  # and SHA-2 included, so every algorithm needs it.
+  expect_true(all(info$zucrypt == "0.1.1"))
   expect_false("none" %in% info$algorithm)
 })
 
