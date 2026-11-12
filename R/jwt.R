@@ -582,19 +582,55 @@ claim_matches <- function(name, value, expected) {
     zujson::json_write(expected),
     simplify = "none"
   )
-  identical(canonical_json(value), canonical_json(expected))
+  json_equal(value, expected)
 }
 
-# A parsed JSON value with object members sorted by name and numbers as
-# doubles, so equal JSON values are identical().
-canonical_json <- function(x) {
-  if (is.list(x)) {
-    if (!is.null(names(x))) {
-      x <- x[order(names(x), method = "radix")]
+# Whether two parsed JSON values are equal: object members in any order,
+# and numbers by value. Level by level, not by recursion, so a claim
+# nested as deep as zujson parses cannot exhaust the C stack.
+json_equal <- function(a, b) {
+  as <- list(a)
+  bs <- list(b)
+  while (length(as) > 0L) {
+    if (length(as) != length(bs)) {
+      return(FALSE)
     }
-    return(lapply(x, canonical_json))
+    next_a <- vector("list", length(as))
+    next_b <- vector("list", length(as))
+    for (i in seq_along(as)) {
+      x <- as[[i]]
+      y <- bs[[i]]
+      if (is.list(x) != is.list(y)) {
+        return(FALSE)
+      }
+      if (!is.list(x)) {
+        same <- if (is.numeric(x) && is.numeric(y)) {
+          identical(as.double(x), as.double(y))
+        } else {
+          identical(x, y)
+        }
+        if (!same) {
+          return(FALSE)
+        }
+        next
+      }
+      if (length(x) != length(y) || is.null(names(x)) != is.null(names(y))) {
+        return(FALSE)
+      }
+      if (!is.null(names(x))) {
+        x <- x[order(names(x), method = "radix")]
+        y <- y[order(names(y), method = "radix")]
+        if (!identical(names(x), names(y))) {
+          return(FALSE)
+        }
+      }
+      next_a[i] <- list(unname(x))
+      next_b[i] <- list(unname(y))
+    }
+    as <- unlist(next_a, recursive = FALSE)
+    bs <- unlist(next_b, recursive = FALSE)
   }
-  if (is.numeric(x)) as.double(x) else x
+  length(bs) == 0L
 }
 
 # RFC 7515 §4.1.9: compare media types without case and without an

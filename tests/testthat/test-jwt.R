@@ -760,3 +760,24 @@ test_that("a JWT with an unencoded payload is refused, outer or nested (#126)", 
     "HS256"
   ))
 })
+
+test_that("claims compares values nested as deep as JSON parses", {
+  key <- jwk_oct(as.raw(1:32))
+  value <- paste0(strrep("[", 998), "1", strrep("]", 998))
+  jwt <- jws_sign(
+    sprintf('{"exp":4000000000,"a":%s}', value),
+    key,
+    "HS256",
+    header = list(typ = "JWT")
+  )
+  expected <- zujson::json_parse(value, simplify = "none")
+  expect_no_error(jwt_decode(jwt, key, "HS256", claims = list(a = expected)))
+  expect_error(
+    jwt_decode(jwt, key, "HS256", claims = list(a = list(1))),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode_at_1000(list(a = list(NULL, 1)), claims = list(a = list(1, NULL))),
+    class = "zujose_claim_error"
+  )
+})

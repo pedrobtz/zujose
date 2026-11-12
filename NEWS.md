@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* A header, JWS JSON token or claims set nested more than about 800
+  levels deep, which zujson parses up to 1000, no longer exhausts the C
+  stack: the check for repeated member names and the `claims` comparison
+  walk the value level by level instead of recursing. Found by the JSON
+  depth straddle (#115).
+
 * `jwt_decode()` refuses a JWT with an unencoded payload (`b64: false`),
   outer or nested, with `zujose_policy_error` before any key is tried
   (RFC 7797 section 7). It returned the claims (#126).

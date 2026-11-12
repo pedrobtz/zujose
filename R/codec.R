@@ -550,14 +550,20 @@ is_string <- function(x) {
   is.character(x) && length(x) == 1L && !is.na(x)
 }
 
+# Level by level, not by recursion: zujson parses JSON nested 1000 deep,
+# which a recursive walk cannot reach without exhausting the C stack.
 has_repeated_names <- function(x) {
-  if (!is.list(x)) {
-    return(FALSE)
+  level <- list(x)
+  while (length(level) > 0L) {
+    level <- Filter(is.list, level)
+    for (value in level) {
+      if (anyDuplicated(names(value))) {
+        return(TRUE)
+      }
+    }
+    level <- unlist(lapply(level, unname), recursive = FALSE)
   }
-  if (!is.null(names(x)) && anyDuplicated(names(x))) {
-    return(TRUE)
-  }
-  any(vapply(x, has_repeated_names, logical(1)))
+  FALSE
 }
 
 empty_object <- function() {
