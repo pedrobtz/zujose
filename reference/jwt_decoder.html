@@ -138,8 +138,12 @@ claims, as <code><a href="jwt_decode.html">jwt_decode()</a></code> does.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">check</span> <span class="op">&lt;-</span> <span class="fu">jwt_decoder</span><span class="op">(</span><span class="va">key</span>, <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"api"</span>, issuer <span class="op">=</span> <span class="st">"me"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwt_encode.html">jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>iss <span class="op">=</span> <span class="st">"me"</span>, aud <span class="op">=</span> <span class="st">"api"</span><span class="op">)</span>, <span class="va">key</span>, <span class="st">"HS256"</span>,</span></span>
-<span class="r-in"><span>                       expires_in <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwt_encode.html">jwt_encode</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>iss <span class="op">=</span> <span class="st">"me"</span>, aud <span class="op">=</span> <span class="st">"api"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">key</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"HS256"</span>,</span></span>
+<span class="r-in"><span>  expires_in <span class="op">=</span> <span class="fl">60</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">check</span><span class="op">(</span><span class="va">jwt</span><span class="op">)</span><span class="op">$</span><span class="va">iss</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "me"</span>
 </code></pre></div>

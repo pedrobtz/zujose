@@ -115,7 +115,8 @@ its content encryption, such as <code>alg = "A128GCM"</code>, to get its exact s
 <code>A256CBC-HS512</code>, and 128, 192 or 256 for <code>A128GCM</code>, <code>A192GCM</code> and
 <code>A256GCM</code>), or give <code>alg = "dir"</code> and its <code>size</code>.</p>
 <p>An <code>RSA</code> key's <code>size</code> is its modulus, a multiple of 8 bits, 2048 by
-default and at most 4096, with public exponent 65537. Generating one takes a moment.</p>
+default and at most 4096, with public exponent 65537. Generating one takes
+a moment.</p>
     </div>
     <div class="section level2">
     <h2 id="secrets-in-memory">Secrets in memory<a class="anchor" aria-label="anchor" href="#secrets-in-memory"></a></h2>
@@ -147,7 +148,7 @@ are needed.</p>
 <span class="r-in"><span><span class="co"># A key encryption key, named by its thumbprint.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="jwk_with_kid.html">jwk_with_kid</a></span><span class="op">(</span><span class="fu">jwk_generate</span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A256KW"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jwk&gt; oct, 256 bits</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   kid "UpSYTu3MrpS_R3tfQyHnhBf6XW1Wd3eexuLuhVZqqXQ"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   kid "PWNq49WRGbJnH3_F-gHjX8mrnF-xBB5-E6rjzMGOsi0"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   alg A256KW</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   private: yes (not shown)</span>
 </code></pre></div>

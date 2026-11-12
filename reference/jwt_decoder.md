@@ -94,8 +94,12 @@ does.
 ``` r
 key <- jwk_oct(as.raw(1:32))
 check <- jwt_decoder(key, "HS256", audience = "api", issuer = "me")
-jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-                       expires_in = 60)
+jwt <- jwt_encode(
+  list(iss = "me", aud = "api"),
+  key,
+  "HS256",
+  expires_in = 60
+)
 check(jwt)$iss
 #> [1] "me"
 ```

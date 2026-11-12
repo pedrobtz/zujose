@@ -139,18 +139,23 @@ expects the same NumericDate.
 A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
 section 7), and one that does is refused with `zujose_policy_error`.
 
-A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
-That inner JWT is verified with the same `key` and `algorithms`, and its
-claims are checked. Deeper nesting is refused.
-
 A JWT sent as a JWE is accepted only when `decrypt` says how to decrypt
 it, so a check meant for signed tokens never silently accepts encrypted
-ones. The JWE carries a signed JWT (`cty: "JWT"`), verified as above,
-or, when its key management is symmetric (`dir`, `A*KW`, `A*GCMKW` or
-`PBES2-*`), the claims themselves. With RSA or ECDH key management
-anyone holding the recipient's public key can encrypt a token, so the
-claims must be signed: an encrypted-only JWT is refused with
-`zujose_policy_error`.
+ones. Each layer has its own allow-list: `decrypt` for the JWE, and
+`key` and `algorithms` for the signature. The JWE's key management must
+be in `decrypt`'s algorithms, checked first. The JWE then carries a
+signed JWT (`cty: "JWT"`), verified as above, or, when its key
+management is symmetric (`dir`, `A*KW`, `A*GCMKW` or `PBES2-*`), the
+claims themselves. With RSA or ECDH key management anyone holding the
+recipient's public key can encrypt a token, so the claims must be
+signed: an encrypted-only JWT is refused with `zujose_policy_error`.
+
+Nesting is one level only, a signed JWT inside a JWE. A signed JWT whose
+header has `cty: "JWT"` is refused with `zujose_policy_error` before its
+signature is checked, whether it is the token or inside a JWE. To accept
+a signed JWT inside another, call
+[`jws_verify()`](https://pedrobtz.github.io/zujose/reference/jws_verify.md)
+on each.
 
 Each failed check raises a subclass of `zujose_claim_error` carrying the
 claim name: `zujose_expired_error`, `zujose_not_yet_valid_error`,
@@ -167,10 +172,13 @@ to fix these arguments once.
 
 ``` r
 key <- jwk_oct(as.raw(1:32))
-jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-                       expires_in = 60)
-claims <- jwt_decode(jwt, key, "HS256", audience = "api",
-                          issuer = "me")
+jwt <- jwt_encode(
+  list(iss = "me", aud = "api"),
+  key,
+  "HS256",
+  expires_in = 60
+)
+claims <- jwt_decode(jwt, key, "HS256", audience = "api", issuer = "me")
 claims$iss
 #> [1] "me"
 

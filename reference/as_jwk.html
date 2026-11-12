@@ -97,9 +97,10 @@ are needed.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu">as_jwk</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">'{"kty":"oct","kid":"k1","alg":"HS256","k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu">as_jwk</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">'{"kty":"oct","kid":"k1","alg":"HS256",'</span>,</span></span>
+<span class="r-in"><span>  <span class="st">'"k":"hJtXIZ2uSN5kbQfbtTNWbpdmhkV8FJG-Onbc6mxCcYg"}'</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">key</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jwk&gt; oct, 256 bits</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   kid "k1"</span>

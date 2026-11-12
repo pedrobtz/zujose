@@ -176,16 +176,20 @@ compared, and passed to a function, as the <code>POSIXct</code> times
 <code>jwt_decode()</code> returns; a number expects the same NumericDate.</p>
 <p>A JWT must not use the unencoded payload option, <code>b64: false</code> (RFC 7797
 section 7), and one that does is refused with <code>zujose_policy_error</code>.</p>
-<p>A JWT whose header has <code>cty: "JWT"</code> carries another JWT as its payload.
-That inner JWT is verified with the same <code>key</code> and <code>algorithms</code>, and its
-claims are checked. Deeper nesting is refused.</p>
 <p>A JWT sent as a JWE is accepted only when <code>decrypt</code> says how to decrypt
 it, so a check meant for signed tokens never silently accepts encrypted
-ones. The JWE carries a signed JWT (<code>cty: "JWT"</code>), verified as above,
-or, when its key management is symmetric (<code>dir</code>, <code>A*KW</code>, <code>A*GCMKW</code> or
-<code>PBES2-*</code>), the claims themselves. With RSA or ECDH key management anyone
-holding the recipient's public key can encrypt a token, so the claims must
-be signed: an encrypted-only JWT is refused with <code>zujose_policy_error</code>.</p>
+ones. Each layer has its own allow-list: <code>decrypt</code> for the JWE, and
+<code>key</code> and <code>algorithms</code> for the signature. The JWE's key management must
+be in <code>decrypt</code>'s algorithms, checked first. The JWE then carries a
+signed JWT (<code>cty: "JWT"</code>), verified as above, or, when its key
+management is symmetric (<code>dir</code>, <code>A*KW</code>, <code>A*GCMKW</code> or <code>PBES2-*</code>), the
+claims themselves. With RSA or ECDH key management anyone holding the
+recipient's public key can encrypt a token, so the claims must be signed:
+an encrypted-only JWT is refused with <code>zujose_policy_error</code>.</p>
+<p>Nesting is one level only, a signed JWT inside a JWE. A signed JWT whose
+header has <code>cty: "JWT"</code> is refused with <code>zujose_policy_error</code> before its
+signature is checked, whether it is the token or inside a JWE. To accept a
+signed JWT inside another, call <code><a href="jws_verify.html">jws_verify()</a></code> on each.</p>
 <p>Each failed check raises a subclass of <code>zujose_claim_error</code> carrying the
 claim name: <code>zujose_expired_error</code>, <code>zujose_not_yet_valid_error</code>,
 <code>zujose_audience_error</code>, <code>zujose_issuer_error</code>, <code>zujose_subject_error</code> or
@@ -199,10 +203,13 @@ claim name: <code>zujose_expired_error</code>, <code>zujose_not_yet_valid_error<
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwt_encode.html">jwt_encode</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>iss <span class="op">=</span> <span class="st">"me"</span>, aud <span class="op">=</span> <span class="st">"api"</span><span class="op">)</span>, <span class="va">key</span>, <span class="st">"HS256"</span>,</span></span>
-<span class="r-in"><span>                       expires_in <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu">jwt_decode</span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"api"</span>,</span></span>
-<span class="r-in"><span>                          issuer <span class="op">=</span> <span class="st">"me"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jwt</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwt_encode.html">jwt_encode</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>iss <span class="op">=</span> <span class="st">"me"</span>, aud <span class="op">=</span> <span class="st">"api"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">key</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"HS256"</span>,</span></span>
+<span class="r-in"><span>  expires_in <span class="op">=</span> <span class="fl">60</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">claims</span> <span class="op">&lt;-</span> <span class="fu">jwt_decode</span><span class="op">(</span><span class="va">jwt</span>, <span class="va">key</span>, <span class="st">"HS256"</span>, audience <span class="op">=</span> <span class="st">"api"</span>, issuer <span class="op">=</span> <span class="st">"me"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">claims</span><span class="op">$</span><span class="va">iss</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "me"</span>
 <span class="r-in"><span></span></span>

@@ -113,9 +113,8 @@ password-protected token's only defence against offline guessing.
 key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
 token <- jwe_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.6Tp6mGWxafc42Qt4lELbC8CtjAzReGamp-9QxnBh9zPP-QDgmtKE8w.caYjNsz-fjLgP2HfwF3QXg.6_s97V0tzNhKUiEumV4u0g.zy3myJa-nJ8NIQyKLkyLAA"
-jwe_decrypt(token, key, algorithms = "A128KW",
-             encryptions = "A128CBC-HS256")
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.NyNO276htSjtRphwrl_xrpiNK0P5cT_e6I7CCjzNCxDdkwb1wZyw_w.gSGSDXB4zdQBOf_eKfLJuw.omp52lE6iP5tB5sVLW7Vqw.zIpSKkS1gEwBcMSUrF8iBA"
+jwe_decrypt(token, key, algorithms = "A128KW", encryptions = "A128CBC-HS256")
 #> <jwe_decrypted> A128KW with A128CBC-HS256, key "kek"
 #> Header:
 #>   alg: "A128KW"
@@ -126,9 +125,18 @@ jwe_decrypt(token, key, algorithms = "A128KW",
 # AES-GCM content encryption, under a password. A p2c of 10000 is one
 # that jwcrypto and JavaScript's jose also read.
 password <- jwk_oct(charToRaw("correct horse battery staple"))
-token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
-                      enc = "A256GCM", header = list(p2c = 10000))
-jwe_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
-             encryptions = "A256GCM")$plaintext
+token <- jwe_encrypt(
+  "secret",
+  password,
+  alg = "PBES2-HS256+A128KW",
+  enc = "A256GCM",
+  header = list(p2c = 10000)
+)
+jwe_decrypt(
+  token,
+  password,
+  algorithms = "PBES2-HS256+A128KW",
+  encryptions = "A256GCM"
+)$plaintext
 #> [1] 73 65 63 72 65 74
 ```
