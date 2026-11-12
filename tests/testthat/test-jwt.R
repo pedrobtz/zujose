@@ -523,7 +523,6 @@ test_that("a claim value JSON cannot represent is an argument error (#123)", {
 })
 
 test_that("names on scalar arguments and claims do not change the JWT (#120)", {
-  withr::local_seed(1)
   key <- jwk_oct(as.raw(1:32))
   local_mocked_bindings(jwt_now = function() 1000)
   same <- function(named, plain) {

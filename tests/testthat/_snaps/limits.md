@@ -15,7 +15,7 @@
 # jose_limits() prints the same under a comma decimal mark
 
     Code
-      print(jose_limits(token = Inf))
+      print_with_comma(jose_limits(token = Inf))
     Output
       <jose_limits>
         token      Inf

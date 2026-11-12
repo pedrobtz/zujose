@@ -116,8 +116,13 @@ test_that("a payload at the default limit fits the default token limit", {
 })
 
 test_that("jose_limits() prints the same under a comma decimal mark", {
-  withr::local_options(OutDec = ",", warn = 2)
-  expect_snapshot(print(jose_limits(token = Inf)))
+  # Base on.exit() rather than withr: Suggests holds only testthat.
+  print_with_comma <- function(x) {
+    old <- options(OutDec = ",", warn = 2)
+    on.exit(options(old))
+    print(x)
+  }
+  expect_snapshot(print_with_comma(jose_limits(token = Inf)))
 })
 
 # Straddles (design §9): each limit at `limit - 1`, `limit` and
