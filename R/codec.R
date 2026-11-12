@@ -382,8 +382,7 @@ check_headers <- function(protected, unprotected, type, call) {
 
   for (name in c("alg", "enc", "kid", "typ", "cty")) {
     for (header in c(list(protected), unprotected)) {
-      value <- member(header, name)
-      if (!is.null(value) && !is_string(value)) {
+      if (name %in% names(header) && !is_string(header[[name]])) {
         abort_zujose(
           "parse",
           sprintf("The `%s` header must be a string.", name),
@@ -507,9 +506,11 @@ json_array <- function(x, what, limit, call) {
   x
 }
 
+# An optional member is absent, never `null`: member() gives NULL for both,
+# and a `null` read as absent let a token verify (found by tools/fuzz/).
 json_string <- function(obj, name, call, optional = FALSE) {
   value <- member(obj, name)
-  if (is.null(value) && optional) {
+  if (optional && !name %in% names(obj)) {
     return("")
   }
   if (!is_string(value)) {
@@ -524,7 +525,7 @@ json_string <- function(obj, name, call, optional = FALSE) {
 
 json_header <- function(obj, name, call) {
   value <- member(obj, name)
-  if (is.null(value)) {
+  if (!name %in% names(obj)) {
     return(empty_object())
   }
   if (!is_json_object(value)) {

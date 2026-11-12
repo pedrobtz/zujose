@@ -159,6 +159,16 @@ test_that("required header members must be present strings", {
     sep = "."
   )
   expect_error(jose_parse(no_enc, jose_limits()), class = "zujose_parse_error")
+  # A `null` member is not an absent one.
+  for (name in c("kid", "typ", "cty")) {
+    header <- sprintf('{"alg":"HS256","%s":null}', name)
+    token <- paste(b64url_encode(charToRaw(header)), "e30", "c2ln", sep = ".")
+    expect_error(
+      jose_parse(token, jose_limits()),
+      class = "zujose_parse_error",
+      info = name
+    )
+  }
 })
 
 test_that("recipients must agree on enc", {
@@ -230,6 +240,58 @@ test_that("malformed JSON serializations fail with zujose_parse_error", {
       info = i
     )
   }
+})
+
+test_that("a JSON null is not an absent member", {
+  # Found by the differential fuzzer (tools/fuzz/): a `null` header,
+  # protected header or encrypted key read as absent, and the token
+  # verified or decrypted. jwcrypto refuses it (RFC 7515 §7.2.1, RFC 7516
+  # §7.2.1).
+  key <- as_jwk(rfc7520_key(5))
+  jws <- rfc7520_token(36)
+  with_null <- function(token, name, inner = FALSE) {
+    if (inner) {
+      sub(
+        '"signatures":[{',
+        sprintf('"signatures":[{"%s":null,', name),
+        token,
+        fixed = TRUE
+      )
+    } else {
+      sub("^\\{", sprintf('{"%s":null,', name), token)
+    }
+  }
+  flattened <- zujson::json_write(zujson::json_parse(jws))
+  # Each base token verifies or decrypts before a null is added.
+  expect_no_error(jws_verify(flattened, key, "HS256"))
+  expect_error(
+    jws_verify(with_null(flattened, "header"), key, "HS256"),
+    class = "zujose_parse_error"
+  )
+  general <- zujson::json_write(zujson::json_parse(rfc7520_token(35)))
+  expect_no_error(jws_verify(general, key, "HS256"))
+  expect_error(
+    jws_verify(with_null(general, "header", inner = TRUE), key, "HS256"),
+    class = "zujose_parse_error"
+  )
+
+  aes <- as_jwk(rfc7520_key(130))
+  dir <- zujson::json_write(zujson::json_parse(rfc7520_token(137)))
+  expect_no_error(jwe_decrypt(dir, aes, "dir", "A128GCM"))
+  for (name in c("unprotected", "header", "encrypted_key")) {
+    expect_error(
+      jwe_decrypt(with_null(dir, name), aes, "dir", "A128GCM"),
+      class = "zujose_parse_error",
+      info = name
+    )
+  }
+  kw <- as_jwk(rfc7520_key(151))
+  aad <- zujson::json_write(zujson::json_parse(rfc7520_token(200)))
+  expect_no_error(jwe_decrypt(aad, kw, "A128KW", "A128GCM"))
+  expect_error(
+    jwe_decrypt(with_null(aad, "protected"), kw, "A128KW", "A128GCM"),
+    class = "zujose_parse_error"
+  )
 })
 
 test_that("a token that is not a single string is a parse error", {

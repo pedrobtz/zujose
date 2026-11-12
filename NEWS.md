@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* A JSON `null` in a JWS or JWE JSON serialization is no longer read as
+  an absent member. A `null` `header`, `unprotected`, `protected` or
+  `encrypted_key`, or a `null` `kid`, `typ` or `cty` header, let a token
+  verify or decrypt; each is now a `zujose_parse_error`. Found by the
+  differential fuzzer in `tools/fuzz/` (#96).
+
 * A header, JWS JSON token or claims set nested more than about 800
   levels deep, which zujson parses up to 1000, no longer exhausts the C
   stack: the check for repeated member names and the `claims` comparison
