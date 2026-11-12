@@ -168,3 +168,68 @@ test_that("zujose decrypts jwcrypto's JWE JSON for each recipient alone", {
   }
   expect_identical(n, 9L)
 })
+
+# Tokens zujose signed (tools/make-zujose-tokens.R, #100), which
+# make-oracle-fixtures.py --check verifies with PyJWT. Here they are
+# verified again and re-signed, so a change to what zujose emits shows as a
+# fixture to regenerate and check with PyJWT.
+
+test_that("zujose emits the tokens PyJWT verified", {
+  claims <- list(
+    iss = "https://issuer.example",
+    sub = "u2",
+    aud = list("api", "other"),
+    exp = as.POSIXct(2000000000, origin = "1970-01-01", tz = "UTC"),
+    nbf = 999999000,
+    iat = 999999990,
+    n = 42L,
+    x = 1.5,
+    ok = TRUE,
+    none = NULL,
+    name = "Zoë 日本",
+    roles = list("a", "b"),
+    ctx = list(tenant = "t1", depth = list(level = 2L))
+  )
+  payload <- "zujose → PyJWT: not JSON"
+  rows <- oracle_zujose_tokens()
+  expect_setequal(
+    rows$alg,
+    paste0(rep(c("HS", "RS", "PS", "ES"), each = 3), c("256", "384", "512"))
+  )
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    key <- jwk_with_kid(oracle_key(row$key, public = FALSE), row$key)
+    ours <- if (row$kind == "jwt") {
+      jwt_encode(claims, key, row$alg, issued_at = FALSE)
+    } else {
+      jws_sign(payload, key, row$alg)
+    }
+    # PS* and ES* signatures are randomised; the rest is not.
+    if (grepl("^(HS|RS)", row$alg)) {
+      expect_identical(ours, row$token, info = row$id)
+    } else {
+      expect_identical(
+        sub("\\.[^.]*$", "", ours),
+        sub("\\.[^.]*$", "", row$token),
+        info = row$id
+      )
+    }
+    public <- jwk_with_kid(oracle_key(row$key), row$key)
+    verified <- jws_verify(row$token, public, row$alg)
+    if (row$kind == "jwt") {
+      got <- jwt_decode(
+        row$token,
+        public,
+        row$alg,
+        audience = "api",
+        issuer = "https://issuer.example",
+        now = oracle_now()
+      )
+      expect_identical(got$ctx, claims$ctx, info = row$id)
+      expect_identical(got$name, claims$name, info = row$id)
+      expect_identical(as.numeric(got$iat), 999999990, info = row$id)
+    } else {
+      expect_identical(rawToChar(verified$payload), payload, info = row$id)
+    }
+  }
+})

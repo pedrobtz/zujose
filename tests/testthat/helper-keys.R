@@ -57,6 +57,17 @@ oracle_key <- function(name, public = TRUE) {
   )
 }
 
+# Tokens zujose signed, which PyJWT verifies (tools/make-zujose-tokens.R,
+# #100): a JWT and a JWS per algorithm.
+oracle_zujose_tokens <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "zujose-tokens.tsv"),
+    colClasses = "character",
+    quote = "",
+    encoding = "UTF-8"
+  )
+}
+
 # Before the oracle tokens' `exp`, 2000000000.
 oracle_now <- function() as.POSIXct(1e9, origin = "1970-01-01", tz = "UTC")
 

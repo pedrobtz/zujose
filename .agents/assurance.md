@@ -61,7 +61,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | PS* verify                                | RFC 7520 §4.2 and §6; PyJWT PS256, PS384, PS512                                         | tests/testthat/test-rsa.R, test-oracle.R                      |
 | ES* verify, raw r and s                   | RFC 7515 A.3, A.4, RFC 7520 §4.3; PyJWT ES256, ES384, ES512                             | tests/testthat/test-ec.R, test-oracle.R                       |
 | Signature verify edge cases               | Wycheproof ECDSA P1363, RSA PKCS#1, RSA-PSS and HMAC verdicts                           | gap #99                                                        |
-| PS*, ES* and JWT emit                     | PyJWT verifying what zujose signs                                                       | gap #100                                                        |
+| PS*, ES* and JWT emit                     | PyJWT's `jwt.decode()` and `jws.decode()` verify zujose's tokens, claims, types and header compared (`zujose-tokens.tsv`); the same tokens re-emitted | tests/testthat/test-oracle.R, tools/make-oracle-fixtures.py --check |
 | JWE compact parse and decrypt             | RFC 7516 A.3, RFC 7520 §5 compact figures to their plaintexts                           | tests/testthat/test-jwe.R, test-jwe-gcm-pbes2.R               |
 | JWE JSON parse and decrypt                | RFC 7516 A.4, RFC 7520 general and flattened figures, §5.13 three recipients            | tests/testthat/test-jwe.R, test-ec.R                          |
 | JWE AAD from the received header bytes    | jwcrypto's non-canonical headers decrypt (`jwe-noncanonical.tsv`)                       | tests/testthat/test-jwe.R                                     |

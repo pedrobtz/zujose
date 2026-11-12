@@ -32,6 +32,13 @@ does not rewrite the others: `x25519` was added that way.
 --check does not regenerate: it verifies every token with PyJWT against
 its key, checks that `cryptography` reads every key and writes each one's
 two files back byte for byte, and exits non-zero on the first failure.
+
+--check also verifies zujose-tokens.tsv, which tools/make-zujose-tokens.R
+writes with zujose (#100): every JWT with PyJWT's jwt.decode(), with
+`exp`, `nbf`, `iat`, `aud` and `iss` checked, and every JWS with
+jws.decode(). The claims must equal ZUJOSE_CLAIMS, types included, so a
+NumericDate written as a string or a float fails; the header must be
+exactly `alg`, `kid` and, for a JWT, `typ: "JWT"`.
 """
 import csv
 import os
@@ -49,6 +56,14 @@ CLAIMS = {"sub": "u2", "aud": "api", "exp": 2000000000, "n": 42}
 CURVES = {"ec-p256": ec.SECP256R1, "ec-p384": ec.SECP384R1,
           "ec-p521": ec.SECP521R1}
 KEYS = ["rsa-2048", "rsa-1024", *CURVES, "x25519"]
+# What tools/make-zujose-tokens.R signs; keep the two in step.
+ZUJOSE_CLAIMS = {
+    "iss": "https://issuer.example", "sub": "u2", "aud": ["api", "other"],
+    "exp": 2000000000, "nbf": 999999000, "iat": 999999990, "n": 42,
+    "x": 1.5, "ok": True, "none": None, "name": "Zo\u00eb \u65e5\u672c",
+    "roles": ["a", "b"], "ctx": {"tenant": "t1", "depth": {"level": 2}},
+}
+ZUJOSE_PAYLOAD = "zujose \u2192 PyJWT: not JSON".encode()
 TOKENS = [
     ("hs256", "HS256", "hmac"), ("hs384", "HS384", "hmac"),
     ("hs512", "HS512", "hmac"), ("hs256-wrong", "HS256", "hmac-wrong"),
@@ -158,8 +173,45 @@ def check():
             if claims != CLAIMS:
                 sys.exit("make-oracle-fixtures: FAILED " + row["id"])
             n += 1
-    print("make-oracle-fixtures: %d keys and %d tokens check with %s."
-          % (len(keys), n, source()))
+    m = check_zujose(keys)
+    print("make-oracle-fixtures: %d keys, %d tokens and %d zujose tokens "
+          "check with %s." % (len(keys), n, m, source()))
+
+
+def same_json(a, b):
+    """Equal as JSON values, types included: 1 is not 1.0 nor True."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(same_json(a[k], b[k]) for k in a)
+    if isinstance(a, list):
+        return len(a) == len(b) and all(map(same_json, a, b))
+    return a == b
+
+
+def check_zujose(keys):
+    path = os.path.join(OUT, "zujose-tokens.tsv")
+    n = 0
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
+            key = signing_key(row["key"], keys)
+            header = jwt.get_unverified_header(row["token"])
+            want = {"alg": row["alg"], "kid": row["key"]}
+            if row["kind"] == "jwt":
+                want["typ"] = "JWT"
+                got = jwt.decode(row["token"], key, algorithms=[row["alg"]],
+                                 audience="api",
+                                 issuer="https://issuer.example",
+                                 options={"require": ["exp", "nbf", "iat"]})
+                ok = same_json(got, ZUJOSE_CLAIMS)
+            else:
+                got = jwt.api_jws.decode(row["token"], key,
+                                         algorithms=[row["alg"]])
+                ok = got == ZUJOSE_PAYLOAD
+            if not ok or header != want:
+                sys.exit("make-oracle-fixtures: FAILED zujose " + row["id"])
+            n += 1
+    return n
 
 
 if __name__ == "__main__":
