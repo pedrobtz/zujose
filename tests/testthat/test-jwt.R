@@ -696,3 +696,22 @@ test_that("claims compares exp, nbf and iat as the times returned (#128)", {
   )
   expect_identical(seen, claims$exp)
 })
+
+test_that("a NumericDate beyond what POSIXct holds is refused (#127)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (claim in c("exp", "nbf", "iat")) {
+    for (value in c("1e308", "9223372036854775807", "-1e17")) {
+      payload <- sprintf('{"%s":%s}', claim, value)
+      jwt <- jws_sign(payload, key, "HS256", header = list(typ = "JWT"))
+      expect_error(
+        jwt_decode(jwt, key, "HS256", required = character(), leeway = 0),
+        class = "zujose_parse_error",
+        info = payload
+      )
+    }
+  }
+  jwt <- jws_sign('{"exp":1e16}', key, "HS256", header = list(typ = "JWT"))
+  claims <- jwt_decode(jwt, key, "HS256")
+  expect_false(is.na(format(claims$exp)))
+  expect_identical(as.numeric(claims$exp), 1e16)
+})

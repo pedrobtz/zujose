@@ -90,7 +90,8 @@ jwt_encode <- function(
 #' rules and then checks its claims (RFC 7519, RFC 8725). The checks happen
 #' here, in one call, so none can be forgotten.
 #'
-#' * `exp`, `nbf` and `iat` must be numbers. The token must not have
+#' * `exp`, `nbf` and `iat` must be numbers that `POSIXct` can hold as a
+#'   time, within about two billion years of 1970. The token must not have
 #'   expired, must already be valid, and must not be issued in the future,
 #'   each allowing `leeway` seconds. `max_age` bounds how long ago `iat`
 #'   was.
@@ -386,6 +387,15 @@ check_claims <- function(
       abort_zujose(
         "parse",
         sprintf("The `%s` claim must be a number.", name),
+        call = call
+      )
+    }
+    # Returned as POSIXct, which has no calendar time for a NumericDate
+    # beyond about two billion years either side of 1970 (#127).
+    if (is.na(as.POSIXlt(as_posixct(value)))) {
+      abort_zujose(
+        "parse",
+        sprintf("The `%s` claim is beyond any time R can represent.", name),
         call = call
       )
     }

@@ -69,7 +69,8 @@ here, in one call, so none can be forgotten.
 }
 \details{
 \itemize{
-\item \code{exp}, \code{nbf} and \code{iat} must be numbers. The token must not have
+\item \code{exp}, \code{nbf} and \code{iat} must be numbers that \code{POSIXct} can hold as a
+time, within about two billion years of 1970. The token must not have
 expired, must already be valid, and must not be issued in the future,
 each allowing \code{leeway} seconds. \code{max_age} bounds how long ago \code{iat}
 was.

@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `jwt_decode()` refuses an `exp`, `nbf` or `iat` beyond any time `POSIXct`
+  can represent, such as `1e308`, with `zujose_parse_error`. It returned
+  the claim as an `NA` time (#127).
+
 * `jwt_decode()` and `jwt_decoder()` refuse repeated, `NA` or empty names
   in `claims` with `zujose_argument_error`. Only the first of two
   expectations for one claim was checked (#118).
