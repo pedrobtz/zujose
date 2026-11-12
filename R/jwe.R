@@ -961,15 +961,14 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
     # RFC 7516 section 11.5 and RFC 3218: a padding failure must not be
     # distinguishable from any later one, so it is replaced by a random CEK
     # of the right length and decryption goes on, to fail at the tag like
-    # any other wrong key.
+    # any other wrong key. The random CEK is drawn first, whatever the
+    # outcome, so a failure takes the same steps as success.
+    random <- zucrypt::crypt_rand_bytes(cek_bytes(enc))
     cek <- tryCatch(
       zucrypt::crypt_rsa_decrypt(encrypted_key, rsa_crypt_key(key, TRUE)),
       zucrypt_error = function(e) NULL
     )
-    if (is.null(cek) || length(cek) != cek_bytes(enc)) {
-      cek <- zucrypt::crypt_rand_bytes(cek_bytes(enc))
-    }
-    cek
+    if (is.null(cek) || length(cek) != cek_bytes(enc)) random else cek
   } else if (is_rsa_kem(alg)) {
     tryCatch(
       zucrypt::crypt_rsa_decrypt(

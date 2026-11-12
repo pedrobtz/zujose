@@ -379,3 +379,28 @@ test_that("an RSA size that is not a whole number of bytes is refused (#123)", {
   )
   expect_error(jwk_generate("RSA", size = 2049), class = "zujose_key_error")
 })
+
+test_that("RSA1_5 draws its random CEK whether or not the padding is good", {
+  # RFC 7516 §11.5: the random CEK is made before decryption, so a padding
+  # failure takes the same steps as success.
+  key <- as_jwk(rfc7520_key(73))
+  wrong <- jwk_generate("RSA")
+  draws <- 0L
+  local_mocked_bindings(
+    crypt_rand_bytes = function(n) {
+      draws <<- draws + 1L
+      as.raw(seq_len(n))
+    },
+    .package = "zucrypt"
+  )
+  out <- jwe_decrypt(rfc7520_token(81), key, "RSA1_5", "A128CBC-HS256")
+  expect_identical(rawToChar(out$plaintext), rfc7520_text(72))
+  expect_identical(draws, 1L)
+
+  draws <- 0L
+  expect_error(
+    jwe_decrypt(rfc7520_token(81), wrong, "RSA1_5", "A128CBC-HS256"),
+    class = "zujose_decrypt_error"
+  )
+  expect_identical(draws, 1L)
+})
