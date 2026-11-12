@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `as_jwk_set()` skips a member of `keys` that is not a JSON object, as
+  RFC 7517 section 5 has it. A string member was read as JWK text or as
+  PEM (#44).
+
 * A JSON `null` in a JWS or JWE JSON serialization is no longer read as
   an absent member. A `null` `header`, `unprotected`, `protected` or
   `encrypted_key`, or a `null` `kid`, `typ` or `cty` header, let a token

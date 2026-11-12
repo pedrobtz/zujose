@@ -6,8 +6,9 @@
 #'
 #' `as_jwk_set()` reads a JWK Set from its JSON text or from a parsed
 #' list. Following RFC 7517 section 5, a member of `keys` that is not a
-#' well-formed JWK is ignored rather than failing the whole set, as is a key
-#' of a type zujose does not know. A key of a known type that zujose cannot
+#' well-formed JWK object is ignored rather than failing the whole set, as
+#' is a key of a type zujose does not know. A string member is not read as
+#' JWK text or PEM. A key of a known type that zujose cannot
 #' use, such as an Ed25519 `OKP` key, is kept: it can be listed, selected
 #' and thumbprinted, and using it raises `zujose_unsupported_error`.
 #'
@@ -71,9 +72,14 @@ as_jwk_set <- function(x) {
     abort_zujose("key", "A JWK Set must have a `keys` array.", call = call)
   }
   known <- c("oct", names(pending_key_types))
+  # RFC 7517 §5: each member of `keys` is a JWK object. A string is not
+  # read as PEM or JWK text; it is skipped like any other bad entry (#44).
   keys <- lapply(entries, function(entry) {
+    if (!is_json_object(entry)) {
+      return(NULL)
+    }
     key <- tryCatch(
-      if (is.list(entry)) list_to_key(entry, call, json) else as_jwk(entry),
+      list_to_key(entry, call, json),
       zujose_key_error = function(e) NULL
     )
     if (!is.null(key) && key$kty %in% known) key
