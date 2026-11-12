@@ -6,6 +6,14 @@
       Error in `jwt_decode()`:
       ! A signed JWT must not carry another JWT (`cty: "JWT"`); only a JWE may.
 
+# signature checks come first
+
+    Code
+      jwt_decode(jwt, key)
+    Condition
+      Error in `jwt_decode()`:
+      ! argument "algorithms" is missing, with no default
+
 # printing claims shows times in UTC
 
     Code

@@ -429,20 +429,6 @@ test_that("Ed25519 keys are read and kept, but cannot be used", {
   expect_error(jws_verify("a.b.c", key, "EdDSA"), class = "zujose_policy_error")
 })
 
-test_that("zujose_info() reports ES* and ECDH-ES available", {
-  info <- zujose_info()
-  ec <- c(
-    "ES256",
-    "ES384",
-    "ES512",
-    "ECDH-ES",
-    "ECDH-ES+A128KW",
-    "ECDH-ES+A192KW",
-    "ECDH-ES+A256KW"
-  )
-  expect_true(all(info$available[info$algorithm %in% ec]))
-})
-
 test_that("EC and X25519 members not of the curve's length are refused", {
   # RFC 7518 sections 6.2.1.2, 6.2.1.3 and 6.2.2.1: x, y and d are the
   # full coordinate length, so each key has one encoding (#94).

@@ -311,27 +311,12 @@ test_that("unknown crit and repeated header members are refused", {
   )
 })
 
-test_that("keys named inside the token are never used", {
-  key <- jwk_oct(as.raw(1:32))
-  attacker <- jwk_oct(as.raw(101:132))
-  token <- jws_sign(
-    "x",
-    attacker,
-    alg = "HS256",
-    header = list(jwk = list(kty = "oct", k = b64url_encode(attacker$k)))
-  )
-  expect_error(
-    jws_verify(token, key, algorithms = "HS256"),
-    class = "zujose_signature_error"
-  )
-})
-
 # Policy and arguments ----------------------------------------------------
 
 test_that("algorithms has no default and names known signature algorithms", {
   key <- jwk_oct(as.raw(1:32))
   token <- jws_sign("x", key, alg = "HS256")
-  expect_error(jws_verify(token, key), "algorithms")
+  expect_snapshot(jws_verify(token, key), error = TRUE)
   for (bad in list(character(), NA_character_, "HS1", "A128KW", 256)) {
     expect_error(
       jws_verify(token, key, algorithms = bad),
@@ -472,13 +457,42 @@ test_that("a resolver sees the header and picks the key", {
   expect_identical(seen, list(alg = "HS256", kid = "k"))
 })
 
-test_that("zujose_info() reports what this installation can do", {
+test_that("zujose_info() lists every RFC 7518 algorithm, all available", {
+  # One table for every family: signatures, key management and content
+  # encryption, each available with the zucrypt it requires.
+  expected <- list(
+    signature = c(
+      paste0("HS", c(256, 384, 512)),
+      paste0("RS", c(256, 384, 512)),
+      paste0("PS", c(256, 384, 512)),
+      paste0("ES", c(256, 384, 512))
+    ),
+    "key management" = c(
+      "dir",
+      paste0("A", c(128, 192, 256), "KW"),
+      paste0("A", c(128, 192, 256), "GCMKW"),
+      "PBES2-HS256+A128KW",
+      "PBES2-HS384+A192KW",
+      "PBES2-HS512+A256KW",
+      "RSA-OAEP",
+      "RSA-OAEP-256",
+      "RSA1_5",
+      "ECDH-ES",
+      paste0("ECDH-ES+A", c(128, 192, 256), "KW")
+    ),
+    "content encryption" = c(
+      "A128CBC-HS256",
+      "A192CBC-HS384",
+      "A256CBC-HS512",
+      paste0("A", c(128, 192, 256), "GCM")
+    )
+  )
   info <- zujose_info()
   expect_named(info, c("algorithm", "kind", "available", "zucrypt"))
-  expect_true(all(info$available[
-    info$algorithm %in% c("HS256", "HS384", "HS512")
-  ]))
-  # Every algorithm zujose knows is available with the zucrypt it requires.
+  for (kind in names(expected)) {
+    expect_setequal(info$algorithm[info$kind == kind], expected[[kind]])
+  }
+  expect_identical(nrow(info), length(unlist(expected)))
   expect_true(all(info$available))
   # zucrypt 0.1.1 adds every primitive beyond HMAC and AES-CBC, randomness
   # and SHA-2 included, so every algorithm needs it.
@@ -535,9 +549,11 @@ test_that("the algorithm allow-list is checked before any signature check", {
 test_that("jwk, x5c, jku and x5u in a header are never used as keys", {
   # The attacker signs with their own key and names it in the header in
   # each of the four ways RFC 7515 allows; verifying with the caller's key
-  # must fail (#43).
-  attacker <- jwk_generate("RSA")
-  caller <- jwk_public(jwk_generate("RSA"))
+  # must fail (#43). Only the `jwk` case can catch a regression: zujose
+  # parses no certificates and fetches nothing, so the `x5c`, `jku` and
+  # `x5u` cases record the rule rather than test it.
+  attacker <- oracle_key("rsa-2048", public = FALSE)
+  caller <- jwk_public(as_jwk(rfc7520_key(4)))
   named <- list(
     jwk = zujson::json_parse_raw(
       charToRaw(jwk_json(attacker)),
@@ -560,6 +576,19 @@ test_that("jwk, x5c, jku and x5u in a header are never used as keys", {
       info = member
     )
   }
+  # The same holds for an HMAC key named as an `oct` JWK.
+  key <- jwk_oct(as.raw(1:32))
+  attacker <- jwk_oct(as.raw(101:132))
+  token <- jws_sign(
+    "x",
+    attacker,
+    alg = "HS256",
+    header = list(jwk = list(kty = "oct", k = b64url_encode(attacker$k)))
+  )
+  expect_error(
+    jws_verify(token, key, algorithms = "HS256"),
+    class = "zujose_signature_error"
+  )
 })
 
 test_that("b64 and crit are set through the b64 argument, not a header", {

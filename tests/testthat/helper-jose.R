@@ -181,7 +181,7 @@ decode_at_1000 <- function(
     header = header,
     issued_at = FALSE
   )
-  jwt_decode(
+  out <- jwt_decode(
     jwt,
     key,
     "HS256",
@@ -189,6 +189,12 @@ decode_at_1000 <- function(
     now = as_posixct(1000),
     ...
   )
+  # A decode that returns without the claims is not a pass, so the
+  # expect_no_error() positives also check what comes back.
+  if (!is.list(out) || !all(names(payload) %in% names(out))) {
+    stop("jwt_decode() did not return the claims")
+  }
+  out
 }
 
 # Hex text to raw, ignoring spaces.

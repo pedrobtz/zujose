@@ -1,3 +1,16 @@
+# algorithms and encryptions have no default and are checked
+
+    Code
+      jwe_decrypt(v$token, v$key)
+    Condition
+      Error in `jwe_decrypt()`:
+      ! argument "algorithms" is missing, with no default
+    Code
+      jwe_decrypt(v$token, v$key, "A128KW")
+    Condition
+      Error in `jwe_decrypt()`:
+      ! argument "encryptions" is missing, with no default
+
 # printing shows the header, not the plaintext
 
     Code

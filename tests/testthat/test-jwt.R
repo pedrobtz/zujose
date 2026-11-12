@@ -380,7 +380,7 @@ test_that("signature checks come first", {
     jwt_decode(jwt, key, "HS256"),
     class = "zujose_signature_error"
   )
-  expect_error(jwt_decode(jwt, key), "algorithms")
+  expect_snapshot(jwt_decode(jwt, key), error = TRUE)
 })
 
 test_that("jwt_decode() refuses bad arguments", {

@@ -305,7 +305,7 @@ test_that("a p2c over the cap fails before any key derivation", {
 })
 
 test_that("a p2s shorter than 8 bytes fails before any key derivation", {
-  local_mocked_bindings(pbes2_kek = function(...) stop("derived a key"))
+  local_pbes2_reached()
   key <- jwk_oct(charToRaw("pw"))
   for (p2s in list(b64url_encode(as.raw(1:7)), "", NULL, "!!", 8)) {
     expect_error(
@@ -326,7 +326,7 @@ test_that("a p2s shorter than 8 bytes fails before any key derivation", {
       "PBES2-HS256+A128KW",
       "A128GCM"
     ),
-    "derived a key"
+    class = "pbes2_reached"
   )
 })
 
@@ -434,23 +434,6 @@ test_that("generated parameters cannot be supplied, and p2c is checked", {
     jwe_encrypt("x", kek, "A128KW", header = list(p2c = 1000)),
     class = "zujose_argument_error"
   )
-})
-
-test_that("zujose_info() reports GCM, GCMKW and PBES2 as available", {
-  info <- zujose_info()
-  algs <- c(
-    "A128GCM",
-    "A192GCM",
-    "A256GCM",
-    "A128GCMKW",
-    "A192GCMKW",
-    "A256GCMKW",
-    "PBES2-HS256+A128KW",
-    "PBES2-HS384+A192KW",
-    "PBES2-HS512+A256KW"
-  )
-  expect_true(all(info$available[info$algorithm %in% algs]))
-  expect_true(all(info$available))
 })
 
 test_that("a dir key may name its content encryption, and only that one", {

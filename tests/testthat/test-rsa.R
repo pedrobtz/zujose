@@ -190,9 +190,12 @@ test_that("RSA1_5 never encrypts and decrypts only when named", {
 })
 
 test_that("a wrong RSA key or a tampered key gives the one decrypt error", {
-  key <- jwk_generate("RSA")
+  # Committed keys, not generated ones: faster, and deterministic.
+  key <- oracle_key("rsa-2048", public = FALSE)
   token <- jwe_encrypt("secret", key, "RSA-OAEP")
-  other <- jwk_generate("RSA")
+  # RFC 7520's RSA key, without its `use: "sig"`.
+  other <- zujson::json_parse(rfc7520_key(4), simplify = "none")
+  other <- as_jwk(other[setdiff(names(other), c("use", "kid"))])
   e1 <- expect_error(
     jwe_decrypt(token, other, "RSA-OAEP", "A128CBC-HS256"),
     class = "zujose_decrypt_error"
@@ -330,22 +333,6 @@ test_that("printing an RSA key shows its size, never its private members", {
   expect_match(out[[1]], "RSA, 2048 bits", fixed = TRUE)
   expect_false(any(grepl(key$members$d, out, fixed = TRUE)))
   expect_true(any(grepl("private: yes", out, fixed = TRUE)))
-})
-
-test_that("zujose_info() reports RS*, PS* and RSA key management available", {
-  info <- zujose_info()
-  rsa <- c(
-    "RS256",
-    "RS384",
-    "RS512",
-    "PS256",
-    "PS384",
-    "PS512",
-    "RSA-OAEP",
-    "RSA-OAEP-256",
-    "RSA1_5"
-  )
-  expect_true(all(info$available[info$algorithm %in% rsa]))
 })
 
 test_that("RSA members with a leading zero octet are refused", {

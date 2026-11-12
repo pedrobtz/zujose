@@ -207,11 +207,10 @@ test_that("dir with an encrypted key is a decryption failure", {
 
 test_that("algorithms and encryptions have no default and are checked", {
   v <- rfc7516_a3()
-  expect_error(jwe_decrypt(v$token, v$key), "algorithms")
-  expect_error(
-    jwe_decrypt(v$token, v$key, "A128KW"),
-    "encryptions"
-  )
+  expect_snapshot(error = TRUE, {
+    jwe_decrypt(v$token, v$key)
+    jwe_decrypt(v$token, v$key, "A128KW")
+  })
   for (bad in list("none", "HS256", "A128GCM", character(), NA_character_)) {
     expect_error(
       jwe_decrypt(v$token, v$key, bad, "A128CBC-HS256"),
@@ -559,7 +558,9 @@ test_that("every key management fails with one class and one message", {
 
 test_that("jwk, x5c, jku and x5u in a JWE header are never used as keys", {
   # The attacker wraps the CEK with their own key and names it in the
-  # header; were it used, the token would decrypt (#43).
+  # header; were it used, the token would decrypt (#43). As for JWS, only
+  # the `jwk` case can catch a regression; zujose parses no certificates
+  # and fetches nothing.
   attacker <- jwk_oct(as.raw(101:116))
   caller <- jwk_oct(as.raw(1:16))
   named <- list(
