@@ -203,7 +203,7 @@ oct_key <- function(secret, alg, kid, use, key_ops, call) {
   if (length(secret) == 0L) {
     abort_zujose("key", "`secret` must be at least one byte.", call = call)
   }
-  new_jose_key(
+  new_jwk(
     kty = "oct",
     k = secret,
     kid = kid,
@@ -309,7 +309,7 @@ jwk_generate <- function(
       call = call
     )
   }
-  new_jose_key(
+  new_jwk(
     kty = "oct",
     k = zucrypt::crypt_rand_bytes(size / 8),
     kid = kid,
@@ -353,7 +353,7 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
     )
   }
   ck <- zucrypt::crypt_rsa_keygen(size)
-  new_jose_key(
+  new_jwk(
     kty = "RSA",
     kid = kid,
     alg = alg,
@@ -406,7 +406,7 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
     zucrypt::crypt_ec_keygen(crv)
   }
   parts <- crypt_key_members(ck)
-  new_jose_key(
+  new_jwk(
     kty = kty,
     kid = kid,
     alg = alg,
@@ -450,7 +450,7 @@ oct_key_bits <- function(alg, call) {
   )
 }
 
-new_jose_key <- function(
+new_jwk <- function(
   kty,
   k = NULL,
   kid = NULL,
@@ -649,7 +649,7 @@ jwk_to_key <- function(jwk, call, json = FALSE) {
     check_ec_jwk(kty, members, call)
   }
 
-  new_jose_key(
+  new_jwk(
     kty = kty,
     k = k,
     kid = member(jwk, "kid"),
@@ -826,7 +826,7 @@ pem_to_key <- function(x, call) {
     )
   }
   parts <- crypt_key_members(ck)
-  new_jose_key(
+  new_jwk(
     kty = parts$kty,
     members = parts$members,
     bits = parts$bits,
@@ -965,7 +965,7 @@ jwk_public <- function(x) {
 public_jwk <- function(x, call) {
   if (inherits(x, "jwk_set")) {
     keys <- Filter(function(key) key$kty != "oct", unclass(x))
-    return(new_jose_keyset(lapply(keys, public_key)))
+    return(new_jwk_set(lapply(keys, public_key)))
   }
   key <- check_key(x, call)
   if (key$kty == "oct") {
