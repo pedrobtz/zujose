@@ -92,7 +92,7 @@ test_that("zujose encrypts dir, A192KW and A192GCMKW as jwcrypto did", {
     parts <- strsplit(row$token, ".", fixed = TRUE)[[1]]
     header <- zujson::json_parse(rawToChar(b64url_decode(parts[[1]], "h")))
     fixed <- if (!is.null(header$iv)) {
-      list(kw_iv = b64url_decode(header$iv, "iv"))
+      list(gcmkw_iv = b64url_decode(header$iv, "iv"))
     }
     ours <- encrypt_fixed(
       hex(row$plaintext),

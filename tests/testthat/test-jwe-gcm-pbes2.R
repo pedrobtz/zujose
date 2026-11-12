@@ -60,7 +60,7 @@ test_that("the RFC's encrypted keys are reproduced from its factors", {
     "A256GCMKW",
     k138,
     rfc7520_factor(139),
-    fixed = list(kw_iv = rfc7520_factor(141))
+    fixed = list(gcmkw_iv = rfc7520_factor(141))
   )
   expect_identical(got$encrypted_key, rfc7520_factor(142))
   header <- jose_peek(rfc7520_token(148))$headers[[1]]

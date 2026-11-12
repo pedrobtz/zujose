@@ -837,11 +837,14 @@ wrap_cek <- function(
       header = list()
     )
   } else if (alg %in% names(gcmkw_key_bytes)) {
-    kw_iv <- fixed$kw_iv %||% zucrypt::crypt_rand_bytes(12L)
-    sealed <- gcm_encrypt(key$k, kw_iv, cek, NULL)
+    gcmkw_iv <- fixed$gcmkw_iv %||% zucrypt::crypt_rand_bytes(12L)
+    sealed <- gcm_encrypt(key$k, gcmkw_iv, cek, NULL)
     list(
       encrypted_key = sealed$ciphertext,
-      header = list(iv = b64url_encode(kw_iv), tag = b64url_encode(sealed$tag))
+      header = list(
+        iv = b64url_encode(gcmkw_iv),
+        tag = b64url_encode(sealed$tag)
+      )
     )
   } else {
     p2c <- p2c %||% pbes2_default_p2c
@@ -871,16 +874,16 @@ kek_params <- function(alg, header, limits, call) {
     b64url_decode(value, what, call)
   }
   if (alg %in% names(gcmkw_key_bytes)) {
-    kw_iv <- member_b64("iv", "key wrapping IV")
+    gcmkw_iv <- member_b64("iv", "key wrapping IV")
     tag <- member_b64("tag", "key wrapping tag")
-    if (length(kw_iv) != 12L || length(tag) != 16L) {
+    if (length(gcmkw_iv) != 12L || length(tag) != 16L) {
       abort_zujose(
         "parse",
         "An A*GCMKW `iv` must be 12 bytes and its `tag` 16.",
         call = call
       )
     }
-    return(list(kw_iv = kw_iv, tag = tag))
+    return(list(gcmkw_iv = gcmkw_iv, tag = tag))
   }
   if (is_ecdh(alg)) {
     return(ecdh_params(header, call))
@@ -978,7 +981,7 @@ recover_cek <- function(alg, enc, key, encrypted_key, params = list()) {
       zucrypt_error = function(e) NULL
     )
   } else if (alg %in% names(gcmkw_key_bytes)) {
-    gcm_decrypt(key$k, params$kw_iv, encrypted_key, params$tag, NULL)
+    gcm_decrypt(key$k, params$gcmkw_iv, encrypted_key, params$tag, NULL)
   } else {
     kek <- pbes2_kek(alg, key$k, params$p2s, params$p2c)
     aes_key_unwrap(kek, encrypted_key)
