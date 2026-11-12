@@ -76,7 +76,12 @@ For \verb{PBES2-*} the key is the password, as an \code{oct} key:
 \code{jwk_oct(charToRaw(enc2utf8(password)))}. The iteration count is
 \code{p2c} in \code{header}, a whole number of at least 1000, and defaults to
 600 000. A recipient decrypting with \code{\link[=jwe_decrypt]{jwe_decrypt()}} accepts at most
-\code{jose_limits()$p2c} iterations, by default also 600 000.
+\code{jose_limits()$p2c} iterations, by default also 600 000. Other
+implementations cap \code{p2c} lower when they decrypt: Python's jwcrypto at
+16 384 and JavaScript's \code{jose} at 10 000 by default. A token for them
+needs \code{header = list(p2c = 10000)} or less, as in the example; the
+default stays high because the iteration count is a password-protected
+token's only defence against offline guessing.
 }
 \examples{
 key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
@@ -85,7 +90,8 @@ token
 jwe_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 
-# AES-GCM content encryption, under a password.
+# AES-GCM content encryption, under a password. A p2c of 10000 is one
+# that jwcrypto and JavaScript's jose also read.
 password <- jwk_oct(charToRaw("correct horse battery staple"))
 token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
                       enc = "A256GCM", header = list(p2c = 10000))

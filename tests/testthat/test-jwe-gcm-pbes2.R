@@ -526,3 +526,9 @@ test_that("a p2c beyond 2^32 - 1 is a parse error at any limit (#123)", {
     class = "zujose_error"
   )
 })
+
+test_that("the default p2c written is 600 000 (#140)", {
+  local_mocked_bindings(pbes2_kek = function(...) as.raw(1:16))
+  token <- jwe_encrypt("x", jwk_oct(charToRaw("pw")), "PBES2-HS256+A128KW")
+  expect_identical(jose_peek(token)$headers[[1]]$p2c, 600000L)
+})

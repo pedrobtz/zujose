@@ -32,6 +32,10 @@ ECDH_ALGS = ["ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW",
              "ECDH-ES+A256KW"]
 CURVE_KIDS = ["ec-p256", "ec-p384", "ec-p521", "x25519"]
 ALLOWED = jwe.default_allowed_algs + ["RSA1_5"]
+# ?jwe_encrypt documents p2c = 10000 as the count other implementations
+# read; oracle.R writes it, and it must be read under jwcrypto's default
+# cap, which this script never raises (#140).
+DOCUMENTED_P2C = 10000
 
 
 def cases():
@@ -60,6 +64,10 @@ def main(out):
             if (token.payload != PLAINTEXT or header["alg"] != row["alg"]
                     or header["enc"] != row["enc"]):
                 sys.exit("oracle.py: FAILED %s %s" % (row["alg"], row["enc"]))
+            if (row["alg"].startswith("PBES2")
+                    and header.get("p2c") != DOCUMENTED_P2C):
+                sys.exit("oracle.py: FAILED %s %s: p2c is not %d"
+                         % (row["alg"], row["enc"], DOCUMENTED_P2C))
             n += 1
     print("oracle.py: jwcrypto %s decrypted %d zujose tokens"
           % (version("jwcrypto"), n))

@@ -1,5 +1,10 @@
 # zujose 0.0.0.9000
 
+* `?jwe_encrypt` documents that other JOSE implementations cap PBES2 `p2c`
+  when they decrypt (jwcrypto at 16 384, JavaScript's `jose` at 10 000),
+  so a token for them needs `header = list(p2c = 10000)` or less. The
+  default stays 600 000 (#140).
+
 * `jwt_encode()` documents `key` as one `jwk`, and refuses `jws_signer()`s
   with a clear `zujose_argument_error`: a JWT is compact and has one
   signature. It inherited a list-of-signers `key` from `jws_sign()` that

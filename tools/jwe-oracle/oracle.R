@@ -110,7 +110,10 @@ encrypt_all <- function(dir) {
     function(i) {
       header <- list(kid = rows$kid[[i]])
       if (startsWith(rows$alg[[i]], "PBES2")) {
-        # jwcrypto refuses more than 16384 iterations.
+        # jwcrypto refuses more than 16384 iterations, and so zujose's
+        # default of 600 000; ?jwe_encrypt gives 10 000 as the interoperable
+        # count, which oracle.py checks jwcrypto reads at its default cap
+        # (#140).
         header$p2c <- 10000L
       }
       jwe_encrypt(

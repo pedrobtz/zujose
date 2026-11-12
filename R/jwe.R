@@ -33,7 +33,12 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' `jwk_oct(charToRaw(enc2utf8(password)))`. The iteration count is
 #' `p2c` in `header`, a whole number of at least 1000, and defaults to
 #' 600 000. A recipient decrypting with [jwe_decrypt()] accepts at most
-#' `jose_limits()$p2c` iterations, by default also 600 000.
+#' `jose_limits()$p2c` iterations, by default also 600 000. Other
+#' implementations cap `p2c` lower when they decrypt: Python's jwcrypto at
+#' 16 384 and JavaScript's `jose` at 10 000 by default. A token for them
+#' needs `header = list(p2c = 10000)` or less, as in the example; the
+#' default stays high because the iteration count is a password-protected
+#' token's only defence against offline guessing.
 #'
 #' @param plaintext The plaintext: a raw vector, or a single string taken
 #'   as UTF-8 text.
@@ -64,7 +69,8 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' jwe_decrypt(token, key, algorithms = "A128KW",
 #'              encryptions = "A128CBC-HS256")
 #'
-#' # AES-GCM content encryption, under a password.
+#' # AES-GCM content encryption, under a password. A p2c of 10000 is one
+#' # that jwcrypto and JavaScript's jose also read.
 #' password <- jwk_oct(charToRaw("correct horse battery staple"))
 #' token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
 #'                       enc = "A256GCM", header = list(p2c = 10000))
