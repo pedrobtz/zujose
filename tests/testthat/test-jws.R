@@ -412,7 +412,7 @@ test_that("jws_sign() refuses inconsistent requests", {
   )
   expect_type(jws_sign("x", key, "HS256", b64 = FALSE), "character")
   expect_error(jws_sign(1, key, "HS256"), class = "zujose_argument_error")
-  expect_error(jws_sign("x", "key", "HS256"), class = "zujose_key_error")
+  expect_error(jws_sign("x", "key", "HS256"), class = "zujose_argument_error")
   expect_error(
     jws_sign("x", jwk_oct(as.raw(1:32), alg = "HS512"), "HS256"),
     class = "zujose_policy_error"

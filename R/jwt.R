@@ -198,6 +198,7 @@ jwt_decode <- function(
 ) {
   call <- sys.call()
   check_algorithms(algorithms, "signature", call = call)
+  check_key_arg(key, call)
   check_decode_args(
     audience,
     issuer,
@@ -333,7 +334,9 @@ jwt_decoder <- function(
   decrypt = NULL,
   limits = jose_limits()
 ) {
-  check_algorithms(algorithms, "signature", call = sys.call())
+  call <- sys.call()
+  check_algorithms(algorithms, "signature", call = call)
+  check_key_arg(key, call)
   if (!is.null(decrypt) && !inherits(decrypt, "jwe_decryption")) {
     abort_zujose("argument", "`decrypt` must be made by jwe_decryption().")
   }

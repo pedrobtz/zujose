@@ -590,7 +590,7 @@ test_that("jwt_encode() takes one key, not a list of signers (#130)", {
     jwt_encode(list(a = 1), jws_signer(key, "HS256")),
     class = "zujose_argument_error"
   )
-  expect_error(jwt_encode(list(a = 1), "key"), class = "zujose_key_error")
+  expect_error(jwt_encode(list(a = 1), "key"), class = "zujose_argument_error")
 })
 
 test_that("claims refuses repeated or empty names before decoding (#118)", {

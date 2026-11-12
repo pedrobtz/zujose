@@ -346,15 +346,15 @@ test_that("EC and X25519 keys are generated, read and written", {
   expect_identical(as_jwk(jwk_pem(x))$members$x, x$members$x)
   expect_error(
     jwk_generate("EC", crv = "P-224"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwk_generate("OKP", crv = "Ed25519"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwk_generate("EC", crv = "P-384", alg = "ES256"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
 })
 

@@ -383,7 +383,10 @@ test_that("encryption refuses inconsistent requests", {
     ),
     class = "zujose_argument_error"
   )
-  expect_error(encrypt_fixed("x", "key", "A128KW"), class = "zujose_key_error")
+  expect_error(
+    encrypt_fixed("x", "key", "A128KW"),
+    class = "zujose_argument_error"
+  )
 })
 
 test_that("printing shows the header, not the plaintext", {

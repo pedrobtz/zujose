@@ -4,12 +4,18 @@
 #' `condition`, so a caller can catch all of them, or one kind, with
 #' [tryCatch()]. Match on the class, never on the message.
 #'
+#' One rule divides the classes: a mistake in the caller's own code is a
+#' `zujose_argument_error`, and anything wrong with what came off the wire
+#' is a token error, from `zujose_parse_error` on. So a key, header or
+#' claims argument of the wrong type is an argument error, while a malformed
+#' token is a parse error whatever its source.
+#'
 #' | Class | Fields | Raised when |
 #' |---|---|---|
-#' | `zujose_argument_error` | | an argument is of the wrong type, out of range, or inconsistent with another, such as `format = "compact"` with several recipients |
+#' | `zujose_argument_error` | | an argument is of the wrong type, out of range, or inconsistent with another, such as `format = "compact"` with several recipients, a `key` that is not a `jwk`, or a `header` member of the wrong type |
 #' | `zujose_parse_error` | | a token, header or key is not well formed, or is over a limit other than `keys` |
 #' | `zujose_policy_error` | | an algorithm is not allowed, a `crit` header is not understood, or a key does not fit the algorithm |
-#' | `zujose_key_error` | | a key is missing, malformed or too weak, or more keys fit a token than `jose_limits(keys = )` allows |
+#' | `zujose_key_error` | | a key is missing, malformed or too weak, or more keys fit a token than `jose_limits(keys = )` allows; a key that does not fit the token is a `zujose_policy_error` |
 #' | `zujose_signature_error` | | a signature or MAC does not verify |
 #' | `zujose_decrypt_error` | | decryption fails, for any reason, after the header has passed the policy checks |
 #' | `zujose_claim_error` | `claim` | a JWT claim is missing or does not match what the caller expects |

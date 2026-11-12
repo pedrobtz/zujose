@@ -8,20 +8,62 @@ test_that("jwk_oct() wraps a raw secret", {
 })
 
 test_that("jwk_oct() refuses what is not a key", {
-  for (bad in list("secret", raw(), 1:32, NULL)) {
-    expect_error(jwk_oct(bad), class = "zujose_key_error")
+  # A secret of the wrong type is the caller's mistake (#78); an empty
+  # one is no key.
+  for (bad in list("secret", 1:32, NULL)) {
+    expect_error(jwk_oct(bad), class = "zujose_argument_error")
   }
-  expect_error(jwk_oct(as.raw(1), kid = 1), class = "zujose_key_error")
+  expect_error(jwk_oct(raw()), class = "zujose_key_error")
+  expect_error(jwk_oct(as.raw(1), kid = 1), class = "zujose_argument_error")
   expect_error(
     jwk_oct(as.raw(1), alg = c("a", "b")),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwk_oct(as.raw(1), key_ops = "fly"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
   expect_error(
     jwk_oct(as.raw(1), key_ops = c("sign", "sign")),
+    class = "zujose_argument_error"
+  )
+})
+
+test_that("a key argument of the wrong R type is an argument error (#78)", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- jws_sign("x", key, "HS256")
+  jwe <- jwe_encrypt("x", key, "dir", "A128CBC-HS256")
+  calls <- list(
+    function() jwk_oct(1),
+    function() jwk_set(1),
+    function() jwk_set(key, "b"),
+    function() c(key, 1),
+    function() jwk_thumbprint(1),
+    function() as_jwk(123),
+    function() as_jwk(c("a", "b")),
+    function() as_jwk_set(1),
+    function() jwk_public("x"),
+    function() jwk_pem(1),
+    function() jwk_json(1),
+    function() jwk_with_kid(1, "a"),
+    function() jws_signer(1, "HS256"),
+    function() jwe_recipient(1, "dir"),
+    function() jws_sign("x", 1, "HS256"),
+    function() jwe_encrypt("x", 1, "dir"),
+    function() jwt_encode(list(a = 1), 1, "HS256"),
+    function() jws_verify(token, 1, "HS256"),
+    function() jwt_decode(token, 1, "HS256"),
+    function() jwt_decoder(1, "HS256"),
+    function() jwe_decrypt(jwe, 1, "dir", "A128CBC-HS256"),
+    function() jwe_decryption(1, "dir", "A128CBC-HS256")
+  )
+  for (i in seq_along(calls)) {
+    expect_error(calls[[i]](), class = "zujose_argument_error", info = i)
+  }
+  # A malformed or too weak key is still a key error.
+  expect_error(as_jwk('{"kty":"oct"}'), class = "zujose_key_error")
+  expect_error(
+    jws_sign("x", jwk_oct(as.raw(1:16)), "HS256"),
     class = "zujose_key_error"
   )
 })
@@ -90,8 +132,8 @@ test_that("malformed JWKs are key errors", {
   for (text in bad) {
     expect_error(as_jwk(text), class = "zujose_key_error", info = text)
   }
-  expect_error(as_jwk(c("a", "b")), class = "zujose_key_error")
-  expect_error(as_jwk(42), class = "zujose_key_error")
+  expect_error(as_jwk(c("a", "b")), class = "zujose_argument_error")
+  expect_error(as_jwk(42), class = "zujose_argument_error")
   expect_error(as_jwk(list(1, 2)), class = "zujose_key_error")
 })
 
@@ -115,7 +157,7 @@ test_that("jwk_json() writes only public members by default", {
   expect_true(all(c("kty", "n", "e") %in% names(public)))
 
   expect_error(jwk_json(jwk_oct(as.raw(1:4))), class = "zujose_key_error")
-  expect_error(jwk_json(rsa, private = NA), class = "zujose_key_error")
+  expect_error(jwk_json(rsa, private = NA), class = "zujose_argument_error")
 })
 
 test_that("jwk_public() strips secrets and refuses oct keys", {
@@ -126,14 +168,14 @@ test_that("jwk_public() strips secrets and refuses oct keys", {
     as_jwk(rfc7520_key(3))$members[c("n", "e")]
   )
   expect_error(jwk_public(jwk_oct(as.raw(1))), class = "zujose_key_error")
-  expect_error(jwk_public("x"), class = "zujose_key_error")
+  expect_error(jwk_public("x"), class = "zujose_argument_error")
 })
 
 test_that("jwk_with_kid() defaults to the thumbprint", {
   key <- jwk_with_kid(jwk_oct(as.raw(1:32)))
   expect_identical(key$kid, jwk_thumbprint(key))
   expect_identical(jwk_with_kid(key, "mine")$kid, "mine")
-  expect_error(jwk_with_kid(key, 1), class = "zujose_key_error")
+  expect_error(jwk_with_kid(key, 1), class = "zujose_argument_error")
 })
 
 # jwk_generate() (design §7.2) ---------------------------------------
@@ -195,8 +237,15 @@ test_that("a generated key signs, verifies and wraps", {
 })
 
 test_that("jwk_generate() refuses sizes and algorithms that do not fit", {
-  bad_sizes <- list(0, 64, 120, 129, 255.5, -256, NA, Inf, "256", c(256, 512))
-  for (size in bad_sizes) {
+  # A size that is not one number is the caller's mistake (#78); one
+  # that makes no key, or too short a key, is a key error.
+  for (size in list(NA, Inf, "256", c(256, 512))) {
+    expect_error(
+      jwk_generate("oct", size = size),
+      class = "zujose_argument_error"
+    )
+  }
+  for (size in list(0, 64, 120, 129, 255.5, -256)) {
     expect_error(
       jwk_generate("oct", size = size),
       class = "zujose_key_error"
@@ -219,14 +268,14 @@ test_that("jwk_generate() refuses sizes and algorithms that do not fit", {
   for (alg in c("RS256", "ES256", "ECDH-ES", "A128GCMX")) {
     expect_error(
       jwk_generate("oct", alg = alg),
-      class = "zujose_key_error"
+      class = "zujose_argument_error"
     )
   }
   expect_error(
     jwk_generate("oct", crv = "P-256"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
-  expect_error(jwk_generate("DSA"), class = "zujose_key_error")
+  expect_error(jwk_generate("DSA"), class = "zujose_argument_error")
 })
 
 test_that("EC and OKP keys are generated on the curves zujose has", {
@@ -234,7 +283,7 @@ test_that("EC and OKP keys are generated on the curves zujose has", {
   expect_identical(jwk_generate("OKP")$members$crv, "X25519")
   expect_error(
     jwk_generate("OKP", crv = "Ed25519"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
 })
 

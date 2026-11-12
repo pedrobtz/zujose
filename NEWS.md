@@ -1,5 +1,14 @@
 # zujose 0.0.0.9000
 
+* A key argument of the wrong R type is a `zujose_argument_error`, as
+  `?zujose_error` now states once: a mistake in the caller's own code is
+  an argument error, and anything wrong with a token is a token error.
+  `jwk_oct(1)`, `jwk_set(1)`, `jwk_thumbprint(1)`, `as_jwk(123)`, a `key`
+  that is not a `jwk` (or, when verifying or decrypting, a `jwk_set` or
+  function), and `jwk_generate()`'s `kty`, `crv`, `alg` and `size` of the
+  wrong type or out of their range raised `zujose_key_error`. A malformed
+  or too weak key is still a `zujose_key_error` (#78).
+
 * `jws_verify()` refuses a flattened or general JWS without a `payload`
   member, given no `payload` argument, with `zujose_parse_error`. It
   verified the token over the empty payload. An empty `payload` member is

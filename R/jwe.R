@@ -191,7 +191,7 @@ encrypt_jwe <- function(
     unname(key)
   } else {
     abort_zujose(
-      "key",
+      "argument",
       "`key` must be a jwk or a list of jwe_recipient() objects.",
       call = call
     )
@@ -515,6 +515,7 @@ jwe_decrypt <- function(
   call <- sys.call()
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
+  check_key_arg(key, call)
   decrypt_jwe(token, key, algorithms, encryptions, limits, call)
 }
 
@@ -534,13 +535,7 @@ jwe_decryption <- function(key, algorithms, encryptions) {
   call <- sys.call()
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
-  if (!is.function(key) && !inherits(key, c("jwk", "jwk_set"))) {
-    abort_zujose(
-      "key",
-      "`key` must be a jwk, a jwk_set or a resolver function.",
-      call = call
-    )
-  }
+  check_key_arg(key, call)
   structure(
     list(key = key, algorithms = algorithms, encryptions = encryptions),
     class = "jwe_decryption"

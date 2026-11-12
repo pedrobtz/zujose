@@ -9,12 +9,16 @@ Every error zujose raises inherits from \code{zujose_error}, then \code{error} a
 \code{\link[=tryCatch]{tryCatch()}}. Match on the class, never on the message.
 }
 \details{
-\tabular{lll}{
+One rule divides the classes: a mistake in the caller's own code is a
+\code{zujose_argument_error}, and anything wrong with what came off the wire
+is a token error, from \code{zujose_parse_error} on. So a key, header or
+claims argument of the wrong type is an argument error, while a malformed
+token is a parse error whatever its source.\tabular{lll}{
    Class \tab Fields \tab Raised when \cr
-   \code{zujose_argument_error} \tab  \tab an argument is of the wrong type, out of range, or inconsistent with another, such as \code{format = "compact"} with several recipients \cr
+   \code{zujose_argument_error} \tab  \tab an argument is of the wrong type, out of range, or inconsistent with another, such as \code{format = "compact"} with several recipients, a \code{key} that is not a \code{jwk}, or a \code{header} member of the wrong type \cr
    \code{zujose_parse_error} \tab  \tab a token, header or key is not well formed, or is over a limit other than \code{keys} \cr
    \code{zujose_policy_error} \tab  \tab an algorithm is not allowed, a \code{crit} header is not understood, or a key does not fit the algorithm \cr
-   \code{zujose_key_error} \tab  \tab a key is missing, malformed or too weak, or more keys fit a token than \code{jose_limits(keys = )} allows \cr
+   \code{zujose_key_error} \tab  \tab a key is missing, malformed or too weak, or more keys fit a token than \code{jose_limits(keys = )} allows; a key that does not fit the token is a \code{zujose_policy_error} \cr
    \code{zujose_signature_error} \tab  \tab a signature or MAC does not verify \cr
    \code{zujose_decrypt_error} \tab  \tab decryption fails, for any reason, after the header has passed the policy checks \cr
    \code{zujose_claim_error} \tab \code{claim} \tab a JWT claim is missing or does not match what the caller expects \cr

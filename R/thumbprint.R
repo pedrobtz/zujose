@@ -39,7 +39,7 @@ jwk_thumbprint <- function(key, hash = "sha256", uri = FALSE) {
   check_flag(uri, "uri", call)
   if (!is_string(hash) || !hash %in% names(thumbprint_hashes)) {
     abort_zujose(
-      "key",
+      "argument",
       "`hash` must be \"sha256\", \"sha384\" or \"sha512\".",
       call = call
     )

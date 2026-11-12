@@ -77,7 +77,7 @@ jws_sign <- function(
     unname(key)
   } else {
     abort_zujose(
-      "key",
+      "argument",
       "`key` must be a jwk or a list of jws_signer() objects.",
       call = call
     )
@@ -294,6 +294,7 @@ jws_verify <- function(
 ) {
   call <- sys.call()
   check_algorithms(algorithms, "signature", call = call)
+  check_key_arg(key, call)
   require <- arg_choice(require, "require", call)
   verify_jws(token, key, algorithms, payload, require, limits, call)
 }

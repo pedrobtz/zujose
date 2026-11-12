@@ -24,7 +24,11 @@
 #' set[["b"]]
 #' length(set)
 jwk_set <- function(...) {
-  items <- list(...)
+  combine_keys(list(...), sys.call())
+}
+
+# The body of jwk_set(), shared with its c() methods.
+combine_keys <- function(items, call) {
   keys <- list()
   for (item in items) {
     if (inherits(item, "jwk_set")) {
@@ -33,9 +37,9 @@ jwk_set <- function(...) {
       keys <- c(keys, list(item))
     } else {
       abort_zujose(
-        "key",
+        "argument",
         "`...` must hold jwk or jwk_set objects.",
-        call = sys.call()
+        call = call
       )
     }
   }
@@ -56,9 +60,19 @@ as_jwk_set <- function(x) {
   json <- is.character(x)
   if (json) {
     if (!is_string(x)) {
-      abort_zujose("key", "A JWK Set must be a single string.", call = call)
+      abort_zujose(
+        "argument",
+        "A JWK Set must be a single string.",
+        call = call
+      )
     }
     x <- json_key_object(x, "JWK Set", call)
+  } else if (!is.list(x)) {
+    abort_zujose(
+      "argument",
+      "`x` must be JWK Set text, a parsed JWK Set or a jwk_set.",
+      call = call
+    )
   }
   if (!is_json_object(x) || has_repeated_names(x)) {
     abort_zujose(
@@ -107,7 +121,11 @@ as_jwk_set <- function(x) {
     return(keys[[i]])
   }
   if (!is_string(i)) {
-    abort_zujose("key", "Select a key with a single `kid`.", call = sys.call())
+    abort_zujose(
+      "argument",
+      "Select a key with a single `kid`.",
+      call = sys.call()
+    )
   }
   kids <- vapply(keys, function(key) key$kid %||% NA_character_, "")
   found <- which(kids == i)
@@ -149,12 +167,12 @@ as_jwk_set <- function(x) {
 
 #' @export
 c.jwk_set <- function(...) {
-  jwk_set(...)
+  combine_keys(list(...), sys.call())
 }
 
 #' @export
 c.jwk <- function(...) {
-  jwk_set(...)
+  combine_keys(list(...), sys.call())
 }
 
 #' @export
