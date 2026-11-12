@@ -157,6 +157,8 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   claims set and decodes it at a fixed time, for the claim-check tests.
   `oracle_pem()`, `oracle_key()` and `oracle_tokens()` read the PyJWT
   fixtures, and `oracle_now()` is a time before their `exp`.
+  `oracle_thumbprints()` reads the jwcrypto thumbprints that
+  `tools/make-jwk-thumbprints.py` writes.
   `rfc7520_text()` reads the §5 plaintexts and password, and
   `rfc7520_factor()` the generated factors (CEKs, IVs, salts, encrypted
   keys); `tools/rfc7520-fixtures.R` extracts both. `pbes2_token()` builds a

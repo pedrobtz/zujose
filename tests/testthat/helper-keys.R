@@ -75,3 +75,13 @@ rsa_2040_jwk <- function() {
   )
   as_jwk(sprintf('{"kty":"RSA","n":"%s","e":"AQAB"}', n))
 }
+
+# RFC 7638 thumbprints jwcrypto computed (tools/make-jwk-thumbprints.py):
+# one row per key and hash, with the key as jwcrypto wrote it.
+oracle_thumbprints <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "thumbprints.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}

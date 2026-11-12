@@ -88,7 +88,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | JWK Set parse and emit                    | RFC 7520 keys as one set; RFC 7517 §5 skip rule; round trip                             | tests/testthat/test-keyset.R                                  |
 | JWK Set parse, published sets             | RFC 7517 Appendix A sets, member by member                                              | gap #104                                                        |
 | RFC 7638 thumbprint, RSA                  | RFC 7638 §3.1 value; RFC 9278 URI                                                       | tests/testthat/test-thumbprint.R                              |
-| Thumbprint, EC, OKP and oct               | RFC 8037 A.3 and jwcrypto's `thumbprint()`                                              | gap #105                                                        |
+| Thumbprint, EC, OKP and oct               | RFC 8037 A.3 value; jwcrypto's `thumbprint()` for P-256 to P-521, X25519, Ed25519, oct  | tests/testthat/test-thumbprint.R                              |
 | JWT claim validation                      | RFC 7519 §3.1; hand straddles of `exp`, `nbf`, `iat` at the leeway                      | tests/testthat/test-jwt.R                                     |
 | JWT claim verdicts                        | PyJWT's accept or reject over a grid of claims, times and leeways                       | gap #106                                                        |
 | Nested JWT decode                         | RFC 7520 §6, PS256 inside RSA-OAEP, to its `iss`                                        | tests/testthat/test-rsa.R, test-jwt-encrypted.R               |

@@ -14,6 +14,51 @@ test_that("RFC 9278 §3 thumbprint URI", {
   )
 })
 
+test_that("RFC 8037 A.3 Ed25519 thumbprint", {
+  # zujose keeps Ed25519 keys without using them, and thumbprints them
+  # from their members (#105).
+  key <- as_jwk(paste0(
+    '{"kty":"OKP","crv":"Ed25519",',
+    '"x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}'
+  ))
+  expect_identical(
+    jwk_thumbprint(key),
+    "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k"
+  )
+})
+
+test_that("every key type's thumbprint is jwcrypto's, under every hash", {
+  rows <- oracle_thumbprints()
+  expect_setequal(
+    unique(rows$id),
+    c(
+      "rsa-2048",
+      "ec-p256",
+      "ec-p384",
+      "ec-p521",
+      "x25519",
+      "ed25519",
+      "oct-16",
+      "oct-32",
+      "oct-64"
+    )
+  )
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    info <- paste(row$id, row$hash)
+    key <- as_jwk(row$jwk)
+    expect_identical(jwk_thumbprint(key, row$hash), row$thumbprint, info = info)
+    if (key$kty != "oct") {
+      public <- as_jwk(jwk_json(key))
+      expect_identical(
+        jwk_thumbprint(public, row$hash),
+        row$thumbprint,
+        info = info
+      )
+    }
+  }
+})
+
 test_that("a private key has its public key's thumbprint", {
   expect_identical(
     jwk_thumbprint(as_jwk(rfc7520_key(4))),
