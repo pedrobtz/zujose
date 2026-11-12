@@ -1,0 +1,6 @@
+.libPaths(c("/private/tmp/claude-501/-Users-pbtz-src-github-com-pedrobtz-zujose/d0fc5964-95dc-448e-aa22-7084d328c0dd/scratchpad/hunt/lib", .libPaths())); library(zujose)
+hexs <- function(x) paste(as.character(x), collapse = "")
+OUT <- list()
+add <- function(...) OUT[[length(OUT) + 1L]] <<- list(...)
+flush_out <- function(path) writeLines(zujson::json_write(OUT), path)
+try_ <- function(expr) tryCatch(expr, error = function(e) structure(list(msg = conditionMessage(e), cls = class(e)), class = "err"))
