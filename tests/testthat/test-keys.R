@@ -76,6 +76,29 @@ test_that("printing a key never shows its secret", {
   expect_snapshot(print(key))
 })
 
+test_that("printing private EC and X25519 keys, or a set, hides secrets", {
+  shown <- function(x) {
+    c(format(x), capture.output(print(x)))
+  }
+  ec <- as_jwk(rfc7520_key(2))
+  x25519 <- jwk_generate("OKP", crv = "X25519")
+  for (key in list(ec, x25519)) {
+    d <- key$members$d
+    expect_true(is.character(d) && nzchar(d))
+    out <- shown(key)
+    expect_false(any(grepl(d, out, fixed = TRUE)), info = key$kty)
+    expect_true(any(grepl("private: yes", out, fixed = TRUE)))
+  }
+
+  secret <- jwk_oct(charToRaw("correct horse battery staple!!!!"))
+  set <- jwk_set(secret, ec, x25519)
+  out <- shown(set)
+  for (s in c(b64url_encode(secret$k), ec$members$d, x25519$members$d)) {
+    expect_false(any(grepl(s, out, fixed = TRUE)))
+  }
+  expect_false(any(grepl("horse", out, fixed = TRUE)))
+})
+
 test_that("RFC 7520 §3.5 and §3.6 symmetric keys read", {
   mac <- as_jwk(rfc7520_key(5))
   expect_identical(mac$kty, "oct")
