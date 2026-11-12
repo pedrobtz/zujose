@@ -136,3 +136,35 @@ test_that("ECDH-ES derives jwcrypto's keys, over 256 bits too", {
     }
   }
 })
+
+# jwcrypto's JWE JSON serializations (tools/make-jwe-json.py, #101); the
+# writing direction is tools/jwe-oracle/'s, in development.
+
+test_that("zujose decrypts jwcrypto's JWE JSON for each recipient alone", {
+  rows <- oracle_jwe_json()
+  expect_setequal(
+    vapply(rows$token, function(t) jose_peek(t)$serialization, ""),
+    c("flattened", "general")
+  )
+  n <- 0L
+  for (i in seq_len(nrow(rows))) {
+    row <- rows[i, ]
+    keys <- as_jwk_set(row$keys)
+    algs <- strsplit(row$algs, ",", fixed = TRUE)[[1]]
+    kids <- strsplit(row$kids, ",", fixed = TRUE)[[1]]
+    for (j in seq_along(kids)) {
+      info <- paste(row$id, kids[[j]])
+      out <- jwe_decrypt(row$token, keys[[kids[[j]]]], algs, row$enc)
+      expect_identical(out$plaintext, hex(row$plaintext), info = info)
+      expect_identical(out$alg, algs[[j]], info = info)
+      expect_identical(out$enc, row$enc, info = info)
+      expect_identical(out$kid, kids[[j]], info = info)
+      # The protected, shared and per-recipient headers, merged.
+      expect_identical(out$header$cty, "text/plain", info = info)
+      expect_identical(out$header[["x-shared"]], "unprotected", info = info)
+      expect_identical(out$header[["x-recipient"]], kids[[j]], info = info)
+      n <- n + 1L
+    }
+  }
+  expect_identical(n, 9L)
+})

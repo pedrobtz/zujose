@@ -164,7 +164,8 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   `rfc_value()` and `rfc_octets()` read the RFC 7517 Appendix C and RFC
   7516 A.1 values the same script extracts. `oracle_jwe_vectors()` reads
   the jwcrypto known answers that `tools/make-jwe-vectors.py` writes with
-  fixed keys and ephemeral keys.
+  fixed keys and ephemeral keys, and `oracle_jwe_json()` the jwcrypto
+  JWE JSON serializations that `tools/make-jwe-json.py` writes.
   `rfc7520_text()` reads the §5 plaintexts and password, and
   `rfc7520_factor()` the generated factors (CEKs, IVs, salts, encrypted
   keys); `tools/rfc7520-fixtures.R` extracts both. `pbes2_token()` builds a
@@ -242,7 +243,9 @@ because a hand-rolled one does not count as the pre-submission check. This packa
 calls `r-cmd-check.yml@v1` and `coverage.yml@v1`. `pkgdown.yaml` is the
 usethis workflow, not an r-actions one. `jwe-oracle.yaml` is bespoke, as
 r-actions has nothing like it: it runs `tools/jwe-oracle/`, where zujose
-and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair, on
+and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair,
+and flattened and general JSON serializations with `aad` and unprotected
+headers, on
 pull requests that touch `R/` or the oracle, and by hand. It is development-only
 and never part of R CMD check.
 

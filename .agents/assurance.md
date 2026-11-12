@@ -66,7 +66,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | JWE JSON parse and decrypt                | RFC 7516 A.4, RFC 7520 general and flattened figures, §5.13 three recipients            | tests/testthat/test-jwe.R, test-ec.R                          |
 | JWE AAD from the received header bytes    | jwcrypto's non-canonical headers decrypt (`jwe-noncanonical.tsv`)                       | tests/testthat/test-jwe.R                                     |
 | JWE compact emit                          | RFC 7516 A.3 byte for byte at a fixed CEK and IV; jwcrypto, dev, decrypts every pair    | tests/testthat/test-jwe.R, tools/jwe-oracle/                  |
-| JWE JSON emit and parse                   | jwcrypto exchanging general and flattened tokens, `aad` and unprotected headers         | gap #101                                                        |
+| JWE JSON emit and parse                   | jwcrypto's flattened and general tokens (`jwe-json.tsv`) per recipient; jwcrypto, dev, both ways | tests/testthat/test-oracle.R, tools/jwe-oracle/               |
 | JWE failure uniformity                    | one class and one message compared across causes and algorithms                         | tests/testthat/test-jwe.R, test-ec.R, test-aes.R              |
 | AES key wrap, A*KW                        | RFC 3394 §4.1 to §4.6 both ways; RFC 7520 §5.8 wrapped key                              | tests/testthat/test-aes.R, test-jwe-gcm-pbes2.R               |
 | A*GCMKW                                   | RFC 7520 §5.7 decrypted and wrap reproduced; jwcrypto, dev, for 128 and 192             | tests/testthat/test-jwe-gcm-pbes2.R, tools/jwe-oracle/        |

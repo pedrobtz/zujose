@@ -4,11 +4,18 @@
 #
 #   Rscript tools/jwe-oracle/oracle.R keys    <dir>   write keys.jwks
 #   Rscript tools/jwe-oracle/oracle.R encrypt <dir>   write r-tokens.tsv
+#                                                     and r-json.tsv
 #   Rscript tools/jwe-oracle/oracle.R decrypt <dir>   check py-tokens.tsv
+#                                                     and py-json.tsv
 #
 # Between `encrypt` and `decrypt`, tools/jwe-oracle/oracle.py decrypts
-# r-tokens.tsv and writes py-tokens.tsv. Every token has the same
-# plaintext; `decrypt` fails unless each token decrypts to it.
+# r-tokens.tsv and r-json.tsv and writes py-tokens.tsv and py-json.tsv.
+# Every token has the same plaintext; `decrypt` fails unless each token
+# decrypts to it. The *-json.tsv files hold the JSON serializations
+# (#101): flattened and general, one and three recipients, with and
+# without `aad`, with a shared unprotected header and a per-recipient
+# header on every recipient, each JSON token decrypted for each of its
+# recipients alone.
 
 pkgload::load_all(quiet = TRUE)
 
@@ -136,6 +143,136 @@ encrypt_all <- function(dir) {
   cat(sprintf("oracle.R: zujose encrypted %d tokens\n", nrow(rows)))
 }
 
+# The JSON serializations, for every `enc`: id, format, whether there is
+# `aad`, and each recipient's alg and kid. Each kid is a key of keys.jwks.
+json_cases <- list(
+  list(
+    id = "flattened-aad",
+    format = "flattened",
+    aad = TRUE,
+    recipients = list(c("A128KW", "A128KW"))
+  ),
+  list(
+    id = "flattened",
+    format = "flattened",
+    aad = FALSE,
+    recipients = list(c("ECDH-ES", "x25519"))
+  ),
+  list(
+    id = "general-one-aad",
+    format = "general",
+    aad = TRUE,
+    recipients = list(c("RSA-OAEP-256", "rsa"))
+  ),
+  list(
+    id = "general-three-aad",
+    format = "general",
+    aad = TRUE,
+    recipients = list(
+      c("A256GCMKW", "A256GCMKW"),
+      c("RSA-OAEP", "rsa"),
+      c("ECDH-ES+A192KW", "ec-p384")
+    )
+  ),
+  list(
+    id = "general-three",
+    format = "general",
+    aad = FALSE,
+    recipients = list(
+      c("PBES2-HS256+A128KW", "PBES2-HS256+A128KW"),
+      c("A192KW", "A192KW"),
+      c("ECDH-ES+A128KW", "ec-p521")
+    )
+  )
+)
+json_aad <- "zujose JWE oracle aad: été"
+
+encrypt_json <- function(dir) {
+  keys <- read_keys(dir)
+  rows <- list()
+  for (enc in encs) {
+    for (case in json_cases) {
+      recipients <- lapply(case$recipients, function(r) {
+        header <- list(`x-recipient` = r[[2]])
+        if (startsWith(r[[1]], "PBES2")) {
+          header$p2c <- 10000L
+        }
+        jwe_recipient(recipient_key(keys[[r[[2]]]]), r[[1]], header = header)
+      })
+      token <- jwe_encrypt(
+        plaintext,
+        recipients,
+        enc = enc,
+        header = list(cty = "text/plain"),
+        unprotected = list(`x-shared` = "unprotected"),
+        aad = if (case$aad) json_aad,
+        format = case$format
+      )
+      rows[[length(rows) + 1L]] <- data.frame(
+        id = case$id,
+        enc = enc,
+        algs = paste(vapply(case$recipients, `[[`, "", 1L), collapse = ","),
+        kids = paste(vapply(case$recipients, `[[`, "", 2L), collapse = ","),
+        aad = if (case$aad) json_aad else "",
+        token = token
+      )
+    }
+  }
+  rows <- do.call(rbind, rows)
+  utils::write.table(
+    rows,
+    file.path(dir, "r-json.tsv"),
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE,
+    fileEncoding = "UTF-8"
+  )
+  cat(sprintf("oracle.R: zujose encrypted %d JSON tokens\n", nrow(rows)))
+}
+
+decrypt_json <- function(dir) {
+  keys <- read_keys(dir)
+  rows <- utils::read.delim(
+    file.path(dir, "py-json.tsv"),
+    colClasses = "character",
+    quote = "",
+    encoding = "UTF-8"
+  )
+  n <- 0L
+  for (i in seq_len(nrow(rows))) {
+    algs <- strsplit(rows$algs[[i]], ",", fixed = TRUE)[[1]]
+    kids <- strsplit(rows$kids[[i]], ",", fixed = TRUE)[[1]]
+    for (j in seq_along(kids)) {
+      out <- jwe_decrypt(
+        rows$token[[i]],
+        keys[[kids[[j]]]],
+        algorithms = algs,
+        encryptions = rows$enc[[i]]
+      )
+      if (
+        !identical(out$plaintext, charToRaw(enc2utf8(plaintext))) ||
+          !identical(out$alg, algs[[j]]) ||
+          !identical(out$header[["x-shared"]], "unprotected") ||
+          !identical(out$header[["x-recipient"]], kids[[j]]) ||
+          !identical(out$header$cty, "text/plain")
+      ) {
+        stop(sprintf(
+          "oracle.R: FAILED %s %s %s",
+          rows$id[[i]],
+          rows$enc[[i]],
+          kids[[j]]
+        ))
+      }
+      n <- n + 1L
+    }
+  }
+  cat(sprintf(
+    "oracle.R: zujose decrypted %d jwcrypto JSON tokens for %d recipients\n",
+    nrow(rows),
+    n
+  ))
+}
+
 decrypt_all <- function(dir) {
   keys <- read_keys(dir)
   rows <- utils::read.delim(
@@ -169,7 +306,13 @@ if (length(args) != 2L) {
 switch(
   args[[1]],
   keys = write_keys(args[[2]]),
-  encrypt = encrypt_all(args[[2]]),
-  decrypt = decrypt_all(args[[2]]),
+  encrypt = {
+    encrypt_all(args[[2]])
+    encrypt_json(args[[2]])
+  },
+  decrypt = {
+    decrypt_all(args[[2]])
+    decrypt_json(args[[2]])
+  },
   stop("usage: oracle.R keys|encrypt|decrypt <dir>")
 )

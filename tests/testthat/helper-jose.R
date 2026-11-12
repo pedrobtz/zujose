@@ -588,3 +588,13 @@ oracle_jwe_vectors <- function() {
     quote = ""
   )
 }
+
+# JWE JSON serializations jwcrypto made (tools/make-jwe-json.py): flattened
+# and general, one and three recipients, with and without `aad`.
+oracle_jwe_json <- function() {
+  utils::read.delim(
+    test_path("fixtures", "oracle", "jwe-json.tsv"),
+    colClasses = "character",
+    quote = ""
+  )
+}
