@@ -52,7 +52,10 @@ test_that("JWS, JWE and JWK refusals agree with Wycheproof's JOSE vectors", {
     # Design section 8.3: a token's `kid` picks the candidates in a key
     # set and only keys that fit its `alg` are tried, so a set mixing HMAC
     # and EC keys, or two keys sharing a `kid`, is not ambiguous. Wycheproof
-    # flags these Ambiguous: not defined by the RFCs.
+    # flags these Ambiguous: not defined by the RFCs. RFC 7517 section 4.5
+    # makes distinct kids a SHOULD and allows one across key types, and
+    # jwcrypto, PyJWT, panva jose, go-jose and Nimbus all accept both.
+    # Decided on pull request #143.
     "json_web_key_test.json 1" = "a mixed key set",
     "json_web_crypto_test.json 47" = "a mixed key set",
     "json_web_key_test.json 4" = "a repeated kid",
@@ -61,13 +64,16 @@ test_that("JWS, JWE and JWK refusals agree with Wycheproof's JOSE vectors", {
     # Wycheproof's key names another `alg` than the RFC 7520 token it
     # verifies: PS256 for the PS384 figure 20, and ES521, which does not
     # exist, for the ES512 figure 27. A key's `alg` binds it (design 8.2).
+    # Reported as C2SP/wycheproof#288, fixed in C2SP/wycheproof#290.
     "json_web_signature_test.json 346" = "the key's alg disagrees",
     "json_web_signature_test.json 347" = "the key's alg disagrees",
     "json_web_signature_test.json 350" = "the key's alg disagrees",
     "json_web_signature_test.json 351" = "the key's alg disagrees",
     # Wycheproof's own errors at this commit: the "invalidBase64Padding"
     # tokens are byte for byte the valid tcId 357, and the two "valid"
-    # tokens hold a `?`, which Base64url does not have.
+    # tokens hold a `?`, which Base64url does not have. Reported as
+    # C2SP/wycheproof#236, fixed in C2SP/wycheproof#289. Drop these four,
+    # and the four above, once the pin moves past both fixes.
     "json_web_signature_test.json 367" = "same token as tcId 357",
     "json_web_signature_test.json 370" = "same token as tcId 357",
     "json_web_signature_test.json 372" = "not Base64url",
