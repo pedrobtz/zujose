@@ -141,11 +141,20 @@ rsa_members <- function(ck) {
 }
 
 # RFC 7518 §3.3: at least 2048 bits, for any use.
+rsa_min_bits <- 2048L
+
+rsa_key_strong <- function(key) {
+  (key$bits %||% 0) >= rsa_min_bits
+}
+
 check_rsa_size <- function(key, call) {
-  if ((key$bits %||% 0) < 2048) {
+  if (!rsa_key_strong(key)) {
     abort_zujose(
       "key",
-      "An RSA key must be at least 2048 bits (RFC 7518 section 3.3).",
+      sprintf(
+        "An RSA key must be at least %d bits (RFC 7518 section 3.3).",
+        rsa_min_bits
+      ),
       call = call
     )
   }
@@ -340,10 +349,10 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
       call = call
     )
   }
-  size <- size %||% 2048
+  size <- size %||% rsa_min_bits
   check_size_arg(size, call)
   ok <- size %% 8 == 0 &&
-    size >= 2048 &&
+    size >= rsa_min_bits &&
     size <= 4096
   if (!ok) {
     abort_zujose(

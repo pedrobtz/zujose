@@ -1012,8 +1012,8 @@ rsa_kem <- c("RSA-OAEP" = "sha1", "RSA-OAEP-256" = "sha256", "RSA1_5" = NA)
 
 is_rsa_kem <- function(alg) alg %in% names(rsa_kem)
 
-# Whether `key` can manage the CEK for `alg`. For RSA: at least 2048 bits,
-# and for decryption the private key.
+# Whether `key` can manage the CEK for `alg`. For RSA: at least
+# `rsa_min_bits`, and for decryption the private key.
 kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
   if (is_ecdh(alg)) {
     return(
@@ -1023,7 +1023,7 @@ kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
     )
   }
   if (is_rsa_kem(alg)) {
-    return((key$bits %||% 0) >= 2048 && (!decrypt || has_private(key)))
+    return(rsa_key_strong(key) && (!decrypt || has_private(key)))
   }
   need <- kek_bytes(alg, enc)
   if (is.na(need)) length(key$k) >= 1L else length(key$k) == need

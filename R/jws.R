@@ -590,21 +590,22 @@ jws_verify_bytes <- function(alg, key, input, signature, call) {
   )
 }
 
-# RFC 7518 §3.2: an HMAC key at least as long as the hash output.
 # Whether `key` meets the minimum strength for signature algorithm `alg`:
-# the hash size for HMAC (RFC 7518 section 3.2), 2048 bits for RSA (3.3).
+# the hash size for HMAC (RFC 7518 section 3.2), `rsa_min_bits` for RSA
+# (3.3).
 sig_key_strong <- function(alg, key) {
   if (alg %in% names(hmac_min_bytes)) {
     return(length(key$k) >= hmac_min_bytes[[alg]])
   }
   if (alg %in% names(rsa_sig_hash)) {
-    return((key$bits %||% 0) >= 2048)
+    return(rsa_key_strong(key))
   }
   TRUE
 }
 
+# RFC 7518 §3.2: an HMAC key at least as long as the hash output.
 check_hmac_key <- function(key, alg, call) {
-  if (length(key$k) < hmac_min_bytes[[alg]]) {
+  if (!sig_key_strong(alg, key)) {
     abort_zujose(
       "key",
       sprintf(
