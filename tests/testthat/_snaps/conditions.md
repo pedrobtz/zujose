@@ -3,7 +3,15 @@
     Code
       conditionMessage(err)
     Output
-      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.4.0)."
+      [1] "Algorithm \"RS256\" needs zucrypt (>= 0.1.1)."
+
+# a bad format or require is an argument error
+
+    Code
+      jws_sign("x", key, format = "bogus")
+    Condition
+      Error in `jws_sign()`:
+      ! `format` must be one of "compact", "flattened", "general".
 
 # argument errors say which argument is wrong
 
@@ -32,12 +40,4 @@
     Condition
       Error in `jwk_thumbprint()`:
       ! `uri` must be TRUE or FALSE.
-
-# a bad format or require is an argument error
-
-    Code
-      jws_sign("x", key, format = "bogus")
-    Condition
-      Error in `jws_sign()`:
-      ! `format` must be one of "compact", "flattened", "general".
 

@@ -47,12 +47,12 @@ test_that("decryption failures share one class and one message", {
 
 test_that("unsupported algorithms name the zucrypt version they need", {
   err <- expect_error(
-    abort_unsupported("RS256", "0.4.0"),
+    abort_unsupported("RS256", "0.1.1"),
     class = "zujose_unsupported_error"
   )
   expect_s3_class(err, "zujose_error")
   expect_identical(err$algorithm, "RS256")
-  expect_identical(err$needs, "0.4.0")
+  expect_identical(err$needs, "0.1.1")
   expect_snapshot(conditionMessage(err))
 })
 
