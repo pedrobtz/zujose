@@ -1,0 +1,4 @@
+file	source	generator
+keys.tsv	C2SP Wycheproof a3d5d1423f2592d6646836a45a21a1b209da9f4d testvectors_v1/, the keys of the files below	tools/make-wycheproof.py
+signatures.tsv	C2SP Wycheproof a3d5d1423f2592d6646836a45a21a1b209da9f4d testvectors_v1/ecdsa_secp256r1_sha256_p1363_test.json, ecdsa_secp384r1_sha384_p1363_test.json, ecdsa_secp521r1_sha512_p1363_test.json, rsa_signature_2048_sha256_test.json, rsa_signature_2048_sha384_test.json, rsa_signature_2048_sha512_test.json, rsa_pss_2048_sha256_mgf1_32_test.json, rsa_pss_2048_sha256_mgf1_0_test.json, rsa_pss_2048_sha384_mgf1_48_test.json, rsa_pss_4096_sha512_mgf1_64_test.json, hmac_sha256_test.json, hmac_sha384_test.json, hmac_sha512_test.json	tools/make-wycheproof.py
+jose.tsv	C2SP Wycheproof a3d5d1423f2592d6646836a45a21a1b209da9f4d testvectors_v1/json_web_signature_test.json, json_web_encryption_test.json, json_web_key_test.json, json_web_crypto_test.json	tools/make-wycheproof.py

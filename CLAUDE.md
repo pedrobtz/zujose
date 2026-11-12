@@ -159,7 +159,10 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   fixtures, and `oracle_now()` is a time before their `exp`.
   `oracle_zujose_tokens()` reads the tokens zujose signed for PyJWT to
   verify (`tools/make-zujose-tokens.R`), and `oracle_claims()` PyJWT's
-  claim verdicts (`tools/make-claim-verdicts.py`).
+  claim verdicts (`tools/make-claim-verdicts.py`). `wycheproof_table()`
+  reads a Wycheproof fixture (`keys`, `signatures` or `jose`) and
+  `wycheproof_key()` one of its keys, both written by
+  `tools/make-wycheproof.py` from a pinned Wycheproof commit.
   `oracle_thumbprints()` reads the jwcrypto thumbprints that
   `tools/make-jwk-thumbprints.py` writes. `rfc7517_jwks()` reads the RFC
   7517 Appendix A sets, which `tools/rfc7516-7517-fixtures.R` extracts,

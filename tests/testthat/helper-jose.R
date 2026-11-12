@@ -608,3 +608,20 @@ oracle_claims <- function() {
     quote = ""
   )
 }
+
+# Wycheproof's cases (tools/make-wycheproof.py, #98, #99): the keys by id,
+# the signature verification cases and the JOSE cases.
+wycheproof_table <- function(name) {
+  utils::read.delim(
+    test_path("fixtures", "wycheproof", paste0(name, ".tsv")),
+    colClasses = "character",
+    quote = "",
+    na.strings = character()
+  )
+}
+
+# The Wycheproof key `id` as a jwk, or a jwk_set for a JWK Set.
+wycheproof_key <- function(keys, id) {
+  text <- keys$jwk[keys$id == id]
+  if (startsWith(text, '{"keys"')) as_jwk_set(text) else as_jwk(text)
+}

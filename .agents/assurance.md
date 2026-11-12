@@ -52,7 +52,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | JWS compact parse                         | RFC 7520 §4.1 parts; every RFC 7520 figure's type and serialization                     | tests/testthat/test-codec.R                                   |
 | JWS JSON parse, general and flattened     | RFC 7520 §4 verified; the three serializations of one token parse alike                 | tests/testthat/test-codec.R, test-jws.R                       |
 | JWS malformed and header-rule refusals    | hand corpus whose verdict is known by construction (`malformed_corpus()`)               | tests/testthat/test-codec.R                                   |
-| JWS, JWE and JWK refusals                 | Wycheproof JOSE vectors, verdict for verdict                                            | gap #98                                                        |
+| JWS, JWE and JWK refusals                 | Wycheproof's JOSE vectors (`jose.tsv`), verdict for verdict with every algorithm allowed; 15 listed divergences, each with its reason | tests/testthat/test-wycheproof.R                              |
 | JWS compact emit                          | RFC 7520 §4.4, §4.5 and RFC 7515 A.2 reproduced byte for byte                           | tests/testthat/test-jws.R, test-rsa.R                         |
 | JWS JSON emit                             | RFC 7520 §4.4 to §4.6, member order ignored                                             | tests/testthat/test-jws.R                                     |
 | RFC 7797 unencoded payload                | RFC 7797 §4.1, §4.2 verified and reproduced: compact, flattened, detached               | tests/testthat/test-jws.R, test-codec.R                       |
@@ -60,7 +60,7 @@ One row per boundary the package crosses. An oracle knows the answer:
 | RS* verify and sign                       | RFC 7515 A.2, RFC 7520 §4.1; PyJWT tokens, signatures byte-identical                    | tests/testthat/test-rsa.R, test-oracle.R                      |
 | PS* verify                                | RFC 7520 §4.2 and §6; PyJWT PS256, PS384, PS512                                         | tests/testthat/test-rsa.R, test-oracle.R                      |
 | ES* verify, raw r and s                   | RFC 7515 A.3, A.4, RFC 7520 §4.3; PyJWT ES256, ES384, ES512                             | tests/testthat/test-ec.R, test-oracle.R                       |
-| Signature verify edge cases               | Wycheproof ECDSA P1363, RSA PKCS#1, RSA-PSS and HMAC verdicts                           | gap #99                                                        |
+| Signature verify edge cases               | Wycheproof's verdicts (`signatures.tsv`) for ECDSA P1363 on P-256, P-384, P-521, RSA PKCS#1, RSA-PSS with salt of the hash length and of 0, HMAC; acceptable MissingNull refused | tests/testthat/test-wycheproof.R                              |
 | PS*, ES* and JWT emit                     | PyJWT's `jwt.decode()` and `jws.decode()` verify zujose's tokens, claims, types and header compared (`zujose-tokens.tsv`); the same tokens re-emitted | tests/testthat/test-oracle.R, tools/make-oracle-fixtures.py --check |
 | JWE compact parse and decrypt             | RFC 7516 A.3, RFC 7520 §5 compact figures to their plaintexts                           | tests/testthat/test-jwe.R, test-jwe-gcm-pbes2.R               |
 | JWE JSON parse and decrypt                | RFC 7516 A.4, RFC 7520 general and flattened figures, §5.13 three recipients            | tests/testthat/test-jwe.R, test-ec.R                          |
