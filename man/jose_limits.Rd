@@ -42,8 +42,10 @@ compute much more than an honest one would. The defaults are far above
 what real tokens need.
 }
 \details{
-A token over a limit fails with \code{zujose_parse_error}. Use \code{Inf} to switch
-a limit off.
+A token over a limit fails with \code{zujose_parse_error}, except for \code{keys}:
+more fitting keys than \code{keys} is a property of the key set as much as of
+the token, and fails with \code{zujose_key_error}. Give the keys a \code{kid}, or
+narrow the set. Use \code{Inf} to switch a limit off.
 }
 \examples{
 jose_limits()

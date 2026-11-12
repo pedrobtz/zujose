@@ -5,8 +5,10 @@
 #' compute much more than an honest one would. The defaults are far above
 #' what real tokens need.
 #'
-#' A token over a limit fails with `zujose_parse_error`. Use `Inf` to switch
-#' a limit off.
+#' A token over a limit fails with `zujose_parse_error`, except for `keys`:
+#' more fitting keys than `keys` is a property of the key set as much as of
+#' the token, and fails with `zujose_key_error`. Give the keys a `kid`, or
+#' narrow the set. Use `Inf` to switch a limit off.
 #'
 #' @param token Maximum length of a token, in bytes.
 #' @param header Maximum length of a decoded protected header, in bytes.
