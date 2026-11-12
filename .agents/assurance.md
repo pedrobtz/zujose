@@ -102,24 +102,24 @@ One row per limit the package enforces. "Straddled by" is the test of
 `limit - 1`, `limit` and `limit + 1` on every path that reaches it.
 
 <!-- markdownlint-disable MD013 -->
-| Limit                                | Unit                                                    | Straddled by              |
-| ------------------------------------ | ------------------------------------------------------- | ------------------------- |
-| `token`                              | bytes of the serialized token                           | gap #107                    |
-| `header`                             | decoded bytes of each protected header                  | gap #108                    |
-| `payload`, Base64url                 | decoded payload bytes                                   | gap #109                    |
-| `payload`, `b64: false` and detached | payload bytes as received                               | gap #109                    |
-| `payload`, JWE                       | decoded ciphertext bytes, not plaintext                 | gap #109                    |
-| `signatures`                         | entries of `signatures`                                 | gap #110                    |
-| `recipients`                         | entries of `recipients`                                 | gap #110                    |
-| `keys`                               | keys tried for one token                                | gap #111                    |
-| `p2c`, decrypt                       | PBKDF2 iterations a header asks for                     | gap #112                    |
-| `p2c`, encrypt                       | iterations, 1000 to 2^32 - 1                            | gap #112                    |
-| `p2s`, at least 8                    | decoded salt bytes                                      | gap #112                    |
-| A*GCMKW `iv` 12 and `tag` 16         | decoded bytes, exact                                    | gap #113                    |
-| HMAC key at least the hash size      | key bytes, 32, 48 and 64                                | gap #113                    |
-| RSA modulus at least 2048            | modulus bits                                            | gap #113                    |
-| `leeway`                             | seconds, on `exp`, `nbf` and `iat`                      | tests/testthat/test-jwt.R |
-| `max_age`                            | seconds since `iat`, plus `leeway`                      | gap #114                    |
-| Nested JWT, one level                | levels of `cty: JWT`                                    | gap #115                    |
-| JSON nesting depth, from zujson      | nesting levels, 1000                                    | gap #115                    |
+| Limit                                | Unit                                                    | Straddled by                 |
+| ------------------------------------ | ------------------------------------------------------- | ---------------------------- |
+| `token`                              | bytes of the serialized token                           | tests/testthat/test-limits.R |
+| `header`                             | decoded bytes of each protected header                  | tests/testthat/test-limits.R |
+| `payload`, Base64url                 | decoded payload bytes                                   | tests/testthat/test-limits.R |
+| `payload`, `b64: false` and detached | payload bytes as received                               | tests/testthat/test-limits.R |
+| `payload`, JWE                       | decoded ciphertext bytes, not plaintext                 | tests/testthat/test-limits.R |
+| `signatures`                         | entries of `signatures`                                 | tests/testthat/test-limits.R |
+| `recipients`                         | entries of `recipients`                                 | tests/testthat/test-limits.R |
+| `keys`                               | keys tried for one token                                | tests/testthat/test-limits.R |
+| `p2c`, decrypt                       | PBKDF2 iterations a header asks for                     | tests/testthat/test-limits.R |
+| `p2c`, encrypt                       | iterations, 1000 to 2^32 - 1                            | tests/testthat/test-limits.R |
+| `p2s`, at least 8                    | decoded salt bytes                                      | tests/testthat/test-limits.R |
+| A*GCMKW `iv` 12 and `tag` 16         | decoded bytes, exact                                    | tests/testthat/test-limits.R |
+| HMAC key at least the hash size      | key bytes, 32, 48 and 64                                | tests/testthat/test-limits.R |
+| RSA modulus at least 2048            | modulus bits                                            | tests/testthat/test-limits.R |
+| `leeway`                             | seconds, on `exp`, `nbf` and `iat`                      | tests/testthat/test-jwt.R    |
+| `max_age`                            | seconds since `iat`, plus `leeway`                      | tests/testthat/test-limits.R |
+| Nested JWT, one level                | levels of `cty: JWT`                                    | tests/testthat/test-jwt.R, test-limits.R |
+| JSON nesting depth, from zujson      | nesting levels, 1000                                    | tests/testthat/test-limits.R |
 <!-- markdownlint-enable MD013 -->

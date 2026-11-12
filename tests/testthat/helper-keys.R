@@ -59,3 +59,19 @@ oracle_key <- function(name, public = TRUE) {
 
 # Before the oracle tokens' `exp`, 2000000000.
 oracle_now <- function() as.POSIXct(1e9, origin = "1970-01-01", tz = "UTC")
+
+# A 2040-bit RSA public key, the largest importable size under RFC 7518's
+# 2048-bit floor: zucrypt takes only whole bytes, so a 2047-bit modulus
+# cannot be a jwk. The modulus was generated once with Python's
+# `cryptography`; only the public half exists.
+rsa_2040_jwk <- function() {
+  n <- paste0(
+    "vReHW_omQGM2gsJuN1G93OC17YEbxgkP0U9BM9LR3RAT7uadnG5UxrMV7R7K8FTM",
+    "hzKmAeWlKbVr9Z-Wm3a8x452k0f7kDRYF3pP28phsBAhKlho_Kb01ipEvCqigtFb",
+    "CquWetfaIRMMrDKEH5NbUf2il32I7_40UymgfuIlASuJMFKbaUMLINBrVZ4m6Njn",
+    "jofvfgLXgRc6arqqONPHY9YlZEce36mudQH0P4lEraCBOkAPEGUp2Fl-_GpHbHGn",
+    "kgOgxDmawnNoVR6XrZ4SpaoOyQjcj3hjqKpsMyROl3UgPcrxPzJo0lJDJRVT8m2e",
+    "l10tni9gogpuln2Y9__x"
+  )
+  as_jwk(sprintf('{"kty":"RSA","n":"%s","e":"AQAB"}', n))
+}
