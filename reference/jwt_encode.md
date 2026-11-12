@@ -22,13 +22,16 @@ jwt_encode(
 
 - claims:
 
-  The claims, as a named list. It may be empty.
+  The claims, as a named list. It may be empty. Names must be unique and
+  not empty at every depth, and values must be of a type JSON can
+  represent.
 
 - key:
 
-  A `jwk`, or a list of
-  [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md)
-  objects for several signatures.
+  A `jwk`. A JWT is in the compact serialization, which carries one
+  signature, so a list of
+  [`jws_signer()`](https://pedrobtz.github.io/zujose/reference/jws_signer.md)s
+  is refused.
 
 - alg:
 
@@ -81,6 +84,6 @@ jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 #> <jwt_claims> verified HS256, key "k1"
 #>   sub: "u1"
 #>   aud: "api"
-#>   exp: 2026-11-12 13:47:49 UTC
-#>   iat: 2026-11-12 12:47:49 UTC
+#>   exp: 2026-11-12 16:47:36 UTC
+#>   iat: 2026-11-12 15:47:36 UTC
 ```

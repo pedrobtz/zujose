@@ -90,7 +90,9 @@ RFC 7518 requires every implementation to support.</p></dd>
 
 <dt id="arg-header">header<a class="anchor" aria-label="anchor" href="#arg-header"></a></dt>
 <dd><p>Further protected header members, as a named list. For
-<code>PBES2-*</code>, <code>p2c</code> sets the iteration count.</p></dd>
+<code>PBES2-*</code>, <code>p2c</code> sets the iteration count. <code>alg</code> and <code>enc</code> are set
+through their arguments, and no header may hold <code>zip</code>: zujose does not
+compress.</p></dd>
 
 
 <dt id="arg-unprotected">unprotected<a class="anchor" aria-label="anchor" href="#arg-unprotected"></a></dt>
@@ -136,7 +138,12 @@ none of the three can be given.</p>
 <code>jwk_oct(charToRaw(enc2utf8(password)))</code>. The iteration count is
 <code>p2c</code> in <code>header</code>, a whole number of at least 1000, and defaults to
 600 000. A recipient decrypting with <code><a href="jwe_decrypt.html">jwe_decrypt()</a></code> accepts at most
-<code>jose_limits()$p2c</code> iterations, by default also 600 000.</p>
+<code>jose_limits()$p2c</code> iterations, by default also 600 000. Other
+implementations cap <code>p2c</code> lower when they decrypt: Python's jwcrypto at
+16 384 and JavaScript's <code>jose</code> at 10 000 by default. A token for them
+needs <code>header = list(p2c = 10000)</code> or less, as in the example; the
+default stays high because the iteration count is a password-protected
+token's only defence against offline guessing.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -148,7 +155,7 @@ none of the three can be given.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwk_generate.html">jwk_generate</a></span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A128KW"</span>, kid <span class="op">=</span> <span class="st">"kek"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jwe_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">key</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.kebPAgGvIPfFpKoHAwaqXF0-l0cTH3r5uahuGQnpvX87AQ9Xx19XtA.SfuGyFEKZ0b_e4XwihWRIA.nUJ2KSUPHrAy1eQMkwG9iw.XsTzIrwFe5kpqI9hYvoo8w"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.7kSYru4g2y6SkC1h7VraEraBt4E0rndY3XBKy-EvPtsxqC4NsaqJNg.fBOFhy9iMsG8o7u_a-5UVQ.zIgK1artT4LhxNXEzVWJhw.Zx9asvTjFGptCPPpZfRWhg"</span>
 <span class="r-in"><span><span class="fu"><a href="jwe_decrypt.html">jwe_decrypt</a></span><span class="op">(</span><span class="va">token</span>, <span class="va">key</span>, algorithms <span class="op">=</span> <span class="st">"A128KW"</span>,</span></span>
 <span class="r-in"><span>             encryptions <span class="op">=</span> <span class="st">"A128CBC-HS256"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jwe_decrypted&gt; A128KW with A128CBC-HS256, key "kek"</span>
@@ -158,7 +165,8 @@ none of the three can be given.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   kid: "kek"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Plaintext: 6 bytes</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># AES-GCM content encryption, under a password.</span></span></span>
+<span class="r-in"><span><span class="co"># AES-GCM content encryption, under a password. A p2c of 10000 is one</span></span></span>
+<span class="r-in"><span><span class="co"># that jwcrypto and JavaScript's jose also read.</span></span></span>
 <span class="r-in"><span><span class="va">password</span> <span class="op">&lt;-</span> <span class="fu"><a href="jwk_oct.html">jwk_oct</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"correct horse battery staple"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">token</span> <span class="op">&lt;-</span> <span class="fu">jwe_encrypt</span><span class="op">(</span><span class="st">"secret"</span>, <span class="va">password</span>, alg <span class="op">=</span> <span class="st">"PBES2-HS256+A128KW"</span>,</span></span>
 <span class="r-in"><span>                      enc <span class="op">=</span> <span class="st">"A256GCM"</span>, header <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>p2c <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span><span class="op">)</span></span></span>

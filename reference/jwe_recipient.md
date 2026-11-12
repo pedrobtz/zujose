@@ -23,7 +23,8 @@ jwe_recipient(key, alg = NULL, header = NULL)
 
 - header:
 
-  Per-recipient unprotected header members, as a named list.
+  Per-recipient unprotected header members, as a named list. It cannot
+  hold `enc` or `zip`, and an `alg` must agree with `alg`.
 
 ## Value
 

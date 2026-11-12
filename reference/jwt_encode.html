@@ -65,12 +65,14 @@ in the compact serialization.</p>
 
 
 <dl><dt id="arg-claims">claims<a class="anchor" aria-label="anchor" href="#arg-claims"></a></dt>
-<dd><p>The claims, as a named list. It may be empty.</p></dd>
+<dd><p>The claims, as a named list. It may be empty. Names must
+be unique and not empty at every depth, and values must be of a type
+JSON can represent.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>A <code>jwk</code>, or a list of <code><a href="jws_signer.html">jws_signer()</a></code> objects for several
-signatures.</p></dd>
+<dd><p>A <code>jwk</code>. A JWT is in the compact serialization, which carries
+one signature, so a list of <code><a href="jws_signer.html">jws_signer()</a></code>s is refused.</p></dd>
 
 
 <dt id="arg-alg">alg<a class="anchor" aria-label="anchor" href="#arg-alg"></a></dt>
@@ -126,8 +128,8 @@ written as NumericDate, whole seconds since 1970. <code>expires_in</code> and
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jwt_claims&gt; verified HS256, key "k1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   sub: "u1"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   aud: "api"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   exp: 2026-11-12 13:47:49 UTC</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   iat: 2026-11-12 12:47:49 UTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   exp: 2026-11-12 16:47:36 UTC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   iat: 2026-11-12 15:47:36 UTC</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

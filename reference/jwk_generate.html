@@ -72,8 +72,8 @@ P-256, P-384 or P-521) and <code>OKP</code> (X25519) keys. There is no Ed25519.<
 
 <dt id="arg-size">size<a class="anchor" aria-label="anchor" href="#arg-size"></a></dt>
 <dd><p>The key size in bits. For an <code>oct</code> key, a multiple of 8 and at
-least 128, and <code>NULL</code> takes the size <code>alg</code> needs; for an <code>RSA</code> key, 2048
-to 4096, and <code>NULL</code> is 2048.</p></dd>
+least 128, and <code>NULL</code> takes the size <code>alg</code> needs; for an <code>RSA</code> key, a
+multiple of 8 from 2048 to 4096, and <code>NULL</code> is 2048.</p></dd>
 
 
 <dt id="arg-crv">crv<a class="anchor" aria-label="anchor" href="#arg-crv"></a></dt>
@@ -108,12 +108,14 @@ for an <code>EC</code> key, <code>"X25519"</code> for an <code>OKP</code> key. N
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Without <code>size</code>, an <code>oct</code> key is as long as <code>alg</code> needs: the hash size for
 <code>HS256</code>, <code>HS384</code> and <code>HS512</code> (RFC 7518 section 3.2), the key size for
-<code>A*KW</code> and <code>A*GCMKW</code>, and 256 bits otherwise. A <code>dir</code> key is the content
-encryption key itself, so give its <code>size</code>: 256 bits for <code>A128CBC-HS256</code>,
-384 for <code>A192CBC-HS384</code>, 512 for <code>A256CBC-HS512</code>, and 128, 192 or 256
-for <code>A128GCM</code>, <code>A192GCM</code> and <code>A256GCM</code>.</p>
-<p>An <code>RSA</code> key's <code>size</code> is its modulus, 2048 bits by default and at most
-4096, with public exponent 65537. Generating one takes a moment.</p>
+<code>A*KW</code> and <code>A*GCMKW</code>, and 256 bits otherwise, as for a <code>PBES2-*</code>
+password. A <code>dir</code> key is the content encryption key itself: name it by
+its content encryption, such as <code>alg = "A128GCM"</code>, to get its exact size
+(256 bits for <code>A128CBC-HS256</code>, 384 for <code>A192CBC-HS384</code>, 512 for
+<code>A256CBC-HS512</code>, and 128, 192 or 256 for <code>A128GCM</code>, <code>A192GCM</code> and
+<code>A256GCM</code>), or give <code>alg = "dir"</code> and its <code>size</code>.</p>
+<p>An <code>RSA</code> key's <code>size</code> is its modulus, a multiple of 8 bits, 2048 by
+default and at most 4096, with public exponent 65537. Generating one takes a moment.</p>
     </div>
     <div class="section level2">
     <h2 id="secrets-in-memory">Secrets in memory<a class="anchor" aria-label="anchor" href="#secrets-in-memory"></a></h2>
@@ -145,7 +147,7 @@ are needed.</p>
 <span class="r-in"><span><span class="co"># A key encryption key, named by its thumbprint.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="jwk_with_kid.html">jwk_with_kid</a></span><span class="op">(</span><span class="fu">jwk_generate</span><span class="op">(</span><span class="st">"oct"</span>, alg <span class="op">=</span> <span class="st">"A256KW"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jwk&gt; oct, 256 bits</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   kid "6RtiPYI3FbxVmC8NluUfC2bn6EuUIFpqhoirwTDTtFQ"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   kid "9NdgekNNhgGpzyUynx4oxjMbIwx6bne9xs0bm87NGWg"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   alg A256KW</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   private: yes (not shown)</span>
 </code></pre></div>

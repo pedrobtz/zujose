@@ -73,6 +73,10 @@ The protected header holds `alg`, the key's `kid` unless `header` or
 the payload is signed and carried unencoded (RFC 7797), and the header
 gains `b64: false` and `crit: ["b64"]`.
 
+A header's names must be unique and not empty at every depth, a member
+may appear in only one header, and values must be of a type JSON can
+represent. Anything else is a `zujose_argument_error`.
+
 The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
 `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
 RSA key of at least 2048 bits, and `ES256`, `ES384` and `ES512` with a

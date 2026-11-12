@@ -116,6 +116,9 @@ verifier then supplies it to <code><a href="jws_verify.html">jws_verify()</a></c
 <code>unprotected</code> sets one, and the members of <code>header</code>. With
 <code>b64 = FALSE</code>, the payload is signed and carried unencoded (RFC 7797),
 and the header gains <code>b64: false</code> and <code>crit: ["b64"]</code>.</p>
+<p>A header's names must be unique and not empty at every depth, a member
+may appear in only one header, and values must be of a type JSON can
+represent. Anything else is a <code>zujose_argument_error</code>.</p>
 <p>The algorithms are <code>HS256</code>, <code>HS384</code> and <code>HS512</code> with an <code>oct</code> key, and
 <code>RS256</code>, <code>RS384</code>, <code>RS512</code>, <code>PS256</code>, <code>PS384</code> and <code>PS512</code> with a private
 RSA key of at least 2048 bits, and <code>ES256</code>, <code>ES384</code> and <code>ES512</code> with a

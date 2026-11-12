@@ -57,7 +57,8 @@ jwt_decoder(
 
 - claims:
 
-  Further expectations, as a named list of values or functions.
+  Further expectations, as a list of values or functions with unique
+  names.
 
 - validate:
 

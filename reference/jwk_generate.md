@@ -27,8 +27,8 @@ jwk_generate(
 - size:
 
   The key size in bits. For an `oct` key, a multiple of 8 and at least
-  128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048 to
-  4096, and `NULL` is 2048.
+  128, and `NULL` takes the size `alg` needs; for an `RSA` key, a
+  multiple of 8 from 2048 to 4096, and `NULL` is 2048.
 
 - crv:
 
@@ -63,13 +63,16 @@ A `jwk`.
 
 Without `size`, an `oct` key is as long as `alg` needs: the hash size
 for `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size
-for `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key is the
-content encryption key itself, so give its `size`: 256 bits for
-`A128CBC-HS256`, 384 for `A192CBC-HS384`, 512 for `A256CBC-HS512`, and
-128, 192 or 256 for `A128GCM`, `A192GCM` and `A256GCM`.
+for `A*KW` and `A*GCMKW`, and 256 bits otherwise, as for a `PBES2-*`
+password. A `dir` key is the content encryption key itself: name it by
+its content encryption, such as `alg = "A128GCM"`, to get its exact size
+(256 bits for `A128CBC-HS256`, 384 for `A192CBC-HS384`, 512 for
+`A256CBC-HS512`, and 128, 192 or 256 for `A128GCM`, `A192GCM` and
+`A256GCM`), or give `alg = "dir"` and its `size`.
 
-An `RSA` key's `size` is its modulus, 2048 bits by default and at most
-4096, with public exponent 65537. Generating one takes a moment.
+An `RSA` key's `size` is its modulus, a multiple of 8 bits, 2048 by
+default and at most 4096, with public exponent 65537. Generating one
+takes a moment.
 
 ## Secrets in memory
 
@@ -101,7 +104,7 @@ key
 # A key encryption key, named by its thumbprint.
 jwk_with_kid(jwk_generate("oct", alg = "A256KW"))
 #> <jwk> oct, 256 bits
-#>   kid "6RtiPYI3FbxVmC8NluUfC2bn6EuUIFpqhoirwTDTtFQ"
+#>   kid "9NdgekNNhgGpzyUynx4oxjMbIwx6bne9xs0bm87NGWg"
 #>   alg A256KW
 #>   private: yes (not shown)
 ```

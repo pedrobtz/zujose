@@ -83,7 +83,8 @@ serialization.</p></dd>
 <li><p><code>headers</code>: one header per signature or recipient, each the union of
 the protected and unprotected headers.</p></li>
 <li><p><code>payload</code>: for a JWS, the payload as a raw vector; <code>NULL</code> for a JWE or
-a detached payload.</p></li>
+a detached payload. In the compact serialization an empty payload
+part is a detached payload.</p></li>
 <li><p><code>claims</code>: the payload parsed as a list when it is a JSON object, as in
 a JWT; otherwise <code>NULL</code>.</p></li>
 </ul><p>A JWS also has, one element per signature:</p><ul><li><p><code>signatures</code>: each signature, as a raw vector.</p></li>

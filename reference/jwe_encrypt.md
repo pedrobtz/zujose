@@ -46,7 +46,8 @@ jwe_encrypt(
 - header:
 
   Further protected header members, as a named list. For `PBES2-*`,
-  `p2c` sets the iteration count.
+  `p2c` sets the iteration count. `alg` and `enc` are set through their
+  arguments, and no header may hold `zip`: zujose does not compress.
 
 - unprotected:
 
@@ -96,6 +97,11 @@ in `header`, a whole number of at least 1000, and defaults to 600 000. A
 recipient decrypting with
 [`jwe_decrypt()`](https://pedrobtz.github.io/zujose/reference/jwe_decrypt.md)
 accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
+Other implementations cap `p2c` lower when they decrypt: Python's
+jwcrypto at 16 384 and JavaScript's `jose` at 10 000 by default. A token
+for them needs `header = list(p2c = 10000)` or less, as in the example;
+the default stays high because the iteration count is a
+password-protected token's only defence against offline guessing.
 
 ## See also
 
@@ -107,7 +113,7 @@ accepts at most `jose_limits()$p2c` iterations, by default also 600 000.
 key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
 token <- jwe_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.kebPAgGvIPfFpKoHAwaqXF0-l0cTH3r5uahuGQnpvX87AQ9Xx19XtA.SfuGyFEKZ0b_e4XwihWRIA.nUJ2KSUPHrAy1eQMkwG9iw.XsTzIrwFe5kpqI9hYvoo8w"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.7kSYru4g2y6SkC1h7VraEraBt4E0rndY3XBKy-EvPtsxqC4NsaqJNg.fBOFhy9iMsG8o7u_a-5UVQ.zIgK1artT4LhxNXEzVWJhw.Zx9asvTjFGptCPPpZfRWhg"
 jwe_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jwe_decrypted> A128KW with A128CBC-HS256, key "kek"
@@ -117,7 +123,8 @@ jwe_decrypt(token, key, algorithms = "A128KW",
 #>   kid: "kek"
 #> Plaintext: 6 bytes
 
-# AES-GCM content encryption, under a password.
+# AES-GCM content encryption, under a password. A p2c of 10000 is one
+# that jwcrypto and JavaScript's jose also read.
 password <- jwk_oct(charToRaw("correct horse battery staple"))
 token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
                       enc = "A256GCM", header = list(p2c = 10000))

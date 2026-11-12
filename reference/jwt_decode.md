@@ -63,7 +63,8 @@ jwt_decode(
 
 - claims:
 
-  Further expectations, as a named list of values or functions.
+  Further expectations, as a list of values or functions with unique
+  names.
 
 - validate:
 
@@ -99,7 +100,8 @@ The claims, as a named list of class `jwt_claims`, with `exp`, `nbf` and
 
 ## Details
 
-- `exp`, `nbf` and `iat` must be numbers. The token must not have
+- `exp`, `nbf` and `iat` must be numbers that `POSIXct` can hold as a
+  time, within about two billion years of 1970. The token must not have
   expired, must already be valid, and must not be issued in the future,
   each allowing `leeway` seconds. `max_age` bounds how long ago `iat`
   was.
@@ -122,6 +124,20 @@ The claims, as a named list of class `jwt_claims`, with `exp`, `nbf` and
   must equal, or a function of the claim that must return `TRUE`.
   `validate` is a function of the whole claims list, for checks across
   claims.
+
+A value in `claims` is compared with the claim as JSON values, the value
+taken as
+[`jwt_encode()`](https://pedrobtz.github.io/zujose/reference/jwt_encode.md)
+would write it. Object members may come in any order, and `3L` equals
+`3`. A vector of length one is a scalar and a longer one an array, so
+`"a"` does not match `["a"]`; write `list("a")` for an array of one.
+`NULL` matches a JSON `null`. `NA` and non-finite numbers have no JSON
+form and are refused. `exp`, `nbf` and `iat` are compared, and passed to
+a function, as the `POSIXct` times `jwt_decode()` returns; a number
+expects the same NumericDate.
+
+A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
+section 7), and one that does is refused with `zujose_policy_error`.
 
 A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
 That inner JWT is verified with the same `key` and `algorithms`, and its

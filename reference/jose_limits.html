@@ -55,7 +55,7 @@ what real tokens need.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">jose_limits</span><span class="op">(</span></span>
-<span>  token <span class="op">=</span> <span class="fl">2</span><span class="op">^</span><span class="fl">20</span>,</span>
+<span>  token <span class="op">=</span> <span class="fl">2</span><span class="op">^</span><span class="fl">21</span>,</span>
 <span>  header <span class="op">=</span> <span class="fl">2</span><span class="op">^</span><span class="fl">14</span>,</span>
 <span>  payload <span class="op">=</span> <span class="fl">2</span><span class="op">^</span><span class="fl">20</span>,</span>
 <span>  signatures <span class="op">=</span> <span class="fl">16</span>,</span>
@@ -70,7 +70,10 @@ what real tokens need.</p>
 
 
 <dl><dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
-<dd><p>Maximum length of a token, in bytes.</p></dd>
+<dd><p>Maximum length of a token, in bytes. This bounds the encoded
+form, which is about 4/3 of the payload, so the default of 2 MiB leaves
+room for a payload at the <code>payload</code> limit. Encoding functions do not
+check these limits.</p></dd>
 
 
 <dt id="arg-header">header<a class="anchor" aria-label="anchor" href="#arg-header"></a></dt>
@@ -106,15 +109,17 @@ serialization.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>A token over a limit fails with <code>zujose_parse_error</code>. Use <code>Inf</code> to switch
-a limit off.</p>
+    <p>A token over a limit fails with <code>zujose_parse_error</code>, except for <code>keys</code>:
+more fitting keys than <code>keys</code> is a property of the key set as much as of
+the token, and fails with <code>zujose_key_error</code>. Give the keys a <code>kid</code>, or
+narrow the set. Use <code>Inf</code> to switch a limit off.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">jose_limits</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;jose_limits&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   token      1,048,576</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   token      2,097,152</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   header     16,384</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   payload    1,048,576</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   signatures 16</span>

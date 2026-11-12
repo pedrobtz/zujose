@@ -20,6 +20,13 @@ jwk_public(x)
 
 An object of the same class.
 
+## Details
+
+A private key's `key_ops` become those of its public half: `sign`
+becomes `verify`, `decrypt` becomes `encrypt` and `unwrapKey` becomes
+`wrapKey`, and public operations stay. When no public operation is left,
+as for a key only for `deriveKey`, the public key has no `key_ops`.
+
 ## Examples
 
 ``` r

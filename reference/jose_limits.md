@@ -9,7 +9,7 @@ what real tokens need.
 
 ``` r
 jose_limits(
-  token = 2^20,
+  token = 2^21,
   header = 2^14,
   payload = 2^20,
   signatures = 16,
@@ -23,7 +23,10 @@ jose_limits(
 
 - token:
 
-  Maximum length of a token, in bytes.
+  Maximum length of a token, in bytes. This bounds the encoded form,
+  which is about 4/3 of the payload, so the default of 2 MiB leaves room
+  for a payload at the `payload` limit. Encoding functions do not check
+  these limits.
 
 - header:
 
@@ -56,15 +59,17 @@ A list of class `jose_limits`.
 
 ## Details
 
-A token over a limit fails with `zujose_parse_error`. Use `Inf` to
-switch a limit off.
+A token over a limit fails with `zujose_parse_error`, except for `keys`:
+more fitting keys than `keys` is a property of the key set as much as of
+the token, and fails with `zujose_key_error`. Give the keys a `kid`, or
+narrow the set. Use `Inf` to switch a limit off.
 
 ## Examples
 
 ``` r
 jose_limits()
 #> <jose_limits>
-#>   token      1,048,576
+#>   token      2,097,152
 #>   header     16,384
 #>   payload    1,048,576
 #>   signatures 16
