@@ -206,3 +206,17 @@ test_that("a bad argument is reported before a bad token (#75)", {
     )
   }
 })
+
+test_that("a token that is not one string is a parse error (#76)", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  for (token in list(123, NULL, NA_character_, c("a", "b"), list("a"))) {
+    expect_error(jwt_decode(token, key, "HS256"), class = "zujose_parse_error")
+    expect_error(jws_verify(token, key, "HS256"), class = "zujose_parse_error")
+    expect_error(
+      jwe_decrypt(token, kek, "A128KW", "A128GCM"),
+      class = "zujose_parse_error"
+    )
+    expect_error(jose_peek(token), class = "zujose_parse_error")
+  }
+})
