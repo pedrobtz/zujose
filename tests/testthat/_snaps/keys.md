@@ -32,3 +32,18 @@
       Error in `jwk_generate()`:
       ! An HS256 key must be at least 256 bits.
 
+# a key of unknown type prints as such
+
+    Code
+      print(as_jwk("{\"kty\":\"foo\",\"k\":\"AQID\"}"))
+    Output
+      <jwk> foo
+        private: yes (not shown)
+        ! not usable: unknown key type
+    Code
+      print(as_jwk("{\"kty\":\"OCT\",\"k\":\"AQID\"}"))
+    Output
+      <jwk> OCT
+        private: yes (not shown)
+        ! not usable: unknown key type
+

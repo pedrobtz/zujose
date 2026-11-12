@@ -414,3 +414,121 @@ test_that("limits$keys caps the key attempts across all recipients", {
     class = "zujose_key_error"
   )
 })
+
+test_that("a header member is read by its exact name, not as p2c (#122)", {
+  local_mocked_bindings(pbes2_kek = function(alg, password, p2s, p2c) {
+    expect_identical(p2c, pbes2_default_p2c)
+    as.raw(1:16)
+  })
+  password <- jwk_oct(charToRaw("pw"))
+  kek <- jwk_oct(as.raw(1:16))
+  header <- jose_peek(jwe_encrypt(
+    "x",
+    password,
+    "PBES2-HS256+A128KW",
+    header = list(p2count = 1234)
+  ))$headers[[1]]
+  expect_identical(header$p2c, pbes2_default_p2c)
+  expect_identical(header[["p2count"]], 1234L)
+
+  header <- jose_peek(jwe_encrypt(
+    "x",
+    kek,
+    "A128KW",
+    header = list(p2count = 1234)
+  ))$headers[[1]]
+  expect_false("p2c" %in% names(header))
+  for (where in c("unprotected", "recipient")) {
+    token <- if (where == "unprotected") {
+      jwe_encrypt(
+        "x",
+        kek,
+        "A128KW",
+        unprotected = list(p2count = 1),
+        format = "flattened"
+      )
+    } else {
+      jwe_encrypt(
+        "x",
+        list(jwe_recipient(kek, "A128KW", header = list(p2count = 1))),
+        format = "general"
+      )
+    }
+    expect_false("p2c" %in% names(jose_peek(token)$headers[[1]]))
+  }
+})
+
+test_that("a named p2c or enc is written as its value (#120)", {
+  local_mocked_bindings(pbes2_kek = function(...) as.raw(1:16))
+  password <- jwk_oct(charToRaw("pw"))
+  for (where in c("header", "unprotected", "recipient")) {
+    p2c <- list(p2c = c(n = 1000))
+    token <- switch(
+      where,
+      header = jwe_encrypt(
+        "x",
+        password,
+        "PBES2-HS256+A128KW",
+        enc = c(e = "A128GCM"),
+        header = p2c
+      ),
+      unprotected = jwe_encrypt(
+        "x",
+        password,
+        "PBES2-HS256+A128KW",
+        unprotected = p2c,
+        format = "flattened"
+      ),
+      recipient = jwe_encrypt(
+        "x",
+        list(jwe_recipient(password, c(a = "PBES2-HS256+A128KW"), p2c)),
+        format = "general"
+      )
+    )
+    header <- jose_peek(token)$headers[[1]]
+    expect_identical(header$p2c, 1000L)
+    expect_type(header$alg, "character")
+    expect_type(header$enc, "character")
+  }
+})
+
+test_that("a p2c beyond 2^32 - 1 is a parse error at any limit (#123)", {
+  local_mocked_bindings(pbes2_kek = function(...) stop("derived a key"))
+  key <- jwk_oct(charToRaw("pw"))
+  for (bad in list(4294967296, 1e300)) {
+    expect_error(
+      jwe_decrypt(
+        pbes2_token(p2c = bad),
+        key,
+        "PBES2-HS256+A128KW",
+        "A128GCM",
+        limits = jose_limits(p2c = Inf)
+      ),
+      class = "zujose_parse_error"
+    )
+  }
+  token <- sub(
+    "^[^.]*",
+    b64url_encode(charToRaw(paste0(
+      "{\"alg\":\"PBES2-HS256+A128KW\",\"enc\":\"A128GCM\",",
+      "\"p2c\":1e400,\"p2s\":\"AQIDBAUGBwgJCgsMDQ4PEA\"}"
+    ))),
+    pbes2_token()
+  )
+  expect_error(
+    jwe_decrypt(
+      token,
+      key,
+      "PBES2-HS256+A128KW",
+      "A128GCM",
+      limits = jose_limits(p2c = Inf)
+    ),
+    class = "zujose_error"
+  )
+})
+
+test_that("the default p2c written is 600 000 (#140)", {
+  local_mocked_bindings(pbes2_kek = function(...) as.raw(1:16))
+  token <- jwe_encrypt("x", jwk_oct(charToRaw("pw")), "PBES2-HS256+A128KW")
+  expect_identical(jose_peek(token)$headers[[1]]$p2c, 600000L)
+})

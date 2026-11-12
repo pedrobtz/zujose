@@ -1,5 +1,130 @@
 # zujose 0.0.0.9000
 
+* A header, JWS JSON token or claims set nested more than about 800
+  levels deep, which zujson parses up to 1000, no longer exhausts the C
+  stack: the check for repeated member names and the `claims` comparison
+  walk the value level by level instead of recursing (#141).
+
+* `jwt_decode()` refuses a JWT with an unencoded payload (`b64: false`),
+  outer or nested, with `zujose_policy_error` before any key is tried
+  (RFC 7797 section 7). It returned the claims (#126).
+
+* `jwt_decode()` refuses an `exp`, `nbf` or `iat` beyond any time `POSIXct`
+  can represent, such as `1e308`, with `zujose_parse_error`. It returned
+  the claim as an `NA` time. `jwt_encode()` refuses such a time, from
+  `claims`, `expires_in` or `not_before`, with `zujose_argument_error`, so
+  it no longer writes a token `jwt_decode()` refuses (#127).
+
+* `jwt_decode()` and `jwt_decoder()` refuse repeated, `NA` or empty names
+  in `claims` with `zujose_argument_error`. Only the first of two
+  expectations for one claim was checked (#118).
+
+* Expectations in `jwt_decode(claims = )` compare JSON values, not JSON
+  text: object members may come in any order. `NA` and non-finite numbers
+  are refused rather than matching `null`, and `NULL` expects `null`.
+  `exp`, `nbf` and `iat` are compared, and passed to a function, as the
+  `POSIXct` times `jwt_decode()` returns. `?jwt_decode` says how vectors
+  and arrays match (#128).
+
+* `jose_peek()` gives `NULL` for `payload` and `signing_input` on a compact
+  detached JWS, as it does for a flattened one. It gave `raw(0)` and the
+  header followed by `"."` (#131).
+
+* `?jwe_encrypt` documents that other JOSE implementations cap PBES2 `p2c`
+  when they decrypt (jwcrypto at 16 384, JavaScript's `jose` at 10 000),
+  so a token for them needs `header = list(p2c = 10000)` or less. The
+  default stays 600 000 (#140).
+
+* `jwt_encode()` documents `key` as one `jwk`, and refuses `jws_signer()`s
+  with a clear `zujose_argument_error`: a JWT is compact and has one
+  signature. It inherited a list-of-signers `key` from `jws_sign()` that
+  its own default header made it refuse (#130).
+
+* Errors that escaped as base R, zucrypt or zujson conditions are now
+  `zujose_error`s: an `enc` that is not one string in `jwe_encrypt()`, a
+  NUL byte in an unencoded (`b64 = FALSE`) payload, an RSA `size` that is
+  not a multiple of 8 in `jwk_generate()` (now documented), a bad index in
+  `[[` on a `jwk_set`, and a PBES2 `p2c` beyond 2^32 - 1, which is a parse
+  error even under `jose_limits(p2c = Inf)` (#123).
+
+* Names on R arguments no longer change the JSON zujose writes or the
+  values it compares. A named `expires_in`, `not_before`, `exp`, `nbf`,
+  `iat`, `p2c`, `alg`, `enc`, `kid`, `typ` or registered claim was written
+  as an object, a named list of `jws_signer()`s wrote `signatures` as an
+  object, and a named `issuer` or `subject` in `jwt_decode()` never
+  matched (#120).
+
+* `jwe_encrypt()` and `jwe_recipient()` refuse `zip` in every header with
+  `zujose_argument_error`. In `unprotected` or a recipient's header it was
+  written over content that was never compressed (#117).
+
+* `jwe_encrypt()` refuses a `jwe_recipient()` header `alg` that disagrees
+  with the recipient's algorithm, in every format, as `jws_sign()` does. It
+  was silently replaced in the general serialization (#129).
+
+* `jws_sign()`, `jws_signer()`, `jwe_encrypt()`, `jwe_recipient()` and
+  `jwt_encode()` refuse, with `zujose_argument_error`, a header or claims
+  set with a repeated, `NA` or empty name at any depth, a member given in
+  more than one header, a data frame or unnamed list as the claims set, and
+  a value JSON cannot represent, such as a raw or complex vector. A
+  repeated header member was dropped and a nested one written, giving
+  tokens zujose's own decoder refuses (#119, #123).
+
+* Header members and key members are read by their exact names. A
+  `p2count` header member no longer sets the PBES2 iteration count, and a
+  `kidnap` header no longer prints as the key's `kid` (#122).
+
+* Printing a key of an unknown `kty` says "unknown key type" instead of
+  "needs zucrypt (>= NA)" (#136).
+
+* `[` on a `jwk_set` refuses an NA or out-of-range index with
+  `zujose_argument_error`, instead of making a set that holds `NULL` and
+  cannot be printed (#135).
+
+* `jwk_public()`, and so `jwk_json()` without `private`, maps a private
+  key's `key_ops` to its public half's: `sign` to `verify`, `decrypt` to
+  `encrypt` and `unwrapKey` to `wrapKey`. The public half of a signing key
+  could not verify. With no public operation left, `key_ops` is dropped
+  (#133).
+
+* `jwk_generate("oct")` accepts every `oct` algorithm `jwk_oct()` does: a
+  `PBES2-*` password (256 bits by default), and a `dir` key named by its
+  content encryption, such as `alg = "A128GCM"`, made at that algorithm's
+  exact size (#132).
+
+* A JWK's `key_ops` must be an array of strings; a JSON object is a key
+  error. A present empty array permits no operation, and stays empty when
+  written and read back, where before it meant no restriction. A list
+  built in R may give `key_ops` as a character vector (#121).
+
+* `as_jwk()` refuses an RSA JWK with `oth`, private or public: zujose has
+  no multi-prime keys (#125).
+
+* `as_jwk()` refuses a key whose members are not in their one canonical
+  form: an RSA member with a leading zero octet, or an EC or X25519 `x`,
+  `y` or `d` that is not exactly the curve's length. Such a key had a
+  different thumbprint from the same key written canonically. An ECDH-ES
+  `epk` is held to the same rule (#94).
+
+* `as_jwk()` refuses a private X25519 JWK whose `x` is not the public key
+  of its `d` (#124).
+
+* Printing `jose_limits()` no longer warns in a session whose `OutDec` is
+  a comma (#137).
+
+* The default `token` limit of `jose_limits()` is 2 MiB, up from 1 MiB, so
+  a token whose payload is at the default 1 MiB `payload` limit can be
+  read. `token` bounds the encoded form, about 4/3 of the payload.
+  Encoders do not check the limits (#134).
+
+* `jws_verify()` counts `limits$keys` across all of a general JWS's
+  signatures, not per signature, as `jwe_decrypt()` does. It checks every
+  signature's algorithm and keys before verifying any (#92).
+
+* The `header` and `payload` limits of `jose_limits()` are exact in bytes
+  for Base64url parts. Before, a limit of `n` let up to two more bytes
+  through in a compact or JSON JWS and in a JWE ciphertext (#91).
+
 * `jws_sign()` refuses `b64` and `crit` in `header` or `unprotected`; the
   `b64` argument sets them. A caller's `b64: false` header with an encoded
   payload gave a token that verified as the wrong bytes (#72).

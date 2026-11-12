@@ -11,6 +11,10 @@
 #' `b64 = FALSE`, the payload is signed and carried unencoded (RFC 7797),
 #' and the header gains `b64: false` and `crit: ["b64"]`.
 #'
+#' A header's names must be unique and not empty at every depth, a member
+#' may appear in only one header, and values must be of a type JSON can
+#' represent. Anything else is a `zujose_argument_error`.
+#'
 #' The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
 #' `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
 #' RSA key of at least 2048 bits, and `ES256`, `ES384` and `ES512` with a
@@ -70,7 +74,7 @@ jws_sign <- function(
         "With several signers, give `alg` and headers to each jws_signer()."
       )
     }
-    key
+    unname(key)
   } else {
     abort_zujose(
       "key",
@@ -94,8 +98,12 @@ jws_sign <- function(
   payload_text <- if (b64) {
     b64url_encode(bytes)
   } else {
-    if (!isTRUE(zuutf::utf_valid(bytes))) {
-      abort_zujose("argument", "An unencoded payload must be valid UTF-8.")
+    # An R string cannot hold a NUL byte (#123).
+    if (!isTRUE(zuutf::utf_valid(bytes)) || any(bytes == as.raw(0))) {
+      abort_zujose(
+        "argument",
+        "An unencoded payload must be valid UTF-8 without NUL bytes."
+      )
     }
     text <- rawToChar(bytes)
     Encoding(text) <- "UTF-8"
@@ -180,13 +188,12 @@ jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  alg <- if (!is.null(alg)) unname(alg)
+  header <- check_header_arg(header, "header")
+  unprotected <- check_header_arg(unprotected, "unprotected")
+  check_disjoint_headers(header, unprotected)
   structure(
-    list(
-      key = key,
-      alg = alg,
-      header = check_header_arg(header, "header"),
-      unprotected = check_header_arg(unprotected, "unprotected")
-    ),
+    list(key = key, alg = alg, header = header, unprotected = unprotected),
     class = "jws_signer"
   )
 }
@@ -221,7 +228,7 @@ protected_header <- function(signer, b64, call) {
       )
     }
   }
-  if ("alg" %in% names(header) && !identical(header$alg, alg)) {
+  if ("alg" %in% names(header) && !identical(header[["alg"]], alg)) {
     abort_zujose("argument", "`header$alg` disagrees with `alg`.")
   }
   header <- header[setdiff(names(header), "alg")]
@@ -320,21 +327,47 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
     }
   }
 
-  verified <- list()
+  # Policy and key selection run for every signature before any
+  # cryptography, and `limits$keys` bounds the keys tried for the whole
+  # token, not per signature, as in jwe_decrypt() (#37, #92).
   first_error <- NULL
-  for (s in obj$signatures) {
-    header <- c(s$protected, s$header)
-    attempt <- function() {
-      verify_signature(s, header, key, algorithms, signed_payload, limits, call)
+  guard <- function(f) {
+    if (require == "all") {
+      return(f())
     }
-    result <- if (require == "all") {
-      attempt()
-    } else {
-      tryCatch(attempt(), zujose_error = function(e) {
-        first_error <<- first_error %||% e
-        NULL
-      })
+    tryCatch(f(), zujose_error = function(e) {
+      first_error <<- first_error %||% e
+      NULL
+    })
+  }
+  headers <- lapply(obj$signatures, function(s) c(s$protected, s$header))
+  keys <- lapply(seq_along(obj$signatures), function(i) {
+    guard(function() {
+      signature_keys(headers[[i]], key, algorithms, limits, call)
+    })
+  })
+  if (sum(lengths(keys)) > limits$keys) {
+    abort_zujose(
+      "key",
+      "More keys fit the token's signatures than `limits$keys` allows.",
+      call = call
+    )
+  }
+
+  verified <- list()
+  for (i in seq_along(obj$signatures)) {
+    if (length(keys[[i]]) == 0L) {
+      next
     }
+    result <- guard(function() {
+      verify_signature(
+        obj$signatures[[i]],
+        headers[[i]],
+        keys[[i]],
+        signed_payload,
+        call
+      )
+    })
     if (!is.null(result)) {
       verified[[length(verified) + 1L]] <- result
     }
@@ -358,15 +391,8 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
   )
 }
 
-verify_signature <- function(
-  s,
-  header,
-  key,
-  algorithms,
-  signed_payload,
-  limits,
-  call
-) {
+# The keys to try for one signature, after its algorithm passes the policy.
+signature_keys <- function(header, key, algorithms, limits, call) {
   alg <- header[["alg"]]
   if (!alg %in% algorithms) {
     abort_zujose(
@@ -381,7 +407,11 @@ verify_signature <- function(
   # stop the search (#39). With none strong enough, the first is used, so
   # its check raises the key error.
   strong <- Filter(function(k) sig_key_strong(alg, k), keys)
-  keys <- if (length(strong) > 0L) strong else keys[1]
+  if (length(strong) > 0L) strong else keys[1]
+}
+
+verify_signature <- function(s, header, keys, signed_payload, call) {
+  alg <- header[["alg"]]
   input <- c(charToRaw(s$protected_b64), charToRaw("."), signed_payload)
   for (k in keys) {
     if (jws_verify_bytes(alg, k, input, s$signature, call)) {
@@ -575,17 +605,99 @@ check_flag <- function(x, name, call) {
   }
 }
 
-check_header_arg <- function(x, name) {
+# A header or claims argument, checked; the members in `scalars`, which
+# JSON gives one type, lose any names, which zujson would write as an
+# object (#120).
+check_header_arg <- function(
+  x,
+  name,
+  scalars = c("alg", "enc", "kid", "typ", "cty", "p2c")
+) {
   if (is.null(x)) {
     return(empty_object())
   }
   if (
     !is.list(x) ||
-      (length(x) > 0L && (is.null(names(x)) || any(!nzchar(names(x)))))
+      is.data.frame(x) ||
+      (length(x) > 0L && is.null(names(x)))
   ) {
     abort_zujose("argument", sprintf("`%s` must be a named list.", name))
   }
+  check_json_arg(x, name)
+  for (member in intersect(scalars, names(x))) {
+    if (is.atomic(x[[member]])) {
+      x[[member]] <- unname(x[[member]])
+    }
+  }
   if (length(x) == 0L) empty_object() else x
+}
+
+# Why zujson would not write `x` as the JSON the caller means: names that
+# are repeated, NA or empty, at any depth, which RFC 8725 section 3.4 asks
+# readers to reject, or a type JSON has no form for (#119, #123). NULL when
+# there is none.
+json_arg_problem <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  nms <- names(x)
+  if (
+    !is.null(nms) && (anyNA(nms) || !all(nzchar(nms)) || anyDuplicated(nms))
+  ) {
+    return("names")
+  }
+  if (is.list(x)) {
+    for (value in x) {
+      problem <- json_arg_problem(value)
+      if (!is.null(problem)) {
+        return(problem)
+      }
+    }
+    return(NULL)
+  }
+  if (
+    is.atomic(x) &&
+      typeof(x) %in% c("logical", "integer", "double", "character")
+  ) {
+    return(NULL)
+  }
+  "type"
+}
+
+# Refuse an argument zujose would write as JSON, as json_arg_problem()
+# describes, with zujose_argument_error.
+check_json_arg <- function(x, name) {
+  problem <- json_arg_problem(x)
+  if (identical(problem, "names")) {
+    abort_zujose(
+      "argument",
+      sprintf(
+        "`%s` must have names that are unique and not empty, at every depth.",
+        name
+      )
+    )
+  }
+  if (identical(problem, "type")) {
+    abort_zujose(
+      "argument",
+      sprintf(
+        "`%s` holds a value JSON cannot represent, such as a raw vector.",
+        name
+      )
+    )
+  }
+  invisible(x)
+}
+
+# Refuse a member given in more than one of the caller's headers, which
+# check_headers() would report as a malformed token (#119).
+check_disjoint_headers <- function(...) {
+  if (anyDuplicated(unlist(lapply(list(...), names)))) {
+    abort_zujose(
+      "argument",
+      "A header member is given in more than one header."
+    )
+  }
 }
 
 #' @export

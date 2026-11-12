@@ -53,6 +53,10 @@ The protected header holds \code{alg}, the key's \code{kid} unless \code{header}
 \code{b64 = FALSE}, the payload is signed and carried unencoded (RFC 7797),
 and the header gains \code{b64: false} and \verb{crit: ["b64"]}.
 
+A header's names must be unique and not empty at every depth, a member
+may appear in only one header, and values must be of a type JSON can
+represent. Anything else is a \code{zujose_argument_error}.
+
 The algorithms are \code{HS256}, \code{HS384} and \code{HS512} with an \code{oct} key, and
 \code{RS256}, \code{RS384}, \code{RS512}, \code{PS256}, \code{PS384} and \code{PS512} with a private
 RSA key of at least 2048 bits, and \code{ES256}, \code{ES384} and \code{ES512} with a

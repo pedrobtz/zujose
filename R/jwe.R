@@ -33,7 +33,12 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' `jwk_oct(charToRaw(enc2utf8(password)))`. The iteration count is
 #' `p2c` in `header`, a whole number of at least 1000, and defaults to
 #' 600 000. A recipient decrypting with [jwe_decrypt()] accepts at most
-#' `jose_limits()$p2c` iterations, by default also 600 000.
+#' `jose_limits()$p2c` iterations, by default also 600 000. Other
+#' implementations cap `p2c` lower when they decrypt: Python's jwcrypto at
+#' 16 384 and JavaScript's `jose` at 10 000 by default. A token for them
+#' needs `header = list(p2c = 10000)` or less, as in the example; the
+#' default stays high because the iteration count is a password-protected
+#' token's only defence against offline guessing.
 #'
 #' @param plaintext The plaintext: a raw vector, or a single string taken
 #'   as UTF-8 text.
@@ -45,7 +50,9 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' @param enc The content encryption algorithm. `"A128CBC-HS256"` is the one
 #'   RFC 7518 requires every implementation to support.
 #' @param header Further protected header members, as a named list. For
-#'   `PBES2-*`, `p2c` sets the iteration count.
+#'   `PBES2-*`, `p2c` sets the iteration count. `alg` and `enc` are set
+#'   through their arguments, and no header may hold `zip`: zujose does not
+#'   compress.
 #' @param unprotected Shared unprotected header members, as a named list.
 #'   Only the JSON serializations carry them.
 #' @param aad Additional authenticated data, as a raw vector or a string.
@@ -62,7 +69,8 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' jwe_decrypt(token, key, algorithms = "A128KW",
 #'              encryptions = "A128CBC-HS256")
 #'
-#' # AES-GCM content encryption, under a password.
+#' # AES-GCM content encryption, under a password. A p2c of 10000 is one
+#' # that jwcrypto and JavaScript's jose also read.
 #' password <- jwk_oct(charToRaw("correct horse battery staple"))
 #' token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
 #'                       enc = "A256GCM", header = list(p2c = 10000))
@@ -104,6 +112,7 @@ jwe_encrypt <- function(
 #' @param key A `jwk`.
 #' @param alg The key management algorithm, or `NULL` for the key's own.
 #' @param header Per-recipient unprotected header members, as a named list.
+#'   It cannot hold `enc` or `zip`, and an `alg` must agree with `alg`.
 #' @returns A `jwe_recipient`.
 #' @export
 #' @examples
@@ -113,10 +122,30 @@ jwe_recipient <- function(key, alg = NULL, header = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  alg <- if (!is.null(alg)) unname(alg)
+  header <- check_header_arg(header, "header")
+  check_no_zip(header)
+  if ("enc" %in% names(header)) {
+    abort_zujose(
+      "argument",
+      "Set `enc` through jwe_encrypt(), not a recipient's header."
+    )
+  }
   structure(
-    list(key = key, alg = alg, header = check_header_arg(header, "header")),
+    list(key = key, alg = alg, header = header),
     class = "jwe_recipient"
   )
+}
+
+# zujose never compresses, so a `zip` header would describe content that
+# is not compressed (design §8.6, RFC 8725 section 3.6, #117).
+check_no_zip <- function(header) {
+  if ("zip" %in% names(header)) {
+    abort_zujose(
+      "argument",
+      "zujose does not compress content; a `zip` header is refused."
+    )
+  }
 }
 
 encrypt_jwe <- function(
@@ -134,6 +163,10 @@ encrypt_jwe <- function(
   fixed = list()
 ) {
   bytes <- as_payload_bytes(plaintext, call)
+  if (!is_string(enc)) {
+    abort_zujose("argument", "`enc` must be a single string.")
+  }
+  enc <- unname(enc)
   check_algorithms(enc, "content encryption", "enc", call)
   check_available(enc, call)
   header <- check_header_arg(header, "header")
@@ -155,7 +188,7 @@ encrypt_jwe <- function(
         "With several recipients, give `alg` to each jwe_recipient()."
       )
     }
-    key
+    unname(key)
   } else {
     abort_zujose(
       "key",
@@ -178,13 +211,18 @@ encrypt_jwe <- function(
       "The compact serialization has no unprotected header and no `aad`."
     )
   }
-  for (name in c("alg", "enc", "zip")) {
-    if (name %in% names(header)) {
+  for (name in c("alg", "enc")) {
+    if (name %in% c(names(header), names(unprotected))) {
       abort_zujose(
         "argument",
-        sprintf("Set `%s` through its argument, not `header`.", name)
+        sprintf("Set `%s` through its argument, not a header.", name)
       )
     }
+  }
+  check_no_zip(header)
+  check_no_zip(unprotected)
+  for (r in recipients) {
+    check_disjoint_headers(header, unprotected, r$header)
   }
   given <- c(
     names(header),
@@ -240,6 +278,21 @@ encrypt_jwe <- function(
     },
     ""
   )
+  # A recipient's own `alg` header must name its algorithm, which is
+  # written once, as jws_sign() requires of `header$alg` (#129).
+  for (i in seq_along(recipients)) {
+    own <- recipients[[i]]$header
+    if ("alg" %in% names(own)) {
+      if (!identical(own[["alg"]], algs[[i]])) {
+        abort_zujose(
+          "argument",
+          "A recipient's `header$alg` disagrees with its algorithm."
+        )
+      }
+      own <- own[names(own) != "alg"]
+      recipients[[i]]$header <- if (length(own)) own else empty_object()
+    }
+  }
   if (any(algs %in% c("dir", "ECDH-ES")) && length(recipients) > 1L) {
     abort_zujose(
       "argument",
@@ -264,7 +317,9 @@ encrypt_jwe <- function(
     b64url_decode(value, name, call)
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
-    p2c <- recipients[[i]]$header$p2c %||% header$p2c %||% unprotected$p2c
+    p2c <- recipients[[i]]$header[["p2c"]] %||%
+      header[["p2c"]] %||%
+      unprotected[["p2c"]]
     if (!is_pbes2(algs[[i]])) {
       if (!is.null(p2c)) {
         abort_zujose("argument", "`p2c` applies only to PBES2 key management.")
@@ -710,7 +765,7 @@ wrap_cek <- function(
     # A fresh ephemeral key on the recipient's curve (RFC 7518 §4.6);
     # `fixed$epk` injects RFC 7518 Appendix C's.
     eph <- fixed$epk %||%
-      jwk_generate(key$kty, crv = key$members$crv)
+      jwk_generate(key$kty, crv = key$members[["crv"]])
     z <- ecdh_secret(eph, key)
     out <- list(header = list(epk = epk_jwk(eph)))
     if (alg == "ECDH-ES") {
@@ -788,12 +843,16 @@ kek_params <- function(alg, header, limits, call) {
       !is.numeric(p2c) ||
         length(p2c) != 1L ||
         is.na(p2c) ||
+        !is.finite(p2c) ||
         p2c != trunc(p2c) ||
-        p2c < 1
+        p2c < 1 ||
+        p2c > 4294967295
     ) {
+      # PBKDF2 counts to 2^32 - 1, as encryption does, whatever the limit
+      # (#123).
       abort_zujose(
         "parse",
-        "A PBES2 token needs a positive whole `p2c`.",
+        "A PBES2 token needs a whole `p2c` from 1 to 2^32 - 1.",
         call = call
       )
     }
@@ -908,7 +967,8 @@ kek_fits <- function(alg, enc, key, decrypt = FALSE, params = NULL) {
   if (is_ecdh(alg)) {
     return(
       (!decrypt || has_private(key)) &&
-        (is.null(params) || identical(key$members$crv, params$epk$members$crv))
+        (is.null(params) ||
+          identical(key$members[["crv"]], params$epk$members[["crv"]]))
     )
   }
   if (is_rsa_kem(alg)) {
@@ -925,7 +985,7 @@ check_kek <- function(alg, enc, key, call, decrypt = FALSE, params = NULL) {
     }
     if (
       !is.null(params) &&
-        !identical(key$members$crv, params$epk$members$crv)
+        !identical(key$members[["crv"]], params$epk$members[["crv"]])
     ) {
       abort_zujose(
         "key",

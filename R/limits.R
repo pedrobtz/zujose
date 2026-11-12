@@ -5,10 +5,15 @@
 #' compute much more than an honest one would. The defaults are far above
 #' what real tokens need.
 #'
-#' A token over a limit fails with `zujose_parse_error`. Use `Inf` to switch
-#' a limit off.
+#' A token over a limit fails with `zujose_parse_error`, except for `keys`:
+#' more fitting keys than `keys` is a property of the key set as much as of
+#' the token, and fails with `zujose_key_error`. Give the keys a `kid`, or
+#' narrow the set. Use `Inf` to switch a limit off.
 #'
-#' @param token Maximum length of a token, in bytes.
+#' @param token Maximum length of a token, in bytes. This bounds the encoded
+#'   form, which is about 4/3 of the payload, so the default of 2 MiB leaves
+#'   room for a payload at the `payload` limit. Encoding functions do not
+#'   check these limits.
 #' @param header Maximum length of a decoded protected header, in bytes.
 #' @param payload Maximum length of a payload or ciphertext, in bytes. This
 #'   applies to detached and unencoded (`b64: false`) payloads too.
@@ -24,7 +29,7 @@
 #' jose_limits()
 #' jose_limits(token = 8192, signatures = 1)
 jose_limits <- function(
-  token = 2^20,
+  token = 2^21,
   header = 2^14,
   payload = 2^20,
   signatures = 16,
@@ -63,7 +68,9 @@ print.jose_limits <- function(x, ...) {
   cat("<jose_limits>\n")
   values <- vapply(
     unclass(x),
-    function(v) format(v, big.mark = ",", scientific = FALSE),
+    function(v) {
+      format(v, big.mark = ",", decimal.mark = ".", scientific = FALSE)
+    },
     ""
   )
   cat(sprintf("  %-10s %s\n", names(values), values), sep = "")

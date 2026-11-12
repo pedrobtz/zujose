@@ -166,7 +166,13 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   `rfc7518_cbc()` and `rfc3394_vectors()` hold the JWE vectors. The RFC
   7518 Appendix B fixture is regenerated with
   `tools/rfc7518-cbc-vectors.R`.
-- **Keep the suite inside the CRAN time budget.** No suite yet.
+  `expect_limit_straddle()` checks a limit at `limit - 1`, `limit` and
+  `limit + 1`, optionally under `local_no_decoding()`;
+  `protected_bytes()`, `local_pbes2_reached()` and `nested_json()` build
+  its inputs, and `rsa_2040_jwk()` is a public key under the 2048-bit
+  minimum.
+- **Keep the suite inside the CRAN time budget.** The whole suite takes
+  about 80 seconds.
 
 ## Assurance
 
@@ -229,7 +235,7 @@ calls `r-cmd-check.yml@v1` and `coverage.yml@v1`. `pkgdown.yaml` is the
 usethis workflow, not an r-actions one. `jwe-oracle.yaml` is bespoke, as
 r-actions has nothing like it: it runs `tools/jwe-oracle/`, where zujose
 and Python's `jwcrypto` exchange JWE tokens for every `alg`/`enc` pair, on
-pull requests that touch the JWE code and by hand. It is development-only
+pull requests that touch `R/` or the oracle, and by hand. It is development-only
 and never part of R CMD check.
 
 The articles live in `vignettes/articles/`, which `.Rbuildignore` keeps

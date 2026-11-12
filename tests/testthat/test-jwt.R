@@ -479,3 +479,322 @@ test_that("a token that is not a single string is a parse error", {
     expect_error(jwt_decode(token, key, "HS256"), class = "zujose_parse_error")
   }
 })
+
+test_that("printing claims reads `kid` by its exact name (#122)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(
+    list(sub = "u"),
+    key,
+    "HS256",
+    header = list(typ = "JWT", kidnap = "zzz")
+  )
+  claims <- jwt_decode(jwt, key, "HS256", required = character())
+  expect_no_match(capture_output(print(claims)), "zzz", fixed = TRUE)
+})
+
+test_that("claims with repeated, NA or empty names are refused (#119)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(o = c(a = 1, a = 2)),
+    list(o = list(a = 1, a = 2)),
+    list(o = list(p = list(a = 1, a = 2))),
+    stats::setNames(list(1), NA),
+    list(o = stats::setNames(list(1), NA)),
+    list(o = list(a = 1, 2)),
+    data.frame(a = 1:2),
+    list(1, 2)
+  )
+  for (claims in bad) {
+    expect_error(
+      jwt_encode(claims, key, "HS256"),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("a claim value JSON cannot represent is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (value in list(as.raw(1), 1i, list(a = 1i))) {
+    expect_error(
+      jwt_encode(list(a = value), key, "HS256"),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("names on scalar arguments and claims do not change the JWT (#120)", {
+  key <- jwk_oct(as.raw(1:32))
+  local_mocked_bindings(jwt_now = function() 1000)
+  same <- function(named, plain) {
+    expect_identical(
+      jose_peek(named)$claims,
+      jose_peek(plain)$claims
+    )
+  }
+  same(
+    jwt_encode(list(), key, "HS256", expires_in = c(ttl = 60)),
+    jwt_encode(list(), key, "HS256", expires_in = 60)
+  )
+  same(
+    jwt_encode(list(), key, "HS256", not_before = c(t = 5)),
+    jwt_encode(list(), key, "HS256", not_before = 5)
+  )
+  same(
+    jwt_encode(
+      list(exp = c(t = 1.9e9), nbf = c(t = 1), iat = c(t = 1)),
+      key,
+      "HS256"
+    ),
+    jwt_encode(list(exp = 1.9e9, nbf = 1, iat = 1), key, "HS256")
+  )
+  same(
+    jwt_encode(
+      list(iss = c(x = "me"), sub = c(x = "u"), aud = c(a = "x", b = "y")),
+      key,
+      "HS256"
+    ),
+    jwt_encode(list(iss = "me", sub = "u", aud = c("x", "y")), key, "HS256")
+  )
+  expect_identical(
+    jose_peek(jwt_encode(
+      list(),
+      key,
+      c(a = "HS256"),
+      header = list(typ = c(t = "JWT"))
+    ))$headers[[1]],
+    list(alg = "HS256", typ = "JWT")
+  )
+})
+
+test_that("a named issuer or subject matches its value (#120)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(list(iss = "me", sub = "u"), key, "HS256")
+  claims <- jwt_decode(
+    jwt,
+    key,
+    "HS256",
+    issuer = c(x = "me"),
+    subject = c(y = "u"),
+    required = character()
+  )
+  expect_identical(claims$iss, "me")
+})
+
+test_that("jwt_encode() takes one key, not a list of signers (#130)", {
+  key <- jwk_oct(as.raw(1:32))
+  expect_error(
+    jwt_encode(list(a = 1), list(jws_signer(key, "HS256"))),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwt_encode(list(a = 1), jws_signer(key, "HS256")),
+    class = "zujose_argument_error"
+  )
+  expect_error(jwt_encode(list(a = 1), "key"), class = "zujose_key_error")
+})
+
+test_that("claims refuses repeated or empty names before decoding (#118)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(scope = "read", scope = "write"),
+    list(scope = function(x) TRUE, scope = function(x) FALSE),
+    stats::setNames(list(1), NA_character_),
+    stats::setNames(list(1, 2), c("a", ""))
+  )
+  for (claims in bad) {
+    expect_error(
+      jwt_decode("not a token", key, "HS256", claims = claims),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwt_decoder(key, "HS256", claims = claims),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("claims compares values, not JSON text (#128)", {
+  # Object members in any order.
+  expect_no_error(decode_at_1000(
+    list(o = list(a = 1, b = list(c = 2, d = 3))),
+    claims = list(o = list(b = list(d = 3, c = 2), a = 1))
+  ))
+  expect_no_error(decode_at_1000(
+    list(o = list(list(a = 1, b = 2))),
+    claims = list(o = list(list(b = 2, a = 1)))
+  ))
+  expect_error(
+    decode_at_1000(
+      list(o = list(a = 1, b = 2)),
+      claims = list(o = list(a = 1))
+    ),
+    class = "zujose_claim_error"
+  )
+  # A vector longer than one is an array, a vector of one is a scalar, and
+  # a list of one is an array of one.
+  expect_no_error(decode_at_1000(list(s = "a"), claims = list(s = "a")))
+  expect_no_error(decode_at_1000(
+    list(s = list("a")),
+    claims = list(s = list("a"))
+  ))
+  expect_error(
+    decode_at_1000(list(s = list("a")), claims = list(s = "a")),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode_at_1000(list(s = "a"), claims = list(s = list("a"))),
+    class = "zujose_claim_error"
+  )
+  expect_no_error(decode_at_1000(
+    list(s = c("a", "b")),
+    claims = list(s = list("a", "b"))
+  ))
+  # NULL expects a JSON null; NA has no JSON form and is refused.
+  expect_no_error(decode_at_1000(list(x = NULL), claims = list(x = NULL)))
+  expect_error(
+    decode_at_1000(list(x = 1), claims = list(x = NULL)),
+    class = "zujose_claim_error"
+  )
+  for (expected in list(NA, NA_character_, list(1, NA), Inf)) {
+    expect_error(
+      decode_at_1000(list(x = NULL), claims = list(x = expected)),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("claims compares exp, nbf and iat as the times returned (#128)", {
+  key <- jwk_oct(as.raw(1:32))
+  jwt <- jwt_encode(list(exp = 1100, nbf = 900, iat = 950), key, "HS256")
+  decode <- function(...) {
+    jwt_decode(jwt, key, "HS256", now = as_posixct(1000), ...)
+  }
+  claims <- decode()
+  expect_no_error(decode(
+    claims = list(
+      exp = claims$exp,
+      nbf = claims$nbf,
+      iat = claims$iat
+    )
+  ))
+  expect_no_error(decode(claims = list(exp = 1100)))
+  expect_error(
+    decode(claims = list(exp = claims$exp + 1)),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode(claims = list(exp = "1100")),
+    class = "zujose_claim_error"
+  )
+  seen <- NULL
+  decode(
+    claims = list(exp = function(x) {
+      seen <<- x
+      TRUE
+    })
+  )
+  expect_identical(seen, claims$exp)
+})
+
+test_that("a NumericDate beyond what POSIXct holds is refused (#127)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (claim in c("exp", "nbf", "iat")) {
+    for (value in c("1e308", "9223372036854775807", "-1e17")) {
+      payload <- sprintf('{"%s":%s}', claim, value)
+      jwt <- jws_sign(payload, key, "HS256", header = list(typ = "JWT"))
+      expect_error(
+        jwt_decode(jwt, key, "HS256", required = character(), leeway = 0),
+        class = "zujose_parse_error",
+        info = payload
+      )
+    }
+  }
+  jwt <- jws_sign('{"exp":1e16}', key, "HS256", header = list(typ = "JWT"))
+  claims <- jwt_decode(jwt, key, "HS256")
+  expect_false(is.na(format(claims$exp)))
+  expect_identical(as.numeric(claims$exp), 1e16)
+})
+
+test_that("a JWT with an unencoded payload is refused, outer or nested (#126)", {
+  key <- jwk_oct(as.raw(1:32))
+  other <- jwk_oct(as.raw(32:1))
+  claims <- '{"exp":4000000000}'
+  unencoded <- jws_sign(
+    claims,
+    key,
+    "HS256",
+    header = list(typ = "JWT"),
+    b64 = FALSE
+  )
+  # Refused before the signature is checked, so even with the wrong key.
+  for (k in list(key, other)) {
+    expect_error(
+      jwt_decode(unencoded, k, "HS256"),
+      class = "zujose_policy_error"
+    )
+  }
+  nested <- jws_sign(unencoded, key, "HS256", header = list(cty = "JWT"))
+  expect_error(jwt_decode(nested, key, "HS256"), class = "zujose_policy_error")
+  kek <- jwk_oct(as.raw(1:16))
+  encrypted <- jwe_encrypt(
+    unencoded,
+    kek,
+    alg = "A128KW",
+    enc = "A128GCM",
+    header = list(cty = "JWT")
+  )
+  expect_error(
+    jwt_decode(
+      encrypted,
+      key,
+      "HS256",
+      decrypt = jwe_decryption(kek, "A128KW", "A128GCM")
+    ),
+    class = "zujose_policy_error"
+  )
+  # The same claims, Base64url-encoded, are accepted.
+  expect_no_error(jwt_decode(
+    jws_sign(claims, key, "HS256", header = list(typ = "JWT")),
+    key,
+    "HS256"
+  ))
+})
+
+test_that("claims compares values nested as deep as JSON parses", {
+  key <- jwk_oct(as.raw(1:32))
+  value <- paste0(strrep("[", 998), "1", strrep("]", 998))
+  jwt <- jws_sign(
+    sprintf('{"exp":4000000000,"a":%s}', value),
+    key,
+    "HS256",
+    header = list(typ = "JWT")
+  )
+  expected <- zujson::json_parse(value, simplify = "none")
+  expect_no_error(jwt_decode(jwt, key, "HS256", claims = list(a = expected)))
+  expect_error(
+    jwt_decode(jwt, key, "HS256", claims = list(a = list(1))),
+    class = "zujose_claim_error"
+  )
+  expect_error(
+    decode_at_1000(list(a = list(NULL, 1)), claims = list(a = list(1, NULL))),
+    class = "zujose_claim_error"
+  )
+})
+
+test_that("jwt_encode() refuses a NumericDate jwt_decode() would refuse (#127)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (claim in c("exp", "nbf", "iat")) {
+    claims <- stats::setNames(list(1e308), claim)
+    expect_error(
+      jwt_encode(claims, key, "HS256"),
+      class = "zujose_argument_error",
+      info = claim
+    )
+  }
+  expect_error(
+    jwt_encode(list(), key, "HS256", expires_in = 1e308),
+    class = "zujose_argument_error"
+  )
+  jwt <- jwt_encode(list(exp = 1e16), key, "HS256")
+  expect_s3_class(jwt_decode(jwt, key, "HS256")$exp, "POSIXct")
+})

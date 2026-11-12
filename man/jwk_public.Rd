@@ -17,6 +17,12 @@ An object of the same class.
 \code{qi} and \code{oth}. A symmetric (\code{oct}) key is entirely secret, so it is an
 error alone and dropped from a key set.
 }
+\details{
+A private key's \code{key_ops} become those of its public half: \code{sign} becomes
+\code{verify}, \code{decrypt} becomes \code{encrypt} and \code{unwrapKey} becomes \code{wrapKey},
+and public operations stay. When no public operation is left, as for a
+key only for \code{deriveKey}, the public key has no \code{key_ops}.
+}
 \examples{
 set <- as_jwk_set('{"keys":[{"kty":"oct","k":"AAAA"}]}')
 length(jwk_public(set))

@@ -597,3 +597,115 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
     }
   }
 })
+
+test_that("JWE headers with repeated or empty names are refused (#119)", {
+  kek <- jwk_oct(as.raw(1:16))
+  bad <- list(
+    list(a = 1, a = 2),
+    list(x = list(a = 1, a = 2)),
+    stats::setNames(list(1), NA),
+    list(x = as.raw(1)),
+    list(x = 1i)
+  )
+  for (header in bad) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", header = header),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_encrypt(
+        "x",
+        kek,
+        "A128KW",
+        unprotected = header,
+        format = "flattened"
+      ),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_recipient(kek, "A128KW", header = header),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jwe_encrypt(
+      "x",
+      kek,
+      "A128KW",
+      header = list(a = 1),
+      unprotected = list(a = 2),
+      format = "flattened"
+    ),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwe_encrypt(
+      "x",
+      list(jwe_recipient(kek, "A128KW", header = list(a = 2))),
+      unprotected = list(a = 1),
+      format = "general"
+    ),
+    class = "zujose_argument_error"
+  )
+})
+
+test_that("zip is refused in every header jwe_encrypt() takes (#117)", {
+  kek <- jwk_oct(as.raw(1:16))
+  zip <- list(zip = "DEF")
+  expect_error(
+    jwe_encrypt("x", kek, "A128KW", header = zip),
+    class = "zujose_argument_error"
+  )
+  for (format in c("flattened", "general")) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", unprotected = zip, format = format),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jwe_recipient(kek, "A128KW", header = zip),
+    class = "zujose_argument_error"
+  )
+})
+
+test_that("a recipient header alg must agree with the algorithm (#129)", {
+  kek <- jwk_oct(as.raw(1:16))
+  for (format in c("flattened", "general")) {
+    expect_error(
+      jwe_encrypt(
+        "p",
+        list(jwe_recipient(kek, "A128KW", header = list(alg = "A256KW"))),
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_encrypt(
+        "p",
+        list(jwe_recipient(
+          jwk_oct(as.raw(1:16), alg = "A128KW"),
+          header = list(alg = "A256KW")
+        )),
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+    # The same `alg` is written once.
+    token <- jwe_encrypt(
+      "p",
+      list(jwe_recipient(kek, "A128KW", header = list(alg = "A128KW"))),
+      format = format
+    )
+    expect_identical(jose_peek(token)$headers[[1]]$alg, "A128KW")
+  }
+})
+
+test_that("`enc` must be one string (#123)", {
+  kek <- jwk_oct(as.raw(1:16))
+  for (enc in list(c("A128GCM", "A256GCM"), NA_character_, 1, NULL)) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", enc = enc),
+      class = "zujose_argument_error"
+    )
+  }
+})

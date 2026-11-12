@@ -313,3 +313,35 @@ test_that("zujose_info() reports RS*, PS* and RSA key management available", {
   )
   expect_true(all(info$available[info$algorithm %in% rsa]))
 })
+
+test_that("RSA members with a leading zero octet are refused", {
+  # RFC 7518 section 2: a Base64urlUInt uses the minimum number of octets,
+  # so each key has one encoding and one thumbprint (#94).
+  jwk <- zujson::json_parse(rfc7520_key(4))
+  for (name in c("n", "e", "d", "p", "q", "dp", "dq", "qi")) {
+    bad <- jwk
+    bad[[name]] <- b64url_encode(c(as.raw(0), b64url_decode(jwk[[name]], "x")))
+    expect_error(as_jwk(bad), class = "zujose_key_error", info = name)
+  }
+  public <- jwk[c("kty", "n", "e")]
+  public$e <- "AAEAAQ"
+  expect_error(as_jwk(public), class = "zujose_key_error")
+  expect_no_error(as_jwk(jwk))
+})
+
+test_that("an RSA JWK with `oth` is refused", {
+  # RFC 7518 section 6.3.2.7: zujose has no multi-prime keys (#125).
+  jwk <- zujson::json_parse(rfc7520_key(4))
+  oth <- list(list(r = "AQAB", d = "AQAB", t = "AQAB"))
+  expect_error(as_jwk(c(jwk, list(oth = oth))), class = "zujose_key_error")
+  public <- c(jwk[c("kty", "n", "e")], list(oth = oth))
+  expect_error(as_jwk(public), class = "zujose_key_error")
+})
+
+test_that("an RSA size that is not a whole number of bytes is refused (#123)", {
+  local_mocked_bindings(
+    crypt_rsa_keygen = function(...) stop("generated a key"),
+    .package = "zucrypt"
+  )
+  expect_error(jwk_generate("RSA", size = 2049), class = "zujose_key_error")
+})

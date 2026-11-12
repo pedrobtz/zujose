@@ -5,10 +5,10 @@
 on:
   workflow_dispatch:
   pull_request:
+    # The JWE path runs through most of R/: the codec, Base64url, key
+    # selection, algorithm policy and limits as well as jwe.R (#95).
     paths:
-      - "R/jwe.R"
-      - "R/aes.R"
-      - "R/keys.R"
+      - "R/**"
       - "tools/jwe-oracle/**"
       - ".github/workflows/jwe-oracle.yaml"
 
@@ -42,6 +42,8 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The same version as tests/testthat/fixtures/oracle/MANIFEST.tsv
+      # records for jwe-noncanonical.tsv; change both together (#95).
       - name: Install jwcrypto
         run: python -m pip install jwcrypto==1.5.6
 

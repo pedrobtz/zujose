@@ -79,7 +79,12 @@ ec_crypt_key <- function(key, private) {
       }
     )
   }
-  zucrypt::crypt_ec_key(key$members$crv, m("x"), m("y"), if (private) m("d"))
+  zucrypt::crypt_ec_key(
+    key$members[["crv"]],
+    m("x"),
+    m("y"),
+    if (private) m("d")
+  )
 }
 
 # JWK members from a zucrypt EC or X25519 key.
@@ -111,7 +116,7 @@ crypt_key_members <- function(ck) {
     list(kty = "OKP", members = ec_members(ck), bits = 255L)
   } else {
     m <- ec_members(ck)
-    list(kty = "EC", members = m, bits = unname(ec_curves[[m$crv]]))
+    list(kty = "EC", members = m, bits = unname(ec_curves[[m[["crv"]]]]))
   }
 }
 
@@ -213,18 +218,20 @@ jwk_oct <- function(
 #'
 #' Without `size`, an `oct` key is as long as `alg` needs: the hash size for
 #' `HS256`, `HS384` and `HS512` (RFC 7518 section 3.2), the key size for
-#' `A*KW` and `A*GCMKW`, and 256 bits otherwise. A `dir` key is the content
-#' encryption key itself, so give its `size`: 256 bits for `A128CBC-HS256`,
-#' 384 for `A192CBC-HS384`, 512 for `A256CBC-HS512`, and 128, 192 or 256
-#' for `A128GCM`, `A192GCM` and `A256GCM`.
+#' `A*KW` and `A*GCMKW`, and 256 bits otherwise, as for a `PBES2-*`
+#' password. A `dir` key is the content encryption key itself: name it by
+#' its content encryption, such as `alg = "A128GCM"`, to get its exact size
+#' (256 bits for `A128CBC-HS256`, 384 for `A192CBC-HS384`, 512 for
+#' `A256CBC-HS512`, and 128, 192 or 256 for `A128GCM`, `A192GCM` and
+#' `A256GCM`), or give `alg = "dir"` and its `size`.
 #'
-#' An `RSA` key's `size` is its modulus, 2048 bits by default and at most
-#' 4096, with public exponent 65537. Generating one takes a moment.
+#' An `RSA` key's `size` is its modulus, a multiple of 8 bits, 2048 by
+#' default and at most 4096, with public exponent 65537. Generating one takes a moment.
 #'
 #' @param kty The key type: `"oct"`, `"RSA"`, `"EC"` or `"OKP"`.
 #' @param size The key size in bits. For an `oct` key, a multiple of 8 and at
-#'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, 2048
-#'   to 4096, and `NULL` is 2048.
+#'   least 128, and `NULL` takes the size `alg` needs; for an `RSA` key, a
+#'   multiple of 8 from 2048 to 4096, and `NULL` is 2048.
 #' @param crv The curve: `"P-256"` (the default), `"P-384"` or `"P-521"`
 #'   for an `EC` key, `"X25519"` for an `OKP` key. Not used otherwise.
 #' @inheritParams jwk_oct
@@ -327,13 +334,13 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
   ok <- is.numeric(size) &&
     length(size) == 1L &&
     is.finite(size) &&
-    size == trunc(size) &&
+    size %% 8 == 0 &&
     size >= 2048 &&
     size <= 4096
   if (!ok) {
     abort_zujose(
       "key",
-      "`size` must be a whole number of bits from 2048 to 4096.",
+      "`size` must be a whole number of bytes, in bits, from 2048 to 4096.",
       call = call
     )
   }
@@ -417,6 +424,15 @@ oct_key_bits <- function(alg, call) {
     bits <- as.numeric(substr(alg, 2L, 4L))
     return(list(bits = bits, min = bits, exact = TRUE))
   }
+  # A PBES2 key is a password, of any length (#132).
+  if ("oct" %in% alg_key_types(alg)) {
+    return(list(bits = 256, min = 128, exact = FALSE))
+  }
+  # A `dir` key named by its content encryption is that algorithm's CEK.
+  if (alg %in% c(names(cbc_hs), names(gcm_key_bytes))) {
+    bits <- 8 * cek_bytes(alg)
+    return(list(bits = bits, min = bits, exact = TRUE))
+  }
   abort_zujose(
     "key",
     sprintf("\"%s\" is not an algorithm for an `oct` key.", alg),
@@ -458,19 +474,25 @@ new_jose_key <- function(
       )
     }
   }
-  supported <- key_type_usable(kty, members$crv)
+  supported <- key_type_usable(kty, members[["crv"]])
   # An OKP curve other than X25519 (Ed25519, X448) waits on no zucrypt
   # version: the bundled library has none of them.
-  needs <- if (!(kty == "OKP" && !identical(members$crv, "X25519"))) {
-    unname(pending_key_types[kty])
+  # An unknown key type waits on no zucrypt version either (#136).
+  needs <- if (
+    kty %in%
+      names(pending_key_types) &&
+      !(kty == "OKP" && !identical(members[["crv"]], "X25519"))
+  ) {
+    unname(pending_key_types[[kty]])
   }
   structure(
     list(
       kty = kty,
-      kid = kid,
-      alg = alg,
-      use = use,
-      key_ops = key_ops,
+      # Names would make zujson write a member as an object (#120).
+      kid = unname(kid),
+      alg = unname(alg),
+      use = unname(use),
+      key_ops = unname(key_ops),
       k = k,
       members = members,
       bits = bits,
@@ -530,12 +552,17 @@ as_jwk.character <- function(x, ...) {
   if (grepl("^[[:space:]]*-----BEGIN", x)) {
     return(pem_to_key(x, call))
   }
-  jwk_to_key(json_key_object(x, "JWK", call), call)
+  jwk_to_key(json_key_object(x, "JWK", call), call, json = TRUE)
 }
 
 #' @export
 as_jwk.list <- function(x, ...) {
-  call <- sys.call(-1)
+  list_to_key(x, sys.call(-1))
+}
+
+# `json` is whether the list was parsed from JSON text, where an array is
+# always a list; a list built in R may hold a character vector instead.
+list_to_key <- function(x, call, json = FALSE) {
   if (!is_json_object(x) || has_repeated_names(x)) {
     abort_zujose(
       "key",
@@ -543,7 +570,7 @@ as_jwk.list <- function(x, ...) {
       call = call
     )
   }
-  jwk_to_key(x, call)
+  jwk_to_key(x, call, json)
 }
 
 #' @export
@@ -564,18 +591,12 @@ json_key_object <- function(text, what, call) {
   )
 }
 
-jwk_to_key <- function(jwk, call) {
+jwk_to_key <- function(jwk, call, json = FALSE) {
   kty <- member(jwk, "kty")
   if (!is_string(kty)) {
     abort_zujose("key", "A JWK must have a string `kty`.", call = call)
   }
-  key_ops <- member(jwk, "key_ops")
-  if (!is.null(key_ops)) {
-    if (!is.list(key_ops) || !all(vapply(key_ops, is_string, logical(1)))) {
-      abort_zujose("key", "`key_ops` must be an array of strings.", call = call)
-    }
-    key_ops <- unlist(key_ops)
-  }
+  key_ops <- jwk_key_ops(member(jwk, "key_ops"), json, call)
   common <- c("kty", "kid", "alg", "use", "key_ops")
   members <- jwk[setdiff(names(jwk), common)]
 
@@ -609,7 +630,9 @@ jwk_to_key <- function(jwk, call) {
 
   bits <- if (kty == "RSA" && key_type_usable("RSA")) {
     check_rsa_jwk(members, call)
-  } else if (kty %in% c("EC", "OKP") && key_type_usable(kty, members$crv)) {
+  } else if (
+    kty %in% c("EC", "OKP") && key_type_usable(kty, members[["crv"]])
+  ) {
     check_ec_jwk(kty, members, call)
   }
 
@@ -626,12 +649,40 @@ jwk_to_key <- function(jwk, call) {
   )
 }
 
+# `key_ops` is an array of strings (RFC 7517 §4.3): a JSON array, or a
+# character vector in a list built in R. A present empty array permits no
+# operation, so it is kept as character(0), never NULL (#121).
+jwk_key_ops <- function(key_ops, json, call) {
+  if (is.null(key_ops)) {
+    return(NULL)
+  }
+  if (!json && is.character(key_ops) && is.null(names(key_ops))) {
+    return(key_ops)
+  }
+  ok <- is.list(key_ops) &&
+    is.null(names(key_ops)) &&
+    all(vapply(key_ops, is_string, logical(1)))
+  if (!ok) {
+    abort_zujose("key", "`key_ops` must be an array of strings.", call = call)
+  }
+  as.character(unlist(key_ops))
+}
+
 # An RSA JWK's members must make a key: n and e, and for a private key all
 # of the CRT parameters, consistent with each other. Returns the modulus
 # size in bits.
 check_rsa_jwk <- function(members, call) {
   if (!all(c("n", "e") %in% names(members))) {
     abort_zujose("key", "An RSA JWK needs `n` and `e`.", call = call)
+  }
+  # RFC 7518 §6.3.2.7: an implementation without multi-prime keys must not
+  # use a key with `oth`, private or not (#125).
+  if ("oth" %in% names(members)) {
+    abort_zujose(
+      "key",
+      "zujose does not support multi-prime RSA keys (`oth`).",
+      call = call
+    )
   }
   given <- rsa_private_members %in% names(members)
   if (any(given) && !all(given)) {
@@ -643,6 +694,21 @@ check_rsa_jwk <- function(members, call) {
       ),
       call = call
     )
+  }
+  # RFC 7518 §2: a Base64urlUInt uses the fewest octets, so a key has one
+  # encoding and one thumbprint (#94).
+  for (name in c("n", "e", if (all(given)) rsa_private_members)) {
+    value <- jwk_member_raw(members, name)
+    if (is.null(value) || length(value) == 0L || value[[1]] == as.raw(0)) {
+      abort_zujose(
+        "key",
+        sprintf(
+          "The RSA JWK's `%s` is not a minimal Base64urlUInt.",
+          name
+        ),
+        call = call
+      )
+    }
   }
   key <- list(kty = "RSA", members = members)
   ck <- tryCatch(
@@ -660,13 +726,22 @@ check_rsa_jwk <- function(members, call) {
   as.integer(as.list(ck)$size)
 }
 
+# A JWK member's bytes, or NULL when it is not a string of Base64url.
+jwk_member_raw <- function(members, name) {
+  value <- members[[name]]
+  if (!is_string(value)) {
+    return(NULL)
+  }
+  tryCatch(b64url_decode(value, name), zujose_error = function(e) NULL)
+}
+
 # An EC JWK needs a NIST curve, x and y; an X25519 one, x. Either may carry
 # d. The point (and d) must make a key. Returns the size in bits.
 check_ec_jwk <- function(kty, members, call) {
   need <- if (kty == "EC") c("crv", "x", "y") else c("crv", "x")
   if (
     !all(need %in% names(members)) ||
-      (kty == "EC" && !members$crv %in% names(ec_curves))
+      (kty == "EC" && !members[["crv"]] %in% names(ec_curves))
   ) {
     abort_zujose(
       "key",
@@ -678,12 +753,40 @@ check_ec_jwk <- function(kty, members, call) {
       call = call
     )
   }
+  # RFC 7518 §6.2.1.2, §6.2.1.3 and §6.2.2.1 (and RFC 8037 §2): `x`, `y`
+  # and `d` are the full coordinate length, never shorter or longer (#94).
+  bytes <- if (kty == "OKP") {
+    32L
+  } else {
+    (ec_curves[[members[["crv"]]]] + 7L) %/% 8L
+  }
+  for (name in intersect(c("x", "y", "d"), names(members))) {
+    if (length(jwk_member_raw(members, name)) != bytes) {
+      abort_zujose(
+        "key",
+        sprintf("The JWK's `%s` is not %d bytes long.", name, bytes),
+        call = call
+      )
+    }
+  }
   key <- list(kty = kty, members = members)
+  private <- "d" %in% names(members)
   ck <- tryCatch(
-    ec_crypt_key(key, "d" %in% names(members)),
+    ec_crypt_key(key, private),
     zujose_error = function(e) e,
     zucrypt_error = function(e) e
   )
+  # An EC private key is built from x, y and d together, so zucrypt checks
+  # that they agree; an X25519 one only from d, so `x` is compared with the
+  # public key d makes (#124).
+  if (
+    !inherits(ck, "error") &&
+      kty == "OKP" &&
+      private &&
+      !identical(as.list(ck)$data$x, jwk_member_raw(members, "x"))
+  ) {
+    ck <- simpleError("x does not match d")
+  }
   if (inherits(ck, "error")) {
     abort_zujose(
       "key",
@@ -691,7 +794,7 @@ check_ec_jwk <- function(kty, members, call) {
       call = call
     )
   }
-  if (kty == "OKP") 255L else unname(ec_curves[[members$crv]])
+  if (kty == "OKP") 255L else unname(ec_curves[[members[["crv"]]]])
 }
 
 # A PEM key, through zucrypt: private first, then public.
@@ -833,6 +936,11 @@ key_to_jwk <- function(key) {
 #' `qi` and `oth`. A symmetric (`oct`) key is entirely secret, so it is an
 #' error alone and dropped from a key set.
 #'
+#' A private key's `key_ops` become those of its public half: `sign` becomes
+#' `verify`, `decrypt` becomes `encrypt` and `unwrapKey` becomes `wrapKey`,
+#' and public operations stay. When no public operation is left, as for a
+#' key only for `deriveKey`, the public key has no `key_ops`.
+#'
 #' @param x A `jwk` or `jwk_set`.
 #' @returns An object of the same class.
 #' @export
@@ -857,8 +965,33 @@ jwk_public <- function(x) {
 }
 
 public_key <- function(key) {
-  key$members <- key$members[setdiff(names(key$members), private_members)]
+  private <- names(key$members) %in% private_members
+  if (any(private)) {
+    key$key_ops <- public_key_ops(key$key_ops)
+  }
+  key$members <- key$members[!private]
   key
+}
+
+# The operations of a key's public half: each private operation becomes its
+# public counterpart, and public ones stay. With none left, `key_ops` is
+# dropped rather than publishing a key that can do nothing (#133). An empty
+# `key_ops` already permits nothing, and stays empty.
+public_ops <- c(
+  sign = "verify",
+  verify = "verify",
+  decrypt = "encrypt",
+  encrypt = "encrypt",
+  unwrapKey = "wrapKey",
+  wrapKey = "wrapKey"
+)
+
+public_key_ops <- function(key_ops) {
+  if (length(key_ops) == 0L) {
+    return(key_ops)
+  }
+  ops <- unique(unname(public_ops[intersect(key_ops, names(public_ops))]))
+  if (length(ops) == 0L) NULL else ops
 }
 
 check_key <- function(key, call) {
@@ -896,8 +1029,13 @@ format.jwk <- function(x, ...) {
   if (!x$supported) {
     lines <- c(
       lines,
-      if (is.null(x$needs)) {
-        sprintf("  ! not usable: zujose has no %s", x$members$crv %||% x$kty)
+      if (!x$kty %in% c("oct", names(pending_key_types))) {
+        "  ! not usable: unknown key type"
+      } else if (is.null(x$needs)) {
+        sprintf(
+          "  ! not usable: zujose has no %s",
+          x$members[["crv"]] %||% x$kty
+        )
       } else {
         sprintf("  ! not usable yet: needs zucrypt (>= %s)", x$needs)
       }

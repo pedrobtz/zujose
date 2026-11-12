@@ -168,7 +168,16 @@ test_that("the default size follows alg", {
     A128GCMKW = 16L,
     A192GCMKW = 24L,
     A256GCMKW = 32L,
-    dir = 32L
+    dir = 32L,
+    "PBES2-HS256+A128KW" = 32L,
+    "PBES2-HS384+A192KW" = 32L,
+    "PBES2-HS512+A256KW" = 32L,
+    "A128CBC-HS256" = 32L,
+    "A192CBC-HS384" = 48L,
+    "A256CBC-HS512" = 64L,
+    A128GCM = 16L,
+    A192GCM = 24L,
+    A256GCM = 32L
   )
   for (alg in names(sizes)) {
     expect_length(jwk_generate("oct", alg = alg)$k, sizes[[alg]])
@@ -207,7 +216,7 @@ test_that("jwk_generate() refuses sizes and algorithms that do not fit", {
   expect_length(jwk_generate("oct", size = 128)$k, 16L)
   expect_length(jwk_generate("oct", size = 192, alg = "dir")$k, 24L)
   # Not an oct algorithm at all.
-  for (alg in c("RS256", "ES256", "A128CBC-HS256", "PBES2-HS256+A128KW")) {
+  for (alg in c("RS256", "ES256", "ECDH-ES", "A128GCMX")) {
     expect_error(
       jwk_generate("oct", alg = alg),
       class = "zujose_key_error"
@@ -238,4 +247,96 @@ test_that("a refused oct size has a message", {
     jwk_generate("oct", size = 128, alg = "HS256"),
     error = TRUE
   )
+})
+
+test_that("an empty `key_ops` permits no operation, and survives JSON", {
+  # #121: a present empty array is no operations, not no restriction.
+  k <- b64url_encode(as.raw(1:32))
+  read <- as_jwk(sprintf('{"kty":"oct","k":"%s","key_ops":[]}', k))
+  expect_identical(read$key_ops, character())
+  expect_error(jws_sign("x", read, "HS256"), class = "zujose_policy_error")
+  made <- jwk_oct(as.raw(1:32), key_ops = character())
+  back <- as_jwk(jwk_json(made, TRUE))
+  expect_identical(back$key_ops, character())
+  expect_error(jws_sign("x", back, "HS256"), class = "zujose_policy_error")
+})
+
+test_that("`key_ops` must be an array of strings", {
+  k <- b64url_encode(as.raw(1:32))
+  for (ops in c('{}', '{"a":"sign"}', '"sign"', '[1]', '["sign",null]')) {
+    json <- sprintf('{"kty":"oct","k":"%s","key_ops":%s}', k, ops)
+    expect_error(as_jwk(json), class = "zujose_key_error", info = ops)
+  }
+  key <- as_jwk(list(kty = "oct", k = k, key_ops = c("sign", "verify")))
+  expect_identical(key$key_ops, c("sign", "verify"))
+  set <- as_jwk_set(list(
+    keys = list(
+      list(kty = "oct", k = k, key_ops = c("sign", "verify"))
+    )
+  ))
+  expect_length(set, 1L)
+  text <- sprintf('{"keys":[{"kty":"oct","k":"%s","key_ops":"sign"}]}', k)
+  expect_length(as_jwk_set(text), 0L)
+})
+
+test_that("jwk_generate() makes an oct key for every oct algorithm", {
+  # #132: PBES2, and a `dir` key named by its content encryption, as
+  # jwk_oct() and key selection allow.
+  password <- jwk_generate("oct", alg = "PBES2-HS256+A128KW")
+  token <- jwe_encrypt("hi", password)
+  out <- jwe_decrypt(token, password, "PBES2-HS256+A128KW", "A128CBC-HS256")
+  expect_identical(out$plaintext, charToRaw("hi"))
+  expect_length(jwk_generate("oct", 128, alg = "PBES2-HS512+A256KW")$k, 16L)
+  cek <- jwk_generate("oct", alg = "A256GCM")
+  token <- jwe_encrypt("hi", cek, alg = "dir", enc = "A256GCM")
+  expect_identical(
+    jwe_decrypt(token, cek, "dir", "A256GCM")$plaintext,
+    charToRaw("hi")
+  )
+  expect_error(
+    jwk_generate("oct", size = 256, alg = "A128GCM"),
+    class = "zujose_key_error"
+  )
+})
+
+test_that("jwk_public() maps private key_ops to their public counterparts", {
+  # #133: the public half of a signing key verifies.
+  key <- jwk_generate("EC", key_ops = "sign", alg = "ES256")
+  public <- jwk_public(key)
+  expect_identical(public$key_ops, "verify")
+  token <- jws_sign("p", key)
+  expect_no_error(jws_verify(token, public, "ES256"))
+  both <- jwk_generate("OKP", key_ops = c("deriveKey", "decrypt", "encrypt"))
+  expect_identical(jwk_public(both)$key_ops, "encrypt")
+  wrap <- jwk_generate("OKP", key_ops = c("unwrapKey", "wrapKey"))
+  expect_identical(jwk_public(wrap)$key_ops, "wrapKey")
+  derive <- jwk_public(jwk_generate("OKP", key_ops = "deriveKey"))
+  expect_null(derive$key_ops)
+  expect_false(grepl("key_ops", jwk_json(derive), fixed = TRUE))
+  expect_null(jwk_public(jwk_generate("OKP"))$key_ops)
+  set <- jwk_public(jwk_set(key))
+  expect_identical(set[[1]]$key_ops, "verify")
+})
+
+test_that("a key of unknown type prints as such", {
+  # #136: no zucrypt version makes it usable.
+  expect_snapshot({
+    print(as_jwk('{"kty":"foo","k":"AQID"}'))
+    print(as_jwk('{"kty":"OCT","k":"AQID"}'))
+  })
+  expect_null(as_jwk('{"kty":"foo"}')$needs)
+})
+
+test_that("names on a key's kid, alg, use and key_ops are dropped (#120)", {
+  key <- jwk_oct(
+    as.raw(1:32),
+    kid = c(a = "k"),
+    alg = c(b = "HS256"),
+    use = c(c = "sig")
+  )
+  expect_identical(
+    jose_peek(jws_sign("x", key))$headers[[1]],
+    list(alg = "HS256", kid = "k")
+  )
+  expect_identical(key$kid, "k")
 })

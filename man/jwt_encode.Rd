@@ -16,10 +16,12 @@ jwt_encode(
 )
 }
 \arguments{
-\item{claims}{The claims, as a named list. It may be empty.}
+\item{claims}{The claims, as a named list. It may be empty. Names must
+be unique and not empty at every depth, and values must be of a type
+JSON can represent.}
 
-\item{key}{A \code{jwk}, or a list of \code{\link[=jws_signer]{jws_signer()}} objects for several
-signatures.}
+\item{key}{A \code{jwk}. A JWT is in the compact serialization, which carries
+one signature, so a list of \code{\link[=jws_signer]{jws_signer()}}s is refused.}
 
 \item{alg}{The signature algorithm, such as \code{"HS256"} or \code{"RS256"}.
 \code{NULL} takes the key's own \code{alg}.}

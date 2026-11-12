@@ -52,7 +52,8 @@ as_jwk_set <- function(x) {
   if (inherits(x, "jwk_set")) {
     return(x)
   }
-  if (is.character(x)) {
+  json <- is.character(x)
+  if (json) {
     if (!is_string(x)) {
       abort_zujose("key", "A JWK Set must be a single string.", call = call)
     }
@@ -71,7 +72,10 @@ as_jwk_set <- function(x) {
   }
   known <- c("oct", names(pending_key_types))
   keys <- lapply(entries, function(entry) {
-    key <- tryCatch(as_jwk(entry), zujose_key_error = function(e) NULL)
+    key <- tryCatch(
+      if (is.list(entry)) list_to_key(entry, call, json) else as_jwk(entry),
+      zujose_key_error = function(e) NULL
+    )
     if (!is.null(key) && key$kty %in% known) key
   })
   new_jose_keyset(Filter(Negate(is.null), keys))
@@ -81,6 +85,19 @@ as_jwk_set <- function(x) {
 `[[.jwk_set` <- function(x, i) {
   keys <- unclass(x)
   if (!is.character(i)) {
+    ok <- is.numeric(i) &&
+      length(i) == 1L &&
+      !is.na(i) &&
+      i == trunc(i) &&
+      i >= 1 &&
+      i <= length(keys)
+    if (!ok) {
+      abort_zujose(
+        "argument",
+        "Select a key with one index in the set, or a `kid`.",
+        call = sys.call()
+      )
+    }
     return(keys[[i]])
   }
   if (!is_string(i)) {
@@ -105,11 +122,23 @@ as_jwk_set <- function(x) {
 #' @export
 `[.jwk_set` <- function(x, i) {
   keys <- unclass(x)
+  if (missing(i)) {
+    return(x)
+  }
   if (is.character(i)) {
     kids <- vapply(keys, function(key) key$kid %||% NA_character_, "")
     i <- which(kids %in% i)
   }
-  new_jose_keyset(keys[i])
+  # An NA or out-of-range index would put NULL in the set (#135).
+  out <- if (!anyNA(i)) keys[i]
+  if (anyNA(i) || any(vapply(out, is.null, logical(1)))) {
+    abort_zujose(
+      "argument",
+      "Select keys with indices or `kid`s in the set, without NA.",
+      call = sys.call()
+    )
+  }
+  new_jose_keyset(out)
 }
 
 #' @export

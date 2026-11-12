@@ -21,7 +21,8 @@
 #'   * `headers`: one header per signature or recipient, each the union of
 #'     the protected and unprotected headers.
 #'   * `payload`: for a JWS, the payload as a raw vector; `NULL` for a JWE or
-#'     a detached payload.
+#'     a detached payload. In the compact serialization an empty payload
+#'     part is a detached payload.
 #'   * `claims`: the payload parsed as a list when it is a JSON object, as in
 #'     a JWT; otherwise `NULL`.
 #'

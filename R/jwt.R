@@ -9,7 +9,11 @@
 #' written as NumericDate, whole seconds since 1970. `expires_in` and
 #' `not_before` count from now.
 #'
-#' @param claims The claims, as a named list. It may be empty.
+#' @param key A `jwk`. A JWT is in the compact serialization, which carries
+#'   one signature, so a list of [jws_signer()]s is refused.
+#' @param claims The claims, as a named list. It may be empty. Names must
+#'   be unique and not empty at every depth, and values must be of a type
+#'   JSON can represent.
 #' @inheritParams jws_sign
 #' @param header Protected header members. The default declares
 #'   `typ: "JWT"`.
@@ -39,33 +43,42 @@ jwt_encode <- function(
   jti = FALSE
 ) {
   call <- sys.call()
+  # A JWT is a compact JWS, which carries one signature (#130).
   if (
-    !is.list(claims) ||
-      (length(claims) > 0L &&
-        (is.null(names(claims)) ||
-          !all(nzchar(names(claims))) ||
-          anyDuplicated(names(claims))))
+    inherits(key, "jws_signer") ||
+      (is.list(key) &&
+        !inherits(key, "jwk") &&
+        any(vapply(key, inherits, logical(1), "jws_signer")))
   ) {
     abort_zujose(
       "argument",
-      "`claims` must be a named list without repeated names."
+      "A JWT has one signature: give `key` as one jwk, not jws_signer()s.",
+      call = call
     )
   }
+  check_key(key, call)
+  claims <- check_header_arg(
+    claims,
+    "claims",
+    c("iss", "sub", "aud", "exp", "nbf", "iat", "jti")
+  )
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)
-  if (length(claims) == 0L) {
-    claims <- empty_object()
-  }
-
   now <- jwt_now()
   for (name in intersect(c("exp", "nbf", "iat"), names(claims))) {
     claims[[name]] <- as_numeric_date(claims[[name]], name)
   }
   if (!is.null(expires_in)) {
-    claims[["exp"]] <- now + as_seconds(expires_in, "expires_in")
+    claims[["exp"]] <- as_numeric_date(
+      now + as_seconds(expires_in, "expires_in"),
+      "expires_in"
+    )
   }
   if (!is.null(not_before)) {
-    claims[["nbf"]] <- now + as_seconds(not_before, "not_before")
+    claims[["nbf"]] <- as_numeric_date(
+      now + as_seconds(not_before, "not_before"),
+      "not_before"
+    )
   }
   if (issued_at && !"iat" %in% names(claims)) {
     claims[["iat"]] <- now
@@ -83,7 +96,8 @@ jwt_encode <- function(
 #' rules and then checks its claims (RFC 7519, RFC 8725). The checks happen
 #' here, in one call, so none can be forgotten.
 #'
-#' * `exp`, `nbf` and `iat` must be numbers. The token must not have
+#' * `exp`, `nbf` and `iat` must be numbers that `POSIXct` can hold as a
+#'   time, within about two billion years of 1970. The token must not have
 #'   expired, must already be valid, and must not be issued in the future,
 #'   each allowing `leeway` seconds. `max_age` bounds how long ago `iat`
 #'   was.
@@ -101,6 +115,18 @@ jwt_encode <- function(
 #'   must equal, or a function of the claim that must return `TRUE`.
 #'   `validate` is a function of the whole claims list, for checks across
 #'   claims.
+#'
+#' A value in `claims` is compared with the claim as JSON values, the value
+#' taken as [jwt_encode()] would write it. Object members may come in any
+#' order, and `3L` equals `3`. A vector of length one is a scalar and a
+#' longer one an array, so `"a"` does not match `["a"]`; write `list("a")`
+#' for an array of one. `NULL` matches a JSON `null`. `NA` and non-finite
+#' numbers have no JSON form and are refused. `exp`, `nbf` and `iat` are
+#' compared, and passed to a function, as the `POSIXct` times
+#' `jwt_decode()` returns; a number expects the same NumericDate.
+#'
+#' A JWT must not use the unencoded payload option, `b64: false` (RFC 7797
+#' section 7), and one that does is refused with `zujose_policy_error`.
 #'
 #' A JWT whose header has `cty: "JWT"` carries another JWT as its payload.
 #' That inner JWT is verified with the same `key` and `algorithms`, and its
@@ -126,8 +152,8 @@ jwt_encode <- function(
 #' @param subject The subject this caller accepts, or `NULL`.
 #' @param type The expected `typ`, or `NULL` to skip the check.
 #' @param required Names of claims that must be present.
-#' @param claims Further expectations, as a named list of values or
-#'   functions.
+#' @param claims Further expectations, as a list of values or functions
+#'   with unique names.
 #' @param validate A function of the claims list that must return `TRUE`, or
 #'   `NULL`.
 #' @param max_age The greatest age, in seconds, of `iat`, or `NULL`.
@@ -184,6 +210,9 @@ jwt_decode <- function(
     leeway,
     now
   )
+  # identical() would compare names too (#120).
+  issuer <- if (!is.null(issuer)) unname(issuer)
+  subject <- if (!is.null(subject)) unname(subject)
   if (!is_string(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
@@ -213,7 +242,7 @@ jwt_decode <- function(
     # can make one. Its claims must then come inside a signed JWT (#34).
     # Decided on the header, before any decryption.
     outer <- jose_parse(token, limits, call)$protected
-    if (!is_nested(outer) && !identical(alg_key_types(outer$alg), "oct")) {
+    if (!is_nested(outer) && !identical(alg_key_types(outer[["alg"]]), "oct")) {
       abort_zujose(
         "policy",
         paste0(
@@ -237,6 +266,7 @@ jwt_decode <- function(
       list(header = opened$header, payload = opened$plaintext)
     }
   } else {
+    refuse_unencoded(token, limits, call)
     verified <- verify_jws(token, key, algorithms, NULL, "all", limits, call)
     if (is_nested(verified$header)) {
       verified <- verify_inner(verified$payload, key, algorithms, limits, call)
@@ -367,6 +397,15 @@ check_claims <- function(
       abort_zujose(
         "parse",
         sprintf("The `%s` claim must be a number.", name),
+        call = call
+      )
+    }
+    # Returned as POSIXct, which has no calendar time for a NumericDate
+    # beyond about two billion years either side of 1970 (#127).
+    if (is.na(as.POSIXlt(as_posixct(value)))) {
+      abort_zujose(
+        "parse",
+        sprintf("The `%s` claim is beyond any time R can represent.", name),
         call = call
       )
     }
@@ -504,11 +543,7 @@ check_claims <- function(
       abort_missing(name, call)
     }
     expected <- spec[[name]]
-    ok <- if (is.function(expected)) {
-      isTRUE(expected(cl[[name]]))
-    } else {
-      identical(zujson::json_write(cl[[name]]), zujson::json_write(expected))
-    }
+    ok <- claim_matches(name, cl[[name]], expected)
     if (!ok) {
       abort_claim(
         NULL,
@@ -527,6 +562,81 @@ check_claims <- function(
     )
   }
   invisible()
+}
+
+# Whether a claim meets its expectation in `claims` (#128). Time claims
+# are compared, and passed to a function, as the POSIXct jwt_decode()
+# returns. Other values are compared as parsed JSON, the expectation as
+# jwt_encode() would write it: object members in any order, and integers
+# equal to the same doubles.
+claim_matches <- function(name, value, expected) {
+  time <- name %in% c("exp", "nbf", "iat")
+  if (time) {
+    value <- as_posixct(value)
+  }
+  if (is.function(expected)) {
+    return(isTRUE(expected(value)))
+  }
+  if (time) {
+    return(
+      (is.numeric(expected) || inherits(expected, "POSIXct")) &&
+        length(expected) == 1L &&
+        identical(as.numeric(expected), as.numeric(value))
+    )
+  }
+  expected <- zujson::json_parse(
+    zujson::json_write(expected),
+    simplify = "none"
+  )
+  json_equal(value, expected)
+}
+
+# Whether two parsed JSON values are equal: object members in any order,
+# and numbers by value. Level by level, not by recursion, so a claim
+# nested as deep as zujson parses cannot exhaust the C stack.
+json_equal <- function(a, b) {
+  as <- list(a)
+  bs <- list(b)
+  while (length(as) > 0L) {
+    if (length(as) != length(bs)) {
+      return(FALSE)
+    }
+    next_a <- vector("list", length(as))
+    next_b <- vector("list", length(as))
+    for (i in seq_along(as)) {
+      x <- as[[i]]
+      y <- bs[[i]]
+      if (is.list(x) != is.list(y)) {
+        return(FALSE)
+      }
+      if (!is.list(x)) {
+        same <- if (is.numeric(x) && is.numeric(y)) {
+          identical(as.double(x), as.double(y))
+        } else {
+          identical(x, y)
+        }
+        if (!same) {
+          return(FALSE)
+        }
+        next
+      }
+      if (length(x) != length(y) || is.null(names(x)) != is.null(names(y))) {
+        return(FALSE)
+      }
+      if (!is.null(names(x))) {
+        x <- x[order(names(x), method = "radix")]
+        y <- y[order(names(y), method = "radix")]
+        if (!identical(names(x), names(y))) {
+          return(FALSE)
+        }
+      }
+      next_a[i] <- list(unname(x))
+      next_b[i] <- list(unname(y))
+    }
+    as <- unlist(next_a, recursive = FALSE)
+    bs <- unlist(next_b, recursive = FALSE)
+  }
+  length(bs) == 0L
 }
 
 # RFC 7515 §4.1.9: compare media types without case and without an
@@ -560,6 +670,7 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
       call = call
     )
   }
+  refuse_unencoded(inner, limits, call)
   verified <- verify_jws(inner, key, algorithms, NULL, "all", limits, call)
   if (is_nested(verified$header)) {
     abort_zujose(
@@ -569,6 +680,20 @@ verify_inner <- function(bytes, key, algorithms, limits, call) {
     )
   }
   verified
+}
+
+# RFC 7797 §7: JWTs must not use the unencoded payload option. Decided on
+# the parsed header, before any key is tried (#126).
+refuse_unencoded <- function(token, limits, call) {
+  obj <- jose_parse(token, limits, call)
+  if (identical(obj$type, "JWS") && !obj$b64) {
+    abort_zujose(
+      "policy",
+      "A JWT must not use an unencoded payload (`b64: false`).",
+      call = call
+    )
+  }
+  invisible()
 }
 
 compact_parts <- function(token) {
@@ -615,12 +740,30 @@ check_decode_args <- function(
   if (!is.character(required) || anyNA(required)) {
     bad("`required` must be a character vector.")
   }
+  # One expectation per claim: a repeated name would go unchecked (#118).
+  nms <- names(claims)
   if (
     !is.list(claims) ||
       (length(claims) > 0L &&
-        (is.null(names(claims)) || !all(nzchar(names(claims)))))
+        (is.null(nms) || anyNA(nms) || !all(nzchar(nms)) || anyDuplicated(nms)))
   ) {
-    bad("`claims` must be a named list.")
+    bad("`claims` must be a list with unique, non-empty names.")
+  }
+  # NA and non-finite numbers would be written as JSON null (#128).
+  for (expected in claims) {
+    if (is.function(expected)) {
+      next
+    }
+    values <- unlist(expected)
+    if (
+      !is.null(json_arg_problem(expected)) ||
+        anyNA(values) ||
+        (is.numeric(values) && !all(is.finite(values)))
+    ) {
+      bad(
+        "Each expectation in `claims` must be a function or a JSON value."
+      )
+    }
   }
   if (!is.null(validate) && !is.function(validate)) {
     bad("`validate` must be NULL or a function.")
@@ -663,7 +806,15 @@ as_numeric_date <- function(x, name) {
       sprintf("`%s` must be a time or a number of seconds.", name)
     )
   }
-  x
+  # jwt_decode() refuses a NumericDate POSIXct cannot hold (#127), so a
+  # token that carries one is not written either.
+  if (is.na(as.POSIXlt(as_posixct(x)))) {
+    abort_zujose(
+      "argument",
+      sprintf("`%s` is beyond any time R can represent.", name)
+    )
+  }
+  unname(x)
 }
 
 as_seconds <- function(x, name) {
@@ -676,7 +827,7 @@ as_seconds <- function(x, name) {
       sprintf("`%s` must be a number of seconds or a difftime.", name)
     )
   }
-  round(x)
+  round(unname(x))
 }
 
 as_posixct <- function(x) {
@@ -708,9 +859,9 @@ print.jwt_claims <- function(x, ...) {
   header <- attr(x, "header")
   cat(sprintf(
     "<jwt_claims> verified %s%s\n",
-    header$alg,
-    if (!is.null(header$kid)) {
-      paste0(", key ", encodeString(header$kid, quote = '"'))
+    member(header, "alg"),
+    if (!is.null(member(header, "kid"))) {
+      paste0(", key ", encodeString(member(header, "kid"), quote = '"'))
     } else {
       ""
     }

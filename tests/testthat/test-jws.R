@@ -524,3 +524,161 @@ test_that("b64 and crit are set through the b64 argument, not a header", {
     "{\"a\":1}"
   )
 })
+
+test_that("`limits$keys` counts the keys tried across all signatures", {
+  signers <- lapply(1:3, function(i) {
+    jws_signer(jwk_oct(as.raw(i + 0:31)), "HS256")
+  })
+  token <- jws_sign("x", signers, format = "general")
+  wrong <- jwk_set(
+    jwk_oct(as.raw(101:132)),
+    jwk_oct(as.raw(102:133)),
+    jwk_oct(as.raw(103:134))
+  )
+  verifies <- 0L
+  local_mocked_bindings(jws_verify_bytes = function(...) {
+    verifies <<- verifies + 1L
+    FALSE
+  })
+  expect_error(
+    jws_verify(
+      token,
+      wrong,
+      "HS256",
+      require = "any",
+      limits = jose_limits(keys = 3)
+    ),
+    class = "zujose_key_error"
+  )
+  expect_identical(verifies, 0L)
+  expect_error(
+    jws_verify(
+      token,
+      wrong,
+      "HS256",
+      require = "any",
+      limits = jose_limits(keys = 9)
+    ),
+    class = "zujose_signature_error"
+  )
+  expect_identical(verifies, 9L)
+})
+
+test_that("a general JWS verifies with keys within `limits$keys`", {
+  a <- jwk_oct(as.raw(1:32))
+  b <- jwk_oct(as.raw(2:33))
+  token <- jws_sign(
+    "x",
+    list(jws_signer(a, "HS256"), jws_signer(b, "HS256")),
+    format = "general"
+  )
+  set <- jwk_set(jwk_oct(as.raw(1:32)), jwk_oct(as.raw(2:33)))
+  expect_no_error(jws_verify(
+    token,
+    set,
+    "HS256",
+    limits = jose_limits(keys = 4)
+  ))
+  expect_error(
+    jws_verify(token, set, "HS256", limits = jose_limits(keys = 3)),
+    class = "zujose_key_error"
+  )
+})
+
+test_that("headers with repeated, NA or empty names are refused (#119)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(a = 1, a = 2),
+    list(typ = "JWT", typ = "at+jwt"),
+    list(x = list(a = 1, a = 2)),
+    list(x = c(a = 1, a = 2)),
+    list(x = list(list(a = 1, a = 2))),
+    stats::setNames(list(1), NA),
+    list(x = stats::setNames(list(1), NA)),
+    list(x = list(a = 1, 2)),
+    data.frame(a = 1:2)
+  )
+  for (header in bad) {
+    expect_error(
+      jws_sign("p", key, "HS256", header = header),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_sign(
+        "p",
+        key,
+        "HS256",
+        unprotected = header,
+        format = "flattened"
+      ),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jws_sign(
+      "p",
+      key,
+      "HS256",
+      header = list(a = 1),
+      unprotected = list(a = 2),
+      format = "flattened"
+    ),
+    class = "zujose_argument_error"
+  )
+  # An array of objects, and an object, are still written.
+  token <- jws_sign(
+    "p",
+    key,
+    "HS256",
+    header = list(x = list(list(a = 1), list(a = 2)), y = list(b = 1))
+  )
+  expect_identical(
+    jose_peek(token)$headers[[1]]$x,
+    list(list(a = 1L), list(a = 2L))
+  )
+})
+
+test_that("a header value JSON cannot represent is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (value in list(as.raw(1), 1i, quote(x), function() 1)) {
+    expect_error(
+      jws_sign("p", key, "HS256", header = list(a = value)),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_sign("p", key, "HS256", header = list(a = list(b = value))),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("a named list of signers writes `signatures` as an array (#120)", {
+  key <- jwk_oct(as.raw(1:32))
+  token <- jws_sign(
+    "x",
+    list(a = jws_signer(key, c(n = "HS256"))),
+    format = "general"
+  )
+  expect_true(startsWith(
+    token,
+    "{\"payload\":\"eA\",\"signatures\":[{"
+  ))
+  expect_identical(jws_verify(token, key, "HS256")$alg, "HS256")
+})
+
+test_that("an unencoded payload with a NUL byte is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (format in c("compact", "flattened")) {
+    expect_error(
+      jws_sign(
+        as.raw(c(0x61, 0, 0x62)),
+        key,
+        "HS256",
+        b64 = FALSE,
+        detached = TRUE,
+        format = format
+      ),
+      class = "zujose_argument_error"
+    )
+  }
+})

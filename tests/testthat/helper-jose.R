@@ -494,3 +494,70 @@ noncanonical_jwe <- function() {
     quote = ""
   )
 }
+
+# A straddle of `limits[[name]]` around `n` (design §9): `run(limits)` is
+# refused with `class` at `n - 1` and passes at `n` and `n + 1`. With
+# `no_decoding`, the refusal must come before any part is decoded.
+expect_limit_straddle <- function(
+  run,
+  name,
+  n,
+  class = "zujose_parse_error",
+  no_decoding = FALSE,
+  info = NULL
+) {
+  at <- function(value) {
+    run(do.call(jose_limits, stats::setNames(list(value), name)))
+  }
+  refuse <- function() {
+    if (no_decoding) {
+      local_no_decoding()
+    }
+    expect_error(at(n - 1), class = class, info = info)
+  }
+  refuse()
+  for (value in c(n, n + 1)) {
+    problem <- tryCatch(
+      {
+        at(value)
+        NULL
+      },
+      error = function(e) conditionMessage(e)
+    )
+    expect(
+      is.null(problem),
+      sprintf("`%s = %s` refused (%s): %s", name, value, info, problem)
+    )
+  }
+  invisible()
+}
+
+# The decoded length of each protected header in a token.
+protected_bytes <- function(token) {
+  if (startsWith(token, "{")) {
+    obj <- zujson::json_parse(token, simplify = "none")
+    entries <- obj$signatures %||% list(obj)
+    vapply(entries, function(e) length(b64url_decode(e$protected, "h")), 1L)
+  } else {
+    length(b64url_decode(strsplit(token, ".", fixed = TRUE)[[1]][[1]], "h"))
+  }
+}
+
+# A mocked PBKDF2 that signals, with class `pbes2_reached`, that a token
+# passed every PBES2 check and reached key derivation.
+local_pbes2_reached <- function(env = parent.frame()) {
+  local_mocked_bindings(
+    pbes2_kek = function(...) {
+      stop(structure(
+        class = c("pbes2_reached", "error", "condition"),
+        list(message = "PBES2 key derivation reached", call = NULL)
+      ))
+    },
+    .env = env
+  )
+}
+
+# JSON text nested `depth` levels deep: an object holding arrays.
+nested_json <- function(depth) {
+  paste0('{"a":', strrep("[", depth - 1), strrep("]", depth - 1), "}")
+}

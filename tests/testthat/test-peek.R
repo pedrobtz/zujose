@@ -50,6 +50,22 @@ test_that("a detached payload has no signing input", {
   expect_type(peek$signatures[[1]], "raw")
 })
 
+test_that("a compact and a flattened detached JWS peek alike (#131)", {
+  key <- jwk_oct(as.raw(1:32))
+  compact <- jose_peek(jws_sign("hello", key, "HS256", detached = TRUE))
+  flattened <- jose_peek(jws_sign(
+    "hello",
+    key,
+    "HS256",
+    detached = TRUE,
+    format = "flattened"
+  ))
+  expect_null(compact$payload)
+  expect_null(compact$signing_input[[1]])
+  expect_identical(compact$payload, flattened$payload)
+  expect_identical(compact$signing_input, flattened$signing_input)
+})
+
 test_that("a JWE shows its encrypted keys, IV, ciphertext and tag", {
   token <- rfc7520_token(81)
   parts <- strsplit(token, ".", fixed = TRUE)[[1]]
