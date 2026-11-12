@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* A caller's `header` or `unprotected` member of the wrong type, such as
+  `jws_sign(..., header = list(typ = 1))`, is a `zujose_argument_error`
+  on every encoder: `jws_sign()`, `jws_signer()`, `jwt_encode()`,
+  `jwe_encrypt()` and `jwe_recipient()`. It was a `zujose_parse_error`,
+  the class for a malformed token, or was raised only when signing (#148).
+
 * A key argument of the wrong R type is a `zujose_argument_error`, as
   `?zujose_error` now states once: a mistake in the caller's own code is
   an argument error, and anything wrong with a token is a token error.

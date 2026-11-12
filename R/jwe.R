@@ -118,12 +118,13 @@ jwe_encrypt <- function(
 #' @examples
 #' jwe_recipient(jwk_oct(as.raw(1:16)), "A128KW")
 jwe_recipient <- function(key, alg = NULL, header = NULL) {
-  key <- check_key(key, sys.call())
+  call <- sys.call()
+  key <- check_key(key, call)
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
   alg <- if (!is.null(alg)) unname(alg)
-  header <- check_header_arg(header, "header")
+  header <- check_header_arg(header, "header", call = call)
   check_no_zip(header)
   if ("enc" %in% names(header)) {
     abort_zujose(
@@ -169,8 +170,8 @@ encrypt_jwe <- function(
   enc <- unname(enc)
   check_algorithms(enc, "content encryption", "enc", call)
   check_available(enc, call)
-  header <- check_header_arg(header, "header")
-  unprotected <- check_header_arg(unprotected, "unprotected")
+  header <- check_header_arg(header, "header", call = call)
+  unprotected <- check_header_arg(unprotected, "unprotected", call = call)
   if (!is.null(aad)) {
     aad <- as_payload_bytes(aad, call)
   }
@@ -314,7 +315,16 @@ encrypt_jwe <- function(
         sprintf("`%s` must be a Base64url string.", name)
       )
     }
-    b64url_decode(value, name, call)
+    tryCatch(
+      b64url_decode(value, name, call),
+      zujose_parse_error = function(e) {
+        abort_zujose(
+          "argument",
+          sprintf("`%s` must be a Base64url string.", name),
+          call = call
+        )
+      }
+    )
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
     p2c <- recipients[[i]]$header[["p2c"]] %||%
@@ -397,7 +407,13 @@ encrypt_jwe <- function(
     )
   }
   for (h in recipient_headers) {
-    check_headers(protected, list(unprotected, h), "JWE", call)
+    check_headers(
+      protected,
+      list(unprotected, h),
+      "JWE",
+      call,
+      kind = "argument"
+    )
   }
 
   protected_b64 <- b64url_encode(charToRaw(enc2utf8(zujson::json_write(

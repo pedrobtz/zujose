@@ -60,7 +60,9 @@ jwt_encode <- function(
   claims <- check_header_arg(
     claims,
     "claims",
-    c("iss", "sub", "aud", "exp", "nbf", "iat", "jti")
+    c("iss", "sub", "aud", "exp", "nbf", "iat", "jti"),
+    strings = character(),
+    call = call
   )
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)

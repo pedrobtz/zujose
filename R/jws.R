@@ -124,7 +124,13 @@ jws_sign <- function(
 
   signatures <- lapply(signers, function(signer) {
     protected <- protected_header(signer, b64, call)
-    check_headers(protected, list(signer$unprotected), "JWS", call)
+    check_headers(
+      protected,
+      list(signer$unprotected),
+      "JWS",
+      call,
+      kind = "argument"
+    )
     protected_b64 <- b64url_encode(charToRaw(enc2utf8(
       zujson::json_write(protected)
     )))
@@ -189,8 +195,8 @@ jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
   alg <- if (!is.null(alg)) unname(alg)
-  header <- check_header_arg(header, "header")
-  unprotected <- check_header_arg(unprotected, "unprotected")
+  header <- check_header_arg(header, "header", call = call)
+  unprotected <- check_header_arg(unprotected, "unprotected", call = call)
   check_disjoint_headers(header, unprotected)
   structure(
     list(key = key, alg = alg, header = header, unprotected = unprotected),
@@ -621,11 +627,15 @@ check_flag <- function(x, name, call) {
 
 # A header or claims argument, checked; the members in `scalars`, which
 # JSON gives one type, lose any names, which zujson would write as an
-# object (#120).
+# object (#120). The members in `strings` must be strings, as
+# check_headers() requires of a token's, but a wrong one is the caller's
+# mistake (#148).
 check_header_arg <- function(
   x,
   name,
-  scalars = c("alg", "enc", "kid", "typ", "cty", "p2c")
+  scalars = c("alg", "enc", "kid", "typ", "cty", "p2c"),
+  strings = c("alg", "enc", "kid", "typ", "cty"),
+  call = NULL
 ) {
   if (is.null(x)) {
     return(empty_object())
@@ -638,6 +648,15 @@ check_header_arg <- function(
     abort_zujose("argument", sprintf("`%s` must be a named list.", name))
   }
   check_json_arg(x, name)
+  for (member in intersect(strings, names(x))) {
+    if (!is_string(x[[member]])) {
+      abort_zujose(
+        "argument",
+        sprintf("`%s$%s` must be a single string.", name, member),
+        call = call
+      )
+    }
+  }
   for (member in intersect(scalars, names(x))) {
     if (is.atomic(x[[member]])) {
       x[[member]] <- unname(x[[member]])

@@ -709,3 +709,47 @@ test_that("an unencoded payload with a NUL byte is an argument error (#123)", {
     )
   }
 })
+
+test_that("a caller header member of the wrong type is an argument error (#148)", {
+  key <- jwk_oct(as.raw(1:32))
+  calls <- list(
+    function() jws_sign("p", key, "HS256", header = list(typ = 1)),
+    function() {
+      jws_sign(
+        "p",
+        key,
+        "HS256",
+        unprotected = list(kid = 1),
+        format = "flattened"
+      )
+    },
+    function() jws_signer(key, "HS256", header = list(cty = TRUE)),
+    function() jws_signer(key, "HS256", unprotected = list(kid = list())),
+    function() {
+      jwt_encode(list(sub = "a"), key, "HS256", header = list(typ = 1))
+    },
+    function() jwe_encrypt("p", key, "dir", header = list(kid = 1)),
+    function() {
+      jwe_encrypt(
+        "p",
+        key,
+        "dir",
+        unprotected = list(typ = 1),
+        format = "flattened"
+      )
+    },
+    function() jwe_encrypt("p", key, "dir", header = list(b64 = TRUE)),
+    function() jwe_recipient(key, "dir", header = list(cty = 2))
+  )
+  for (i in seq_along(calls)) {
+    expect_error(calls[[i]](), class = "zujose_argument_error", info = i)
+  }
+  ec <- jwk_generate("EC")
+  expect_error(
+    jwe_encrypt("p", ec, "ECDH-ES", header = list(apu = "a=")),
+    class = "zujose_argument_error"
+  )
+  # The same member in a token is a parse error.
+  token <- paste0(b64_json(list(alg = "HS256", typ = 1)), ".e30.AAAA")
+  expect_error(jws_verify(token, key, "HS256"), class = "zujose_parse_error")
+})
