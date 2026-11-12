@@ -113,7 +113,7 @@ password-protected token's only defence against offline guessing.
 key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
 token <- jwe_encrypt("secret", key)
 token
-#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.7kSYru4g2y6SkC1h7VraEraBt4E0rndY3XBKy-EvPtsxqC4NsaqJNg.fBOFhy9iMsG8o7u_a-5UVQ.zIgK1artT4LhxNXEzVWJhw.Zx9asvTjFGptCPPpZfRWhg"
+#> [1] "eyJhbGciOiJBMTI4S1ciLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoia2VrIn0.Z5wR7FXMpjW3mtE5znZI8wRfxscT9_-HU4Q6cg9Prcg5RnGPR3cUDw.3AUJ0fd4SvTs6ZQZlL_3_g.QvqXyKkOexsPKMuisQSjqw.HqLEAAfdc9I904yrXsAf6A"
 jwe_decrypt(token, key, algorithms = "A128KW",
              encryptions = "A128CBC-HS256")
 #> <jwe_decrypted> A128KW with A128CBC-HS256, key "kek"
