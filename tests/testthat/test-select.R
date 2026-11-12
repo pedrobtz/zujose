@@ -42,7 +42,7 @@ test_that("a resolver must return a key or key set", {
   )
   expect_error(
     resolve_keys("key", list(alg = "HS256"), "verify", jose_limits()),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
 })
 

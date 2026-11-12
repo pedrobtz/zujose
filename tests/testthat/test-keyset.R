@@ -61,7 +61,7 @@ test_that("[[ selects by kid or position; [ keeps a set", {
   expect_length(set[c("a", "b")], 2L)
   expect_length(set[2:3], 2L)
   expect_error(set[["z"]], class = "zujose_key_error")
-  expect_error(set[[c("a", "b")]], class = "zujose_key_error")
+  expect_error(set[[c("a", "b")]], class = "zujose_argument_error")
 
   twice <- jwk_set(set, jwk_oct(as.raw(4), kid = "a"))
   expect_error(twice[["a"]], class = "zujose_key_error")
@@ -74,7 +74,7 @@ test_that("c() and jwk_set() combine keys and sets in order", {
   expect_s3_class(set, "jwk_set")
   expect_identical(c(set, a)[[3]], a)
   expect_identical(jwk_set(), structure(list(), class = "jwk_set"))
-  expect_error(jwk_set(a, "b"), class = "zujose_key_error")
+  expect_error(jwk_set(a, "b"), class = "zujose_argument_error")
 })
 
 test_that("malformed and unknown entries are ignored, per RFC 7517 §5", {
@@ -98,7 +98,7 @@ test_that("a JWK Set must be an object with a keys array", {
   for (bad in c("[]", "{}", '{"keys":{}}', '{"keys":1}', "nope")) {
     expect_error(as_jwk_set(bad), class = "zujose_key_error", info = bad)
   }
-  expect_error(as_jwk_set(c("a", "b")), class = "zujose_key_error")
+  expect_error(as_jwk_set(c("a", "b")), class = "zujose_argument_error")
   expect_error(
     as_jwk_set('{"keys":[],"keys":[]}'),
     class = "zujose_key_error"

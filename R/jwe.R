@@ -118,17 +118,22 @@ jwe_encrypt <- function(
 #' @examples
 #' jwe_recipient(jwk_oct(as.raw(1:16)), "A128KW")
 jwe_recipient <- function(key, alg = NULL, header = NULL) {
-  key <- check_key(key, sys.call())
+  new_recipient(key, alg, header, sys.call())
+}
+
+new_recipient <- function(key, alg, header, call) {
+  key <- check_key(key, call)
   if (!is.null(alg) && !is_string(alg)) {
-    abort_zujose("argument", "`alg` must be a single string.")
+    abort_zujose("argument", "`alg` must be a single string.", call = call)
   }
   alg <- if (!is.null(alg)) unname(alg)
-  header <- check_header_arg(header, "header")
-  check_no_zip(header)
+  header <- check_header_arg(header, "header", call = call)
+  check_no_zip(header, call)
   if ("enc" %in% names(header)) {
     abort_zujose(
       "argument",
-      "Set `enc` through jwe_encrypt(), not a recipient's header."
+      "Set `enc` through jwe_encrypt(), not a recipient's header.",
+      call = call
     )
   }
   structure(
@@ -139,11 +144,12 @@ jwe_recipient <- function(key, alg = NULL, header = NULL) {
 
 # zujose never compresses, so a `zip` header would describe content that
 # is not compressed (design §8.6, RFC 8725 section 3.6, #117).
-check_no_zip <- function(header) {
+check_no_zip <- function(header, call) {
   if ("zip" %in% names(header)) {
     abort_zujose(
       "argument",
-      "zujose does not compress content; a `zip` header is refused."
+      "zujose does not compress content; a `zip` header is refused.",
+      call = call
     )
   }
 }
@@ -162,21 +168,21 @@ encrypt_jwe <- function(
   call,
   fixed = list()
 ) {
-  bytes <- as_payload_bytes(plaintext, call)
+  bytes <- as_payload_bytes(plaintext, call, "plaintext")
   if (!is_string(enc)) {
-    abort_zujose("argument", "`enc` must be a single string.")
+    abort_zujose("argument", "`enc` must be a single string.", call = call)
   }
   enc <- unname(enc)
   check_algorithms(enc, "content encryption", "enc", call)
   check_available(enc, call)
-  header <- check_header_arg(header, "header")
-  unprotected <- check_header_arg(unprotected, "unprotected")
+  header <- check_header_arg(header, "header", call = call)
+  unprotected <- check_header_arg(unprotected, "unprotected", call = call)
   if (!is.null(aad)) {
-    aad <- as_payload_bytes(aad, call)
+    aad <- as_payload_bytes(aad, call, "aad")
   }
 
   recipients <- if (inherits(key, "jwk")) {
-    list(jwe_recipient(key, alg))
+    list(new_recipient(key, alg, NULL, call))
   } else if (
     is.list(key) &&
       length(key) > 0L &&
@@ -185,20 +191,25 @@ encrypt_jwe <- function(
     if (!is.null(alg)) {
       abort_zujose(
         "argument",
-        "With several recipients, give `alg` to each jwe_recipient()."
+        "With several recipients, give `alg` to each jwe_recipient().",
+        call = call
       )
     }
     unname(key)
   } else {
     abort_zujose(
-      "key",
+      "argument",
       "`key` must be a jwk or a list of jwe_recipient() objects.",
       call = call
     )
   }
   general <- format == "general"
   if (length(recipients) > 1L && !general) {
-    abort_zujose("argument", "Several recipients need `format = \"general\"`.")
+    abort_zujose(
+      "argument",
+      "Several recipients need `format = \"general\"`.",
+      call = call
+    )
   }
   if (
     format == "compact" &&
@@ -208,21 +219,23 @@ encrypt_jwe <- function(
   ) {
     abort_zujose(
       "argument",
-      "The compact serialization has no unprotected header and no `aad`."
+      "The compact serialization has no unprotected header and no `aad`.",
+      call = call
     )
   }
   for (name in c("alg", "enc")) {
     if (name %in% c(names(header), names(unprotected))) {
       abort_zujose(
         "argument",
-        sprintf("Set `%s` through its argument, not a header.", name)
+        sprintf("Set `%s` through its argument, not a header.", name),
+        call = call
       )
     }
   }
-  check_no_zip(header)
-  check_no_zip(unprotected)
+  check_no_zip(header, call)
+  check_no_zip(unprotected, call)
   for (r in recipients) {
-    check_disjoint_headers(header, unprotected, r$header)
+    check_disjoint_headers(header, unprotected, r$header, call = call)
   }
   given <- c(
     names(header),
@@ -232,7 +245,8 @@ encrypt_jwe <- function(
   for (name in intersect(c("iv", "tag", "p2s", "epk"), given)) {
     abort_zujose(
       "argument",
-      sprintf("`%s` is generated for each message; it cannot be given.", name)
+      sprintf("`%s` is generated for each message; it cannot be given.", name),
+      call = call
     )
   }
 
@@ -286,7 +300,8 @@ encrypt_jwe <- function(
       if (!identical(own[["alg"]], algs[[i]])) {
         abort_zujose(
           "argument",
-          "A recipient's `header$alg` disagrees with its algorithm."
+          "A recipient's `header$alg` disagrees with its algorithm.",
+          call = call
         )
       }
       own <- own[names(own) != "alg"]
@@ -296,7 +311,8 @@ encrypt_jwe <- function(
   if (any(algs %in% c("dir", "ECDH-ES")) && length(recipients) > 1L) {
     abort_zujose(
       "argument",
-      "`dir` and `ECDH-ES` encrypt to exactly one recipient."
+      "`dir` and `ECDH-ES` encrypt to exactly one recipient.",
+      call = call
     )
   }
   # ECDH-ES's PartyUInfo and PartyVInfo (RFC 7518 §4.6.1.2), from whichever
@@ -311,10 +327,20 @@ encrypt_jwe <- function(
     if (!is_string(value)) {
       abort_zujose(
         "argument",
-        sprintf("`%s` must be a Base64url string.", name)
+        sprintf("`%s` must be a Base64url string.", name),
+        call = call
       )
     }
-    b64url_decode(value, name, call)
+    tryCatch(
+      b64url_decode(value, name, call),
+      zujose_parse_error = function(e) {
+        abort_zujose(
+          "argument",
+          sprintf("`%s` must be a Base64url string.", name),
+          call = call
+        )
+      }
+    )
   }
   p2cs <- lapply(seq_along(recipients), function(i) {
     p2c <- recipients[[i]]$header[["p2c"]] %||%
@@ -322,11 +348,15 @@ encrypt_jwe <- function(
       unprotected[["p2c"]]
     if (!is_pbes2(algs[[i]])) {
       if (!is.null(p2c)) {
-        abort_zujose("argument", "`p2c` applies only to PBES2 key management.")
+        abort_zujose(
+          "argument",
+          "`p2c` applies only to PBES2 key management.",
+          call = call
+        )
       }
       return(NULL)
     }
-    check_p2c(p2c %||% pbes2_default_p2c)
+    check_p2c(p2c %||% pbes2_default_p2c, call)
   })
 
   cek <- if (algs[[1]] == "dir") {
@@ -397,7 +427,13 @@ encrypt_jwe <- function(
     )
   }
   for (h in recipient_headers) {
-    check_headers(protected, list(unprotected, h), "JWE", call)
+    check_headers(
+      protected,
+      list(unprotected, h),
+      "JWE",
+      call,
+      kind = "argument"
+    )
   }
 
   protected_b64 <- b64url_encode(charToRaw(enc2utf8(zujson::json_write(
@@ -515,6 +551,8 @@ jwe_decrypt <- function(
   call <- sys.call()
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
+  check_key_arg(key, call)
+  check_limits(limits, call)
   decrypt_jwe(token, key, algorithms, encryptions, limits, call)
 }
 
@@ -534,13 +572,7 @@ jwe_decryption <- function(key, algorithms, encryptions) {
   call <- sys.call()
   check_algorithms(algorithms, "key management", call = call)
   check_algorithms(encryptions, "content encryption", "encryptions", call)
-  if (!is.function(key) && !inherits(key, c("jwk", "jwk_set"))) {
-    abort_zujose(
-      "key",
-      "`key` must be a jwk, a jwk_set or a resolver function.",
-      call = call
-    )
-  }
+  check_key_arg(key, call)
   structure(
     list(key = key, algorithms = algorithms, encryptions = encryptions),
     class = "jwe_decryption"
@@ -717,7 +749,7 @@ is_pbes2 <- function(alg) alg %in% names(pbes2)
 
 # RFC 7518 §4.8.1.2 recommends at least 1000; zucrypt's PBKDF2 counts to
 # 2^32 - 1.
-check_p2c <- function(p2c) {
+check_p2c <- function(p2c, call) {
   ok <- is.numeric(p2c) &&
     length(p2c) == 1L &&
     !is.na(p2c) &&
@@ -727,7 +759,8 @@ check_p2c <- function(p2c) {
   if (!ok) {
     abort_zujose(
       "argument",
-      "`p2c` must be a whole number of PBKDF2 iterations, at least 1000."
+      "`p2c` must be a whole number of PBKDF2 iterations, at least 1000.",
+      call = call
     )
   }
   p2c

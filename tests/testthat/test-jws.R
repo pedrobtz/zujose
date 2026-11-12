@@ -48,6 +48,31 @@ test_that("RFC 7520 §4.5 detached content verifies and is reproduced", {
     jws_verify(rfc7520_token(41), key, algorithms = "HS256"),
     class = "zujose_signature_error"
   )
+  # A JSON token without its `payload` member needs the payload (#147).
+  for (figure in 42:43) {
+    expect_error(
+      jws_verify(rfc7520_token(figure), key, algorithms = "HS256"),
+      class = "zujose_parse_error"
+    )
+  }
+})
+
+test_that("a JSON JWS without a payload member is not an empty payload (#147)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (format in c("flattened", "general")) {
+    absent <- jws_sign("", key, "HS256", format = format, detached = TRUE)
+    expect_error(
+      jws_verify(absent, key, algorithms = "HS256"),
+      class = "zujose_parse_error"
+    )
+    out <- jws_verify(absent, key, algorithms = "HS256", payload = "")
+    expect_identical(out$payload, raw())
+    empty <- jws_sign("", key, "HS256", format = format)
+    expect_identical(jws_verify(empty, key, "HS256")$payload, raw())
+  }
+  # In the compact serialization an empty part is the detached payload.
+  compact <- jws_sign("", key, "HS256", detached = TRUE)
+  expect_identical(jws_verify(compact, key, "HS256")$payload, raw())
 })
 
 test_that("RFC 7520 §4.6 protects only some header members", {
@@ -387,7 +412,7 @@ test_that("jws_sign() refuses inconsistent requests", {
   )
   expect_type(jws_sign("x", key, "HS256", b64 = FALSE), "character")
   expect_error(jws_sign(1, key, "HS256"), class = "zujose_argument_error")
-  expect_error(jws_sign("x", "key", "HS256"), class = "zujose_key_error")
+  expect_error(jws_sign("x", "key", "HS256"), class = "zujose_argument_error")
   expect_error(
     jws_sign("x", jwk_oct(as.raw(1:32), alg = "HS512"), "HS256"),
     class = "zujose_policy_error"
@@ -683,4 +708,48 @@ test_that("an unencoded payload with a NUL byte is an argument error (#123)", {
       class = "zujose_argument_error"
     )
   }
+})
+
+test_that("a caller header member of the wrong type is an argument error (#148)", {
+  key <- jwk_oct(as.raw(1:32))
+  calls <- list(
+    function() jws_sign("p", key, "HS256", header = list(typ = 1)),
+    function() {
+      jws_sign(
+        "p",
+        key,
+        "HS256",
+        unprotected = list(kid = 1),
+        format = "flattened"
+      )
+    },
+    function() jws_signer(key, "HS256", header = list(cty = TRUE)),
+    function() jws_signer(key, "HS256", unprotected = list(kid = list())),
+    function() {
+      jwt_encode(list(sub = "a"), key, "HS256", header = list(typ = 1))
+    },
+    function() jwe_encrypt("p", key, "dir", header = list(kid = 1)),
+    function() {
+      jwe_encrypt(
+        "p",
+        key,
+        "dir",
+        unprotected = list(typ = 1),
+        format = "flattened"
+      )
+    },
+    function() jwe_encrypt("p", key, "dir", header = list(b64 = TRUE)),
+    function() jwe_recipient(key, "dir", header = list(cty = 2))
+  )
+  for (i in seq_along(calls)) {
+    expect_error(calls[[i]](), class = "zujose_argument_error", info = i)
+  }
+  ec <- jwk_generate("EC")
+  expect_error(
+    jwe_encrypt("p", ec, "ECDH-ES", header = list(apu = "a=")),
+    class = "zujose_argument_error"
+  )
+  # The same member in a token is a parse error.
+  token <- paste0(b64_json(list(alg = "HS256", typ = 1)), ".e30.AAAA")
+  expect_error(jws_verify(token, key, "HS256"), class = "zujose_parse_error")
 })

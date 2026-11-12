@@ -191,13 +191,17 @@ jwk_oct <- function(
   use = NULL,
   key_ops = NULL
 ) {
-  call <- sys.call()
-  if (!is.raw(secret) || length(secret) == 0L) {
-    abort_zujose(
-      "key",
-      "`secret` must be a raw vector of at least one byte.",
-      call = call
-    )
+  oct_key(secret, alg, kid, use, key_ops, sys.call())
+}
+
+# The body of jwk_oct(), shared with as_jwk() so that errors name the
+# function the caller called.
+oct_key <- function(secret, alg, kid, use, key_ops, call) {
+  if (!is.raw(secret)) {
+    abort_zujose("argument", "`secret` must be a raw vector.", call = call)
+  }
+  if (length(secret) == 0L) {
+    abort_zujose("key", "`secret` must be at least one byte.", call = call)
   }
   new_jose_key(
     kty = "oct",
@@ -206,7 +210,8 @@ jwk_oct <- function(
     alg = alg,
     use = use,
     key_ops = key_ops,
-    call = call
+    call = call,
+    kind = "argument"
   )
 }
 
@@ -258,7 +263,7 @@ jwk_generate <- function(
   call <- sys.call()
   if (!is_string(kty) || !kty %in% c("oct", names(pending_key_types))) {
     abort_zujose(
-      "key",
+      "argument",
       "`kty` must be \"oct\", \"RSA\", \"EC\" or \"OKP\".",
       call = call
     )
@@ -275,21 +280,17 @@ jwk_generate <- function(
     abort_unsupported(kty, pending_key_types[[kty]], call = call)
   }
   if (!is.null(crv)) {
-    abort_zujose("key", "An `oct` key has no `crv`.", call = call)
+    abort_zujose("argument", "An `oct` key has no `crv`.", call = call)
   }
   if (!is.null(alg) && !is_string(alg)) {
-    abort_zujose("key", "`alg` must be a single string.", call = call)
+    abort_zujose("argument", "`alg` must be a single string.", call = call)
   }
   need <- oct_key_bits(alg, call)
   if (is.null(size)) {
     size <- need$bits
   }
-  ok <- is.numeric(size) &&
-    length(size) == 1L &&
-    is.finite(size) &&
-    size >= 128 &&
-    size %% 8 == 0
-  if (!ok) {
+  check_size_arg(size, call)
+  if (size < 128 || size %% 8 != 0) {
     abort_zujose(
       "key",
       "`size` must be a whole number of bytes, in bits, of at least 128.",
@@ -315,26 +316,33 @@ jwk_generate <- function(
     alg = alg,
     use = use,
     key_ops = key_ops,
-    call = call
+    call = call,
+    kind = "argument"
   )
+}
+
+# A key size argument is one finite number; whether it makes a strong
+# enough key is a key error.
+check_size_arg <- function(size, call) {
+  if (!is.numeric(size) || length(size) != 1L || !is.finite(size)) {
+    abort_zujose("argument", "`size` must be a number of bits.", call = call)
+  }
 }
 
 generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
   if (!is.null(crv)) {
-    abort_zujose("key", "An `RSA` key has no `crv`.", call = call)
+    abort_zujose("argument", "An `RSA` key has no `crv`.", call = call)
   }
   if (!is.null(alg) && (!is_string(alg) || !"RSA" %in% alg_key_types(alg))) {
     abort_zujose(
-      "key",
+      "argument",
       "`alg` must be an RSA algorithm such as \"RS256\" or \"RSA-OAEP\".",
       call = call
     )
   }
   size <- size %||% 2048
-  ok <- is.numeric(size) &&
-    length(size) == 1L &&
-    is.finite(size) &&
-    size %% 8 == 0 &&
+  check_size_arg(size, call)
+  ok <- size %% 8 == 0 &&
     size >= 2048 &&
     size <= 4096
   if (!ok) {
@@ -353,7 +361,8 @@ generate_rsa <- function(size, crv, alg, kid, use, key_ops, call) {
     key_ops = key_ops,
     members = rsa_members(ck),
     bits = as.integer(size),
-    call = call
+    call = call,
+    kind = "argument"
   )
 }
 
@@ -362,7 +371,7 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
   curves <- if (kty == "EC") names(ec_curves) else "X25519"
   if (!is_string(crv) || !crv %in% curves) {
     abort_zujose(
-      "key",
+      "argument",
       sprintf(
         "`crv` must be %s for an `%s` key.",
         paste0('"', curves, '"', collapse = ", "),
@@ -373,7 +382,7 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
   }
   if (!is.null(size)) {
     abort_zujose(
-      "key",
+      "argument",
       "The curve sets an EC key's size; omit `size`.",
       call = call
     )
@@ -386,7 +395,7 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
         !kty %in% alg_key_types(alg))
   ) {
     abort_zujose(
-      "key",
+      "argument",
       sprintf("`alg` does not fit a %s key.", crv),
       call = call
     )
@@ -405,7 +414,8 @@ generate_ec <- function(kty, size, crv, alg, kid, use, key_ops, call) {
     key_ops = key_ops,
     members = parts$members,
     bits = parts$bits,
-    call = call
+    call = call,
+    kind = "argument"
   )
 }
 
@@ -434,7 +444,7 @@ oct_key_bits <- function(alg, call) {
     return(list(bits = bits, min = bits, exact = TRUE))
   }
   abort_zujose(
-    "key",
+    "argument",
     sprintf("\"%s\" is not an algorithm for an `oct` key.", alg),
     call = call
   )
@@ -449,13 +459,16 @@ new_jose_key <- function(
   key_ops = NULL,
   members = empty_object(),
   bits = NULL,
-  call = NULL
+  call = NULL,
+  kind = "key"
 ) {
+  # `kind` is "argument" for members the caller passes as arguments, and
+  # "key" for members read from a JWK.
   for (name in c("kid", "alg", "use")) {
     value <- get(name)
     if (!is.null(value) && !is_string(value)) {
       abort_zujose(
-        "key",
+        kind,
         sprintf("`%s` must be a single string.", name),
         call = call
       )
@@ -468,7 +481,7 @@ new_jose_key <- function(
       all(key_ops %in% key_operations)
     if (!ok) {
       abort_zujose(
-        "key",
+        kind,
         "`key_ops` must name distinct operations from RFC 7517 section 4.3.",
         call = call
       )
@@ -540,14 +553,14 @@ as_jwk.jwk <- function(x, ...) {
 
 #' @export
 as_jwk.raw <- function(x, ...) {
-  jwk_oct(x)
+  oct_key(x, NULL, NULL, NULL, NULL, sys.call(-1))
 }
 
 #' @export
 as_jwk.character <- function(x, ...) {
   call <- sys.call(-1)
   if (!is_string(x)) {
-    abort_zujose("key", "A JWK must be a single string.", call = call)
+    abort_zujose("argument", "A JWK must be a single string.", call = call)
   }
   if (grepl("^[[:space:]]*-----BEGIN", x)) {
     return(pem_to_key(x, call))
@@ -576,7 +589,7 @@ list_to_key <- function(x, call, json = FALSE) {
 #' @export
 as_jwk.default <- function(x, ...) {
   abort_zujose(
-    "key",
+    "argument",
     "Can't read a key from this object.",
     call = sys.call(-1)
   )
@@ -839,9 +852,7 @@ pem_to_key <- function(x, call) {
 jwk_pem <- function(key, private = FALSE) {
   call <- sys.call()
   key <- check_key(key, call)
-  if (!isTRUE(private) && !isFALSE(private)) {
-    abort_zujose("key", "`private` must be TRUE or FALSE.", call = call)
-  }
+  check_flag(private, "private", call)
   if (key$kty == "oct" || !key$supported) {
     abort_zujose(
       "key",
@@ -877,9 +888,10 @@ jwk_pem <- function(key, private = FALSE) {
 #' key <- jwk_with_kid(jwk_oct(as.raw(1:32)))
 #' key$kid
 jwk_with_kid <- function(key, kid = jwk_thumbprint(key)) {
-  key <- check_key(key, sys.call())
+  call <- sys.call()
+  key <- check_key(key, call)
   if (!is_string(kid)) {
-    abort_zujose("key", "`kid` must be a single string.", call = sys.call())
+    abort_zujose("argument", "`kid` must be a single string.", call = call)
   }
   key$kid <- kid
   key
@@ -902,11 +914,9 @@ jwk_with_kid <- function(key, kid = jwk_thumbprint(key)) {
 #' jwk_json(key, private = TRUE)
 jwk_json <- function(x, private = FALSE) {
   call <- sys.call()
-  if (!isTRUE(private) && !isFALSE(private)) {
-    abort_zujose("key", "`private` must be TRUE or FALSE.", call = call)
-  }
+  check_flag(private, "private", call)
   if (!private) {
-    x <- jwk_public(x)
+    x <- public_jwk(x, call)
   }
   if (inherits(x, "jwk_set")) {
     zujson::json_write(list(keys = lapply(unclass(x), key_to_jwk)))
@@ -948,7 +958,11 @@ key_to_jwk <- function(key) {
 #' set <- as_jwk_set('{"keys":[{"kty":"oct","k":"AAAA"}]}')
 #' length(jwk_public(set))
 jwk_public <- function(x) {
-  call <- sys.call()
+  public_jwk(x, sys.call())
+}
+
+# The body of jwk_public(), shared with jwk_json().
+public_jwk <- function(x, call) {
   if (inherits(x, "jwk_set")) {
     keys <- Filter(function(key) key$kty != "oct", unclass(x))
     return(new_jose_keyset(lapply(keys, public_key)))
@@ -996,7 +1010,7 @@ public_key_ops <- function(key_ops) {
 
 check_key <- function(key, call) {
   if (!inherits(key, "jwk")) {
-    abort_zujose("key", "`key` must be a jwk.", call = call)
+    abort_zujose("argument", "`key` must be a jwk.", call = call)
   }
   key
 }

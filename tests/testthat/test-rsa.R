@@ -310,7 +310,7 @@ test_that("jwk_generate('RSA') makes a usable key of the size asked", {
   }
   expect_error(
     jwk_generate("RSA", alg = "HS256"),
-    class = "zujose_key_error"
+    class = "zujose_argument_error"
   )
 })
 

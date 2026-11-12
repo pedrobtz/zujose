@@ -44,7 +44,7 @@ registered_headers <- c(
 understood_crit <- "b64"
 
 jose_parse <- function(token, limits, call = NULL) {
-  check_limits(limits)
+  check_limits(limits, call)
   if (!is.character(token) || length(token) != 1L || is.na(token)) {
     abort_zujose("parse", "`token` must be a single string.", call = call)
   }
@@ -360,12 +360,14 @@ parse_protected <- function(text, limits, call) {
   json_object(bytes, "protected header", call)
 }
 
-# RFC 7515 §4.1.11 and §7.2.1, RFC 7516 §7.2.1, RFC 7797 §3 and §6.
-check_headers <- function(protected, unprotected, type, call) {
+# RFC 7515 §4.1.11 and §7.2.1, RFC 7516 §7.2.1, RFC 7797 §3 and §6. An
+# encoder checks the header it writes with `kind = "argument"`: what fails
+# there came from the caller (#148).
+check_headers <- function(protected, unprotected, type, call, kind = "parse") {
   all_names <- c(names(protected), unlist(lapply(unprotected, names)))
   if (anyDuplicated(all_names)) {
     abort_zujose(
-      "parse",
+      kind,
       "A header member appears in more than one header.",
       call = call
     )
@@ -373,7 +375,7 @@ check_headers <- function(protected, unprotected, type, call) {
   for (header in unprotected) {
     if (any(c("crit", "b64") %in% names(header))) {
       abort_zujose(
-        "parse",
+        kind,
         "`crit` and `b64` must be in the protected header.",
         call = call
       )
@@ -384,7 +386,7 @@ check_headers <- function(protected, unprotected, type, call) {
     for (header in c(list(protected), unprotected)) {
       if (name %in% names(header) && !is_string(header[[name]])) {
         abort_zujose(
-          "parse",
+          kind,
           sprintf("The `%s` header must be a string.", name),
           call = call
         )
@@ -394,11 +396,11 @@ check_headers <- function(protected, unprotected, type, call) {
 
   if ("b64" %in% names(protected)) {
     if (type != "JWS") {
-      abort_zujose("parse", "`b64` applies only to a JWS.", call = call)
+      abort_zujose(kind, "`b64` applies only to a JWS.", call = call)
     }
     b64 <- protected[["b64"]]
     if (!is.logical(b64) || length(b64) != 1L || is.na(b64)) {
-      abort_zujose("parse", "The `b64` header must be a boolean.", call = call)
+      abort_zujose(kind, "The `b64` header must be a boolean.", call = call)
     }
   }
 
@@ -410,7 +412,7 @@ check_headers <- function(protected, unprotected, type, call) {
       all(vapply(crit, is_string, logical(1)))
     if (!names_ok) {
       abort_zujose(
-        "parse",
+        kind,
         "`crit` must be a non-empty array of strings.",
         call = call
       )
@@ -418,28 +420,28 @@ check_headers <- function(protected, unprotected, type, call) {
     crit <- unlist(crit)
     if (anyDuplicated(crit) || any(crit %in% registered_headers)) {
       abort_zujose(
-        "parse",
+        kind,
         "`crit` repeats a name or lists a registered header.",
         call = call
       )
     }
     if (!all(crit %in% understood_crit)) {
       abort_zujose(
-        "parse",
+        kind,
         "`crit` lists an extension zujose does not implement.",
         call = call
       )
     }
     if (!all(crit %in% all_names)) {
       abort_zujose(
-        "parse",
+        kind,
         "`crit` lists a header that is not present.",
         call = call
       )
     }
   }
   if ("b64" %in% names(protected) && !"b64" %in% crit) {
-    abort_zujose("parse", "`b64` must be listed in `crit`.", call = call)
+    abort_zujose(kind, "`b64` must be listed in `crit`.", call = call)
   }
   invisible()
 }

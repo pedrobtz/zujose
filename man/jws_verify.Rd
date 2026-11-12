@@ -22,7 +22,9 @@ returning one.}
 \item{algorithms}{The signature algorithms to accept, such as \code{"HS256"}.}
 
 \item{payload}{For a detached payload (RFC 7515 Appendix F), the payload:
-a raw vector or a single string.}
+a raw vector or a single string. A JSON serialization without a
+\code{payload} member needs it; a compact one with an empty payload part is
+checked over the empty payload when it is not given.}
 
 \item{require}{With several signatures, whether \code{"all"} must verify (the
 default) or \code{"any"} one is enough. With \code{"any"}, signatures whose

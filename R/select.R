@@ -81,11 +81,7 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
       )
     }
   } else {
-    abort_zujose(
-      "key",
-      "`key` must be a jwk, a jwk_set or a resolver function.",
-      call = call
-    )
+    check_key_arg(key, call)
   }
 
   usable <- Filter(function(k) k$supported, candidates)
@@ -100,6 +96,19 @@ resolve_keys <- function(key, header, operation, limits, call = NULL) {
     )
   }
   usable
+}
+
+# A verifying or decrypting `key` argument: a jwk, a jwk_set or a resolver.
+# Its type is the caller's code, so a wrong one is an argument error (#78).
+check_key_arg <- function(key, call) {
+  if (!is.function(key) && !inherits(key, c("jwk", "jwk_set"))) {
+    abort_zujose(
+      "argument",
+      "`key` must be a jwk, a jwk_set or a resolver function.",
+      call = call
+    )
+  }
+  invisible(key)
 }
 
 # Design §8.2: ES256 only with P-256, ES384 with P-384, ES512 with P-521;

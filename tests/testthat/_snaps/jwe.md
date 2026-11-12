@@ -16,3 +16,16 @@
     Output
       <jwe_decryption> A128KW with A128CBC-HS256
 
+# a bad plaintext or aad is named in the error
+
+    Code
+      jwe_encrypt(1, key, "A128KW")
+    Condition
+      Error in `jwe_encrypt()`:
+      ! `plaintext` must be a raw vector or a single string.
+    Code
+      jwe_encrypt("x", key, "A128KW", aad = 1, format = "flattened")
+    Condition
+      Error in `jwe_encrypt()`:
+      ! `aad` must be a raw vector or a single string.
+

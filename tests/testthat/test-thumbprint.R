@@ -81,7 +81,7 @@ test_that("the hash sets the length and the URI's hash name", {
   expect_identical(nchar(jwk_thumbprint(key, "sha384")), 64L)
   expect_identical(nchar(jwk_thumbprint(key, "sha512")), 86L)
   expect_match(jwk_thumbprint(key, "sha512", uri = TRUE), ":sha-512:")
-  expect_error(jwk_thumbprint(key, "md5"), class = "zujose_key_error")
+  expect_error(jwk_thumbprint(key, "md5"), class = "zujose_argument_error")
 })
 
 test_that("a key without its required members has no thumbprint", {
@@ -89,5 +89,5 @@ test_that("a key without its required members has no thumbprint", {
     jwk_thumbprint(as_jwk('{"kty":"EC","crv":"P-256","x":"AAAA"}')),
     class = "zujose_key_error"
   )
-  expect_error(jwk_thumbprint("x"), class = "zujose_key_error")
+  expect_error(jwk_thumbprint("x"), class = "zujose_argument_error")
 })

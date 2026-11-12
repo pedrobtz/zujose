@@ -1,5 +1,32 @@
 # zujose 0.0.0.9000
 
+* Every `zujose_argument_error` names the function the caller called, such
+  as `jwt_encode()` rather than the `jws_sign()` it calls, and every
+  argument is checked before the token is read: `jwt_decode()` reported a
+  bad token before a bad `decrypt`, `limits` or `key`, and `jws_verify()`
+  and `jwe_decrypt()` before a bad `key`, `payload` or `limits` (#75).
+
+* A caller's `header` or `unprotected` member of the wrong type, such as
+  `jws_sign(..., header = list(typ = 1))`, is a `zujose_argument_error`
+  on every encoder: `jws_sign()`, `jws_signer()`, `jwt_encode()`,
+  `jwe_encrypt()` and `jwe_recipient()`. It was a `zujose_parse_error`,
+  the class for a malformed token, or was raised only when signing (#148).
+
+* A key argument of the wrong R type is a `zujose_argument_error`, as
+  `?zujose_error` now states once: a mistake in the caller's own code is
+  an argument error, and anything wrong with a token is a token error.
+  `jwk_oct(1)`, `jwk_set(1)`, `jwk_thumbprint(1)`, `as_jwk(123)`, a `key`
+  that is not a `jwk` (or, when verifying or decrypting, a `jwk_set` or
+  function), and `jwk_generate()`'s `kty`, `crv`, `alg` and `size` of the
+  wrong type or out of their range raised `zujose_key_error`. A malformed
+  or too weak key is still a `zujose_key_error` (#78).
+
+* `jws_verify()` refuses a flattened or general JWS without a `payload`
+  member, given no `payload` argument, with `zujose_parse_error`. It
+  verified the token over the empty payload. An empty `payload` member is
+  still the empty payload, and the compact serialization is unchanged
+  (#147).
+
 * `zujose_info()` and `zujose_unsupported_error` name zucrypt 0.1.1 as
   the version every algorithm needs. zucrypt re-planned its releases, and
   0.1.1 now carries all the primitives zujose uses beyond HMAC and

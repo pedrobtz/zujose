@@ -134,3 +134,89 @@ test_that("a bad format or require is an argument error", {
   )
   expect_snapshot(jws_sign("x", key, format = "bogus"), error = TRUE)
 })
+
+test_that("an argument error names the function the caller called (#75)", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  token <- jws_sign("x", key)
+  jwe <- jwe_encrypt("x", kek, "A128KW")
+  cases <- list(
+    jws_sign = function() jws_sign("x", key, header = list(typ = 1)),
+    jws_signer = function() jws_signer(key, alg = 1),
+    jws_verify = function() jws_verify(token, key, "HS256", payload = 1),
+    jwt_encode = function() jwt_encode(list(), key, header = list(kid = 1)),
+    jwt_decode = function() jwt_decode(token, key, "HS256", leeway = -1),
+    jwt_decoder = function() jwt_decoder(key, "HS256", decrypt = 1),
+    jwe_encrypt = function() jwe_encrypt("x", kek, "A128KW", aad = 1),
+    jwe_recipient = function() jwe_recipient(kek, header = list(zip = "DEF")),
+    jwe_decrypt = function() {
+      jwe_decrypt(jwe, kek, "A128KW", "A128CBC-HS256", limits = 1)
+    },
+    jwe_decryption = function() jwe_decryption(1, "A128KW", "A128CBC-HS256"),
+    jose_peek = function() jose_peek(token, limits = 1),
+    jose_limits = function() jose_limits(keys = 0),
+    jwk_oct = function() jwk_oct(1),
+    jwk_generate = function() jwk_generate("DSA"),
+    as_jwk = function() as_jwk(1),
+    jwk_set = function() jwk_set(1),
+    as_jwk_set = function() as_jwk_set(1),
+    jwk_thumbprint = function() jwk_thumbprint(key, uri = NA),
+    jwk_with_kid = function() jwk_with_kid(key, 1),
+    jwk_public = function() jwk_public(1),
+    jwk_json = function() jwk_json(key, private = NA),
+    jwk_pem = function() jwk_pem(1)
+  )
+  for (fn in names(cases)) {
+    err <- expect_error(cases[[fn]](), class = "zujose_argument_error")
+    expect_identical(conditionCall(err)[[1]], as.name(fn), info = fn)
+  }
+})
+
+test_that("a bad argument is reported before a bad token (#75)", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  for (token in list(123, "not a token", "{")) {
+    expect_error(
+      jwt_decode(token, key, "HS256", decrypt = "yes"),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwt_decode(token, key, "HS256", limits = list()),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwt_decode(token, 1, "HS256"),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_verify(token, key, "HS256", payload = 1),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_verify(token, "key", "HS256"),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_decrypt(token, kek, "A128KW", "A128GCM", limits = list()),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_decrypt(token, "kek", "A128KW", "A128GCM"),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("a token that is not one string is a parse error (#76)", {
+  key <- jwk_oct(as.raw(1:32), alg = "HS256")
+  kek <- jwk_oct(as.raw(1:16))
+  for (token in list(123, NULL, NA_character_, c("a", "b"), list("a"))) {
+    expect_error(jwt_decode(token, key, "HS256"), class = "zujose_parse_error")
+    expect_error(jws_verify(token, key, "HS256"), class = "zujose_parse_error")
+    expect_error(
+      jwe_decrypt(token, kek, "A128KW", "A128GCM"),
+      class = "zujose_parse_error"
+    )
+    expect_error(jose_peek(token), class = "zujose_parse_error")
+  }
+})
