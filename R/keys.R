@@ -919,6 +919,11 @@ key_to_jwk <- function(key) {
 #' `qi` and `oth`. A symmetric (`oct`) key is entirely secret, so it is an
 #' error alone and dropped from a key set.
 #'
+#' A private key's `key_ops` become those of its public half: `sign` becomes
+#' `verify`, `decrypt` becomes `encrypt` and `unwrapKey` becomes `wrapKey`,
+#' and public operations stay. When no public operation is left, as for a
+#' key only for `deriveKey`, the public key has no `key_ops`.
+#'
 #' @param x A `jwk` or `jwk_set`.
 #' @returns An object of the same class.
 #' @export
@@ -943,8 +948,33 @@ jwk_public <- function(x) {
 }
 
 public_key <- function(key) {
-  key$members <- key$members[setdiff(names(key$members), private_members)]
+  private <- names(key$members) %in% private_members
+  if (any(private)) {
+    key$key_ops <- public_key_ops(key$key_ops)
+  }
+  key$members <- key$members[!private]
   key
+}
+
+# The operations of a key's public half: each private operation becomes its
+# public counterpart, and public ones stay. With none left, `key_ops` is
+# dropped rather than publishing a key that can do nothing (#133). An empty
+# `key_ops` already permits nothing, and stays empty.
+public_ops <- c(
+  sign = "verify",
+  verify = "verify",
+  decrypt = "encrypt",
+  encrypt = "encrypt",
+  unwrapKey = "wrapKey",
+  wrapKey = "wrapKey"
+)
+
+public_key_ops <- function(key_ops) {
+  if (length(key_ops) == 0L) {
+    return(key_ops)
+  }
+  ops <- unique(unname(public_ops[intersect(key_ops, names(public_ops))]))
+  if (length(ops) == 0L) NULL else ops
 }
 
 check_key <- function(key, call) {

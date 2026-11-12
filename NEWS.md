@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* `jwk_public()`, and so `jwk_json()` without `private`, maps a private
+  key's `key_ops` to its public half's: `sign` to `verify`, `decrypt` to
+  `encrypt` and `unwrapKey` to `wrapKey`. The public half of a signing key
+  could not verify. With no public operation left, `key_ops` is dropped
+  (#133).
+
 * `jwk_generate("oct")` accepts every `oct` algorithm `jwk_oct()` does: a
   `PBES2-*` password (256 bits by default), and a `dir` key named by its
   content encryption, such as `alg = "A128GCM"`, made at that algorithm's

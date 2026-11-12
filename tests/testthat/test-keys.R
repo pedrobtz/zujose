@@ -298,3 +298,22 @@ test_that("jwk_generate() makes an oct key for every oct algorithm", {
     class = "zujose_key_error"
   )
 })
+
+test_that("jwk_public() maps private key_ops to their public counterparts", {
+  # #133: the public half of a signing key verifies.
+  key <- jwk_generate("EC", key_ops = "sign", alg = "ES256")
+  public <- jwk_public(key)
+  expect_identical(public$key_ops, "verify")
+  token <- jws_sign("p", key)
+  expect_no_error(jws_verify(token, public, "ES256"))
+  both <- jwk_generate("OKP", key_ops = c("deriveKey", "decrypt", "encrypt"))
+  expect_identical(jwk_public(both)$key_ops, "encrypt")
+  wrap <- jwk_generate("OKP", key_ops = c("unwrapKey", "wrapKey"))
+  expect_identical(jwk_public(wrap)$key_ops, "wrapKey")
+  derive <- jwk_public(jwk_generate("OKP", key_ops = "deriveKey"))
+  expect_null(derive$key_ops)
+  expect_false(grepl("key_ops", jwk_json(derive), fixed = TRUE))
+  expect_null(jwk_public(jwk_generate("OKP"))$key_ops)
+  set <- jwk_public(jwk_set(key))
+  expect_identical(set[[1]]$key_ops, "verify")
+})
