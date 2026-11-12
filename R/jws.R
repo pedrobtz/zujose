@@ -264,7 +264,9 @@ protected_header <- function(signer, b64, call) {
 #'   returning one.
 #' @param algorithms The signature algorithms to accept, such as `"HS256"`.
 #' @param payload For a detached payload (RFC 7515 Appendix F), the payload:
-#'   a raw vector or a single string.
+#'   a raw vector or a single string. A JSON serialization without a
+#'   `payload` member needs it; a compact one with an empty payload part is
+#'   checked over the empty payload when it is not given.
 #' @param require With several signatures, whether `"all"` must verify (the
 #'   default) or `"any"` one is enough. With `"any"`, signatures whose
 #'   algorithm is not in `algorithms` are skipped.
@@ -319,6 +321,17 @@ verify_jws <- function(token, key, algorithms, payload, require, limits, call) {
     }
     signed_payload <- if (obj$b64) charToRaw(b64url_encode(bytes)) else bytes
   } else {
+    # RFC 7515 Appendix F: a JSON token without its `payload` member is
+    # detached, and the caller supplies the payload. A missing payload is
+    # not an empty one. In the compact serialization an empty part is
+    # both, so it verifies as the empty payload (#131, #147).
+    if (is.null(obj$payload_b64) && obj$serialization != "compact") {
+      abort_zujose(
+        "parse",
+        "The token has no `payload` member; pass the detached `payload`.",
+        call = call
+      )
+    }
     bytes <- obj$payload %||% raw()
     signed_payload <- if (obj$b64) {
       charToRaw(obj$payload_b64 %||% "")

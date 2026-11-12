@@ -1,5 +1,11 @@
 # zujose 0.0.0.9000
 
+* `jws_verify()` refuses a flattened or general JWS without a `payload`
+  member, given no `payload` argument, with `zujose_parse_error`. It
+  verified the token over the empty payload. An empty `payload` member is
+  still the empty payload, and the compact serialization is unchanged
+  (#147).
+
 * `zujose_info()` and `zujose_unsupported_error` name zucrypt 0.1.1 as
   the version every algorithm needs. zucrypt re-planned its releases, and
   0.1.1 now carries all the primitives zujose uses beyond HMAC and

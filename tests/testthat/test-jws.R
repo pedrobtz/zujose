@@ -48,6 +48,31 @@ test_that("RFC 7520 §4.5 detached content verifies and is reproduced", {
     jws_verify(rfc7520_token(41), key, algorithms = "HS256"),
     class = "zujose_signature_error"
   )
+  # A JSON token without its `payload` member needs the payload (#147).
+  for (figure in 42:43) {
+    expect_error(
+      jws_verify(rfc7520_token(figure), key, algorithms = "HS256"),
+      class = "zujose_parse_error"
+    )
+  }
+})
+
+test_that("a JSON JWS without a payload member is not an empty payload (#147)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (format in c("flattened", "general")) {
+    absent <- jws_sign("", key, "HS256", format = format, detached = TRUE)
+    expect_error(
+      jws_verify(absent, key, algorithms = "HS256"),
+      class = "zujose_parse_error"
+    )
+    out <- jws_verify(absent, key, algorithms = "HS256", payload = "")
+    expect_identical(out$payload, raw())
+    empty <- jws_sign("", key, "HS256", format = format)
+    expect_identical(jws_verify(empty, key, "HS256")$payload, raw())
+  }
+  # In the compact serialization an empty part is the detached payload.
+  compact <- jws_sign("", key, "HS256", detached = TRUE)
+  expect_identical(jws_verify(compact, key, "HS256")$payload, raw())
 })
 
 test_that("RFC 7520 §4.6 protects only some header members", {
