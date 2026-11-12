@@ -33,10 +33,10 @@ test_that("the three serializations of one JWS agree", {
   expect_identical(flattened$signatures, compact$signatures)
 })
 
-test_that("a detached payload parses as empty, or as absent in JSON", {
+test_that("a detached payload parses as absent in every serialization", {
   compact <- jose_parse(rfc7520_token(41), jose_limits())
-  expect_identical(compact$payload_b64, "")
-  expect_identical(compact$payload, raw())
+  expect_null(compact$payload_b64)
+  expect_null(compact$payload)
 
   general <- jose_parse(rfc7520_token(42), jose_limits())
   expect_null(general$payload_b64)
@@ -73,7 +73,7 @@ test_that("RFC 7797 §4.2 unencoded payloads parse", {
   detached <- paste0(rfc7797_header(), "..", rfc7797_signature())
   obj <- jose_parse(detached, jose_limits())
   expect_false(obj$b64)
-  expect_identical(obj$payload, raw())
+  expect_null(obj$payload)
 })
 
 # Header rules (design §8.1) ----------------------------------------------

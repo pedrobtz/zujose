@@ -1,5 +1,9 @@
 # zujose 0.0.0.9000
 
+* `jose_peek()` gives `NULL` for `payload` and `signing_input` on a compact
+  detached JWS, as it does for a flattened one. It gave `raw(0)` and the
+  header followed by `"."` (#131).
+
 * `?jwe_encrypt` documents that other JOSE implementations cap PBES2 `p2c`
   when they decrypt (jwcrypto at 16 384, JavaScript's `jose` at 10 000),
   so a token for them needs `header = list(p2c = 10000)` or less. The

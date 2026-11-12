@@ -6,7 +6,7 @@
 # A jose_object is a list:
 #
 # * JWS: `type`, `serialization`, `payload_b64` (as received, or NULL when
-#   detached), `payload` (raw, or NULL), `b64`, and `signatures`, a list of
+#   detached, which in the compact serialization is an empty part), `payload` (raw, or NULL), `b64`, and `signatures`, a list of
 #   `protected_b64` (as received), `protected`, `header` and `signature`.
 # * JWE: `type`, `serialization`, `protected_b64`, `protected`,
 #   `unprotected`, `aad_b64` and `aad` (NULL when absent), `iv`,
@@ -97,12 +97,17 @@ parse_jws_compact <- function(parts, limits, call) {
   check_headers(protected, list(), "JWS", call)
   require_member(protected, "alg", "header", call)
   b64 <- !identical(member(protected, "b64"), FALSE)
+  # An empty payload part is a detached payload (RFC 7515 Appendix F),
+  # marked as the JSON parser marks one (#131).
+  payload_b64 <- if (nzchar(parts[[2]])) parts[[2]]
 
   new_jose_object(
     type = "JWS",
     serialization = "compact",
-    payload_b64 = parts[[2]],
-    payload = decode_payload(parts[[2]], b64, limits, call),
+    payload_b64 = payload_b64,
+    payload = if (!is.null(payload_b64)) {
+      decode_payload(payload_b64, b64, limits, call)
+    },
     b64 = b64,
     signatures = list(list(
       protected_b64 = parts[[1]],
