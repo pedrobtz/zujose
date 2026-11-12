@@ -11,6 +11,10 @@
 #' `b64 = FALSE`, the payload is signed and carried unencoded (RFC 7797),
 #' and the header gains `b64: false` and `crit: ["b64"]`.
 #'
+#' A header's names must be unique and not empty at every depth, a member
+#' may appear in only one header, and values must be of a type JSON can
+#' represent. Anything else is a `zujose_argument_error`.
+#'
 #' The algorithms are `HS256`, `HS384` and `HS512` with an `oct` key, and
 #' `RS256`, `RS384`, `RS512`, `PS256`, `PS384` and `PS512` with a private
 #' RSA key of at least 2048 bits, and `ES256`, `ES384` and `ES512` with a
@@ -180,13 +184,11 @@ jws_signer <- function(key, alg = NULL, header = NULL, unprotected = NULL) {
   if (!is.null(alg) && !is_string(alg)) {
     abort_zujose("argument", "`alg` must be a single string.")
   }
+  header <- check_header_arg(header, "header")
+  unprotected <- check_header_arg(unprotected, "unprotected")
+  check_disjoint_headers(header, unprotected)
   structure(
-    list(
-      key = key,
-      alg = alg,
-      header = check_header_arg(header, "header"),
-      unprotected = check_header_arg(unprotected, "unprotected")
-    ),
+    list(key = key, alg = alg, header = header, unprotected = unprotected),
     class = "jws_signer"
   )
 }
@@ -604,11 +606,81 @@ check_header_arg <- function(x, name) {
   }
   if (
     !is.list(x) ||
-      (length(x) > 0L && (is.null(names(x)) || any(!nzchar(names(x)))))
+      is.data.frame(x) ||
+      (length(x) > 0L && is.null(names(x)))
   ) {
     abort_zujose("argument", sprintf("`%s` must be a named list.", name))
   }
+  check_json_arg(x, name)
   if (length(x) == 0L) empty_object() else x
+}
+
+# Why zujson would not write `x` as the JSON the caller means: names that
+# are repeated, NA or empty, at any depth, which RFC 8725 section 3.4 asks
+# readers to reject, or a type JSON has no form for (#119, #123). NULL when
+# there is none.
+json_arg_problem <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  nms <- names(x)
+  if (
+    !is.null(nms) && (anyNA(nms) || !all(nzchar(nms)) || anyDuplicated(nms))
+  ) {
+    return("names")
+  }
+  if (is.list(x)) {
+    for (value in x) {
+      problem <- json_arg_problem(value)
+      if (!is.null(problem)) {
+        return(problem)
+      }
+    }
+    return(NULL)
+  }
+  if (
+    is.atomic(x) &&
+      typeof(x) %in% c("logical", "integer", "double", "character")
+  ) {
+    return(NULL)
+  }
+  "type"
+}
+
+# Refuse an argument zujose would write as JSON, as json_arg_problem()
+# describes, with zujose_argument_error.
+check_json_arg <- function(x, name) {
+  problem <- json_arg_problem(x)
+  if (identical(problem, "names")) {
+    abort_zujose(
+      "argument",
+      sprintf(
+        "`%s` must have names that are unique and not empty, at every depth.",
+        name
+      )
+    )
+  }
+  if (identical(problem, "type")) {
+    abort_zujose(
+      "argument",
+      sprintf(
+        "`%s` holds a value JSON cannot represent, such as a raw vector.",
+        name
+      )
+    )
+  }
+  invisible(x)
+}
+
+# Refuse a member given in more than one of the caller's headers, which
+# check_headers() would report as a malformed token (#119).
+check_disjoint_headers <- function(...) {
+  if (anyDuplicated(unlist(lapply(list(...), names)))) {
+    abort_zujose(
+      "argument",
+      "A header member is given in more than one header."
+    )
+  }
 }
 
 #' @export

@@ -584,3 +584,70 @@ test_that("a general JWS verifies with keys within `limits$keys`", {
     class = "zujose_key_error"
   )
 })
+
+test_that("headers with repeated, NA or empty names are refused (#119)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(a = 1, a = 2),
+    list(typ = "JWT", typ = "at+jwt"),
+    list(x = list(a = 1, a = 2)),
+    list(x = c(a = 1, a = 2)),
+    list(x = list(list(a = 1, a = 2))),
+    stats::setNames(list(1), NA),
+    list(x = stats::setNames(list(1), NA)),
+    list(x = list(a = 1, 2)),
+    data.frame(a = 1:2)
+  )
+  for (header in bad) {
+    expect_error(
+      jws_sign("p", key, "HS256", header = header),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_sign(
+        "p",
+        key,
+        "HS256",
+        unprotected = header,
+        format = "flattened"
+      ),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jws_sign(
+      "p",
+      key,
+      "HS256",
+      header = list(a = 1),
+      unprotected = list(a = 2),
+      format = "flattened"
+    ),
+    class = "zujose_argument_error"
+  )
+  # An array of objects, and an object, are still written.
+  token <- jws_sign(
+    "p",
+    key,
+    "HS256",
+    header = list(x = list(list(a = 1), list(a = 2)), y = list(b = 1))
+  )
+  expect_identical(
+    jose_peek(token)$headers[[1]]$x,
+    list(list(a = 1L), list(a = 2L))
+  )
+})
+
+test_that("a header value JSON cannot represent is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (value in list(as.raw(1), 1i, quote(x), function() 1)) {
+    expect_error(
+      jws_sign("p", key, "HS256", header = list(a = value)),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jws_sign("p", key, "HS256", header = list(a = list(b = value))),
+      class = "zujose_argument_error"
+    )
+  }
+})

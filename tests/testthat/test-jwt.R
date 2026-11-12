@@ -491,3 +491,33 @@ test_that("printing claims reads `kid` by its exact name (#122)", {
   claims <- jwt_decode(jwt, key, "HS256", required = character())
   expect_no_match(capture_output(print(claims)), "zzz", fixed = TRUE)
 })
+
+test_that("claims with repeated, NA or empty names are refused (#119)", {
+  key <- jwk_oct(as.raw(1:32))
+  bad <- list(
+    list(o = c(a = 1, a = 2)),
+    list(o = list(a = 1, a = 2)),
+    list(o = list(p = list(a = 1, a = 2))),
+    stats::setNames(list(1), NA),
+    list(o = stats::setNames(list(1), NA)),
+    list(o = list(a = 1, 2)),
+    data.frame(a = 1:2),
+    list(1, 2)
+  )
+  for (claims in bad) {
+    expect_error(
+      jwt_encode(claims, key, "HS256"),
+      class = "zujose_argument_error"
+    )
+  }
+})
+
+test_that("a claim value JSON cannot represent is an argument error (#123)", {
+  key <- jwk_oct(as.raw(1:32))
+  for (value in list(as.raw(1), 1i, list(a = 1i))) {
+    expect_error(
+      jwt_encode(list(a = value), key, "HS256"),
+      class = "zujose_argument_error"
+    )
+  }
+})

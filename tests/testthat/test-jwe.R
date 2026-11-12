@@ -597,3 +597,54 @@ test_that("a truncated tag that is a prefix of the real one is refused", {
     }
   }
 })
+
+test_that("JWE headers with repeated or empty names are refused (#119)", {
+  kek <- jwk_oct(as.raw(1:16))
+  bad <- list(
+    list(a = 1, a = 2),
+    list(x = list(a = 1, a = 2)),
+    stats::setNames(list(1), NA),
+    list(x = as.raw(1)),
+    list(x = 1i)
+  )
+  for (header in bad) {
+    expect_error(
+      jwe_encrypt("x", kek, "A128KW", header = header),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_encrypt(
+        "x",
+        kek,
+        "A128KW",
+        unprotected = header,
+        format = "flattened"
+      ),
+      class = "zujose_argument_error"
+    )
+    expect_error(
+      jwe_recipient(kek, "A128KW", header = header),
+      class = "zujose_argument_error"
+    )
+  }
+  expect_error(
+    jwe_encrypt(
+      "x",
+      kek,
+      "A128KW",
+      header = list(a = 1),
+      unprotected = list(a = 2),
+      format = "flattened"
+    ),
+    class = "zujose_argument_error"
+  )
+  expect_error(
+    jwe_encrypt(
+      "x",
+      list(jwe_recipient(kek, "A128KW", header = list(a = 2))),
+      unprotected = list(a = 1),
+      format = "general"
+    ),
+    class = "zujose_argument_error"
+  )
+})

@@ -1,5 +1,13 @@
 # zujose 0.0.0.9000
 
+* `jws_sign()`, `jws_signer()`, `jwe_encrypt()`, `jwe_recipient()` and
+  `jwt_encode()` refuse, with `zujose_argument_error`, a header or claims
+  set with a repeated, `NA` or empty name at any depth, a member given in
+  more than one header, a data frame or unnamed list as the claims set, and
+  a value JSON cannot represent, such as a raw or complex vector. A
+  repeated header member was dropped and a nested one written, giving
+  tokens zujose's own decoder refuses (#119, #123).
+
 * Header members and key members are read by their exact names. A
   `p2count` header member no longer sets the PBES2 iteration count, and a
   `kidnap` header no longer prints as the key's `kid` (#122).

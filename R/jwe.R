@@ -186,6 +186,9 @@ encrypt_jwe <- function(
       )
     }
   }
+  for (r in recipients) {
+    check_disjoint_headers(header, unprotected, r$header)
+  }
   given <- c(
     names(header),
     names(unprotected),

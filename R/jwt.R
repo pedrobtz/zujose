@@ -9,7 +9,9 @@
 #' written as NumericDate, whole seconds since 1970. `expires_in` and
 #' `not_before` count from now.
 #'
-#' @param claims The claims, as a named list. It may be empty.
+#' @param claims The claims, as a named list. It may be empty. Names must
+#'   be unique and not empty at every depth, and values must be of a type
+#'   JSON can represent.
 #' @inheritParams jws_sign
 #' @param header Protected header members. The default declares
 #'   `typ: "JWT"`.
@@ -39,24 +41,9 @@ jwt_encode <- function(
   jti = FALSE
 ) {
   call <- sys.call()
-  if (
-    !is.list(claims) ||
-      (length(claims) > 0L &&
-        (is.null(names(claims)) ||
-          !all(nzchar(names(claims))) ||
-          anyDuplicated(names(claims))))
-  ) {
-    abort_zujose(
-      "argument",
-      "`claims` must be a named list without repeated names."
-    )
-  }
+  claims <- check_header_arg(claims, "claims")
   check_flag(issued_at, "issued_at", call)
   check_flag(jti, "jti", call)
-  if (length(claims) == 0L) {
-    claims <- empty_object()
-  }
-
   now <- jwt_now()
   for (name in intersect(c("exp", "nbf", "iat"), names(claims))) {
     claims[[name]] <- as_numeric_date(claims[[name]], name)

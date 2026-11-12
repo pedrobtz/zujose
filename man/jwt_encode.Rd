@@ -16,7 +16,9 @@ jwt_encode(
 )
 }
 \arguments{
-\item{claims}{The claims, as a named list. It may be empty.}
+\item{claims}{The claims, as a named list. It may be empty. Names must
+be unique and not empty at every depth, and values must be of a type
+JSON can represent.}
 
 \item{key}{A \code{jwk}, or a list of \code{\link[=jws_signer]{jws_signer()}} objects for several
 signatures.}
