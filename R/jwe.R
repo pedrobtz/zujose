@@ -168,7 +168,7 @@ encrypt_jwe <- function(
   call,
   fixed = list()
 ) {
-  bytes <- as_payload_bytes(plaintext, call)
+  bytes <- as_payload_bytes(plaintext, call, "plaintext")
   if (!is_string(enc)) {
     abort_zujose("argument", "`enc` must be a single string.", call = call)
   }
@@ -178,7 +178,7 @@ encrypt_jwe <- function(
   header <- check_header_arg(header, "header", call = call)
   unprotected <- check_header_arg(unprotected, "unprotected", call = call)
   if (!is.null(aad)) {
-    aad <- as_payload_bytes(aad, call)
+    aad <- as_payload_bytes(aad, call, "aad")
   }
 
   recipients <- if (inherits(key, "jwk")) {

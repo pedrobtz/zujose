@@ -619,7 +619,7 @@ check_hmac_key <- function(key, alg, call) {
 
 # Helpers -----------------------------------------------------------------
 
-as_payload_bytes <- function(x, call) {
+as_payload_bytes <- function(x, call, arg = "payload") {
   if (is.raw(x)) {
     return(x)
   }
@@ -628,7 +628,7 @@ as_payload_bytes <- function(x, call) {
   }
   abort_zujose(
     "argument",
-    "`payload` must be a raw vector or a single string.",
+    sprintf("`%s` must be a raw vector or a single string.", arg),
     call = call
   )
 }

@@ -712,3 +712,11 @@ test_that("`enc` must be one string (#123)", {
     )
   }
 })
+
+test_that("a bad plaintext or aad is named in the error", {
+  key <- jwk_oct(as.raw(1:16))
+  expect_snapshot(error = TRUE, {
+    jwe_encrypt(1, key, "A128KW")
+    jwe_encrypt("x", key, "A128KW", aad = 1, format = "flattened")
+  })
+})
