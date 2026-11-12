@@ -29,8 +29,12 @@
 #' @export
 #' @examples
 #' key <- jwk_oct(as.raw(1:32), kid = "k1")
-#' jwt <- jwt_encode(list(sub = "u1", aud = "api"), key, "HS256",
-#'                        expires_in = 3600)
+#' jwt <- jwt_encode(
+#'   list(sub = "u1", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 3600
+#' )
 #' jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 jwt_encode <- function(
   claims,
@@ -186,10 +190,13 @@ jwt_encode <- function(
 #' @export
 #' @examples
 #' key <- jwk_oct(as.raw(1:32))
-#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-#'                        expires_in = 60)
-#' claims <- jwt_decode(jwt, key, "HS256", audience = "api",
-#'                           issuer = "me")
+#' jwt <- jwt_encode(
+#'   list(iss = "me", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 60
+#' )
+#' claims <- jwt_decode(jwt, key, "HS256", audience = "api", issuer = "me")
 #' claims$iss
 #'
 #' # Claim failures have classes of their own.
@@ -342,8 +349,12 @@ jwt_decode <- function(
 #' @examples
 #' key <- jwk_oct(as.raw(1:32))
 #' check <- jwt_decoder(key, "HS256", audience = "api", issuer = "me")
-#' jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-#'                        expires_in = 60)
+#' jwt <- jwt_encode(
+#'   list(iss = "me", aud = "api"),
+#'   key,
+#'   "HS256",
+#'   expires_in = 60
+#' )
 #' check(jwt)$iss
 jwt_decoder <- function(
   key,

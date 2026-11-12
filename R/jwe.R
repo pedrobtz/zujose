@@ -66,16 +66,24 @@ kw_key_bytes <- c(A128KW = 16L, A192KW = 24L, A256KW = 32L)
 #' key <- jwk_generate("oct", alg = "A128KW", kid = "kek")
 #' token <- jwe_encrypt("secret", key)
 #' token
-#' jwe_decrypt(token, key, algorithms = "A128KW",
-#'              encryptions = "A128CBC-HS256")
+#' jwe_decrypt(token, key, algorithms = "A128KW", encryptions = "A128CBC-HS256")
 #'
 #' # AES-GCM content encryption, under a password. A p2c of 10000 is one
 #' # that jwcrypto and JavaScript's jose also read.
 #' password <- jwk_oct(charToRaw("correct horse battery staple"))
-#' token <- jwe_encrypt("secret", password, alg = "PBES2-HS256+A128KW",
-#'                       enc = "A256GCM", header = list(p2c = 10000))
-#' jwe_decrypt(token, password, algorithms = "PBES2-HS256+A128KW",
-#'              encryptions = "A256GCM")$plaintext
+#' token <- jwe_encrypt(
+#'   "secret",
+#'   password,
+#'   alg = "PBES2-HS256+A128KW",
+#'   enc = "A256GCM",
+#'   header = list(p2c = 10000)
+#' )
+#' jwe_decrypt(
+#'   token,
+#'   password,
+#'   algorithms = "PBES2-HS256+A128KW",
+#'   encryptions = "A256GCM"
+#' )$plaintext
 jwe_encrypt <- function(
   plaintext,
   key,

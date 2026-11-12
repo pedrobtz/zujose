@@ -54,8 +54,12 @@ written as NumericDate, whole seconds since 1970. \code{expires_in} and
 }
 \examples{
 key <- jwk_oct(as.raw(1:32), kid = "k1")
-jwt <- jwt_encode(list(sub = "u1", aud = "api"), key, "HS256",
-                       expires_in = 3600)
+jwt <- jwt_encode(
+  list(sub = "u1", aud = "api"),
+  key,
+  "HS256",
+  expires_in = 3600
+)
 jwt_decode(jwt, key, algorithms = "HS256", audience = "api")
 }
 \seealso{

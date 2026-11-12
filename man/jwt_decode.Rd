@@ -125,10 +125,13 @@ claim name: \code{zujose_expired_error}, \code{zujose_not_yet_valid_error},
 }
 \examples{
 key <- jwk_oct(as.raw(1:32))
-jwt <- jwt_encode(list(iss = "me", aud = "api"), key, "HS256",
-                       expires_in = 60)
-claims <- jwt_decode(jwt, key, "HS256", audience = "api",
-                          issuer = "me")
+jwt <- jwt_encode(
+  list(iss = "me", aud = "api"),
+  key,
+  "HS256",
+  expires_in = 60
+)
+claims <- jwt_decode(jwt, key, "HS256", audience = "api", issuer = "me")
 claims$iss
 
 # Claim failures have classes of their own.
