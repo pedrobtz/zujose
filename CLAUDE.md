@@ -193,8 +193,14 @@ These are fixed by the design (§6, §8, §12) before any code exists.
   about 100 seconds.
 
 ## Assurance
+<!-- r-skills: shared-rules -->
 
-@.claude/shared/assurance.md
+The portfolio's shared rules (`workflow`, `r-package`, `ci`, `native-code`,
+`correctness`, `assurance`) come from the
+[r-skills](https://github.com/pedrobtz/r-skills) plugin's `rules/`, loaded at
+session start because of the marker above. Never copy them here. Where this
+file and a shared rule disagree, this file wins for this package. Cloud
+sessions do not load the plugin and run without them.
 
 `.agents/assurance.md` records how zujose meets that standard: its kinds,
 the oracle behind each boundary and the straddle of each limit. A change
