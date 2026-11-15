@@ -13,8 +13,6 @@ on:
       cases:
         description: Cases to generate
         default: "10000"
-  schedule:
-    - cron: "5 8 * * 3"  # weekly, Wednesdays
 
 name: fuzz
 
